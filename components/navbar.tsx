@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Menu, X, MapPin } from "lucide-react"
 import { useState, useEffect } from "react"
 import { logoutUser } from "@/services/auth/logoutUser"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 
 interface UserInfo {
   id?: string
@@ -20,15 +20,22 @@ export function Navbar() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   const fetchUserInfo = async () => {
     try {
-      const response = await fetch("/api/user-info", { cache: "no-store" })
+      const response = await fetch("/api/user-info", { 
+        cache: "no-store",
+        credentials: "include", // Ensure cookies are sent
+        headers: {
+          'Cache-Control': 'no-cache',
+        }
+      })
       if (response.ok) {
         const data = await response.json()
-        console.log("Navbar - User info fetched:", data) // Debug log
         // Only set user info if role exists and is not null
-        if (data.role && data.role !== null) {
+        if (data.role && data.role !== null && data.role !== undefined) {
           setUserInfo(data)
         } else {
           setUserInfo(null)
@@ -38,7 +45,7 @@ export function Navbar() {
       }
     } catch (error) {
       // User is not logged in
-      console.error("Navbar - Error fetching user info:", error) // Debug log
+      console.error("Navbar fetchUserInfo error:", error)
       setUserInfo(null)
     } finally {
       setIsLoading(false)
@@ -54,11 +61,58 @@ export function Navbar() {
       fetchUserInfo()
     }
     
+    // Refresh on route change (when user navigates)
+    const handleRouteChange = () => {
+      fetchUserInfo()
+    }
+    
     window.addEventListener("focus", handleFocus)
+    window.addEventListener("popstate", handleRouteChange)
+    
+    // Also listen for custom events that might be triggered after login
+    window.addEventListener("user-logged-in", handleRouteChange)
+    window.addEventListener("user-logged-out", handleRouteChange)
     
     return () => {
       window.removeEventListener("focus", handleFocus)
+      window.removeEventListener("popstate", handleRouteChange)
+      window.removeEventListener("user-logged-in", handleRouteChange)
+      window.removeEventListener("user-logged-out", handleRouteChange)
     }
+  }, [])
+
+  // Refresh user info when pathname changes (e.g., after login redirect)
+  useEffect(() => {
+    // Small delay to ensure cookies are set after redirect
+    const timer = setTimeout(() => {
+      fetchUserInfo()
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [pathname])
+
+  // Refresh when loggedIn query parameter is present (after successful login)
+  useEffect(() => {
+    const loggedIn = searchParams.get('loggedIn')
+    if (loggedIn === 'true') {
+      // Delay to ensure cookies are set
+      const timer = setTimeout(() => {
+        fetchUserInfo()
+        // Remove the query parameter from URL without reload
+        router.replace(pathname)
+      }, 200)
+      return () => clearTimeout(timer)
+    }
+  }, [searchParams, pathname, router])
+
+  // Also refresh when the page becomes visible (handles tab switching after login)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchUserInfo()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
   const handleLogout = async () => {
@@ -76,8 +130,6 @@ export function Navbar() {
     }
   }
 
-  const isLoggedIn = !!userInfo?.role && userInfo.role !== null
-  
   // Normalize role - handle any case variations
   const getNormalizedRole = (role: string | undefined | null): "TOURIST" | "GUIDE" | "ADMIN" | null => {
     if (!role) return null
@@ -89,16 +141,12 @@ export function Navbar() {
   }
   
   const normalizedRole = getNormalizedRole(userInfo?.role)
-
-  // Debug log (remove in production)
-  if (process.env.NODE_ENV === 'development' && userInfo) {
-    console.log("Navbar Debug - User info:", userInfo, "Normalized role:", normalizedRole, "Is logged in:", isLoggedIn)
-  }
+  const isLoggedIn = !!normalizedRole
 
   return (
-    <nav className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+    <nav className="sticky top-0 z-50 h-16 border-b bg-background/80 backdrop-blur-md supports-backdrop-filter:bg-background/80">
+      <div className="mx-auto h-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-full items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-sm">
               <MapPin className="h-4.5 w-4.5 text-primary-foreground" />
@@ -209,7 +257,7 @@ export function Navbar() {
         </div>
 
         {isMenuOpen && (
-          <div className="border-t py-4 md:hidden">
+          <div className="absolute left-0 right-0 top-16 border-t bg-background/95 backdrop-blur-md py-4 shadow-lg md:hidden">
             <div className="flex flex-col gap-2">
               {!isLoggedIn ? (
                 <>

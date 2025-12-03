@@ -9,8 +9,7 @@ import { DollarSign, Users, Calendar, TrendingUp, CheckCircle2 } from "lucide-re
 export default function BecomeGuidePage() {
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar />
-
+      
       <main className="flex-1">
         {/* Hero Section */}
         <section className="bg-gradient-to-br from-primary/10 via-accent/5 to-background py-20 lg:py-32">

@@ -15,45 +15,57 @@ export interface UserInfo {
 }
 
 export const getUserInfo = async (): Promise<UserInfo | any> => {
-    let userInfo: UserInfo | any;
     try {
+        const accessToken = await getCookie("accessToken");
 
+        if (!accessToken) {
+            // No access token, user is not logged in
+            return {
+                id: "",
+                name: "",
+                email: "",
+                role: null,
+            };
+        }
+
+        if (!process.env.JWT_ACCESS_SECRET) {
+            throw new Error("JWT_ACCESS_SECRET environment variable is not set");
+        }
+
+        // Verify token first
+        const verifiedToken = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET) as JwtPayload;
+
+        // If token is valid, try to get full user info from API
         const response = await serverFetch.get("/auth/me", {
-            cache: "force-cache",
-            next: { tags: ["user-info"] }
+            cache: "no-store",
+            next: { tags: ["user-info"], revalidate: 0 }
         })
 
         const result = await response.json();
 
-        if (result.success) {
-            const accessToken = await getCookie("accessToken");
-
-            if (!accessToken) {
-                throw new Error("No access token found");
-            }
-
-            if (!process.env.JWT_ACCESS_SECRET) {
-                throw new Error("JWT_ACCESS_SECRET environment variable is not set");
-            }
-
-            const verifiedToken = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET) as JwtPayload;
-
-            userInfo = {
-                name: verifiedToken.name || "Unknown User",
-                email: verifiedToken.email,
-                role: verifiedToken.role,
-            }
+        // If API call was successful, use API data, otherwise use token data
+        if (result.success && result.data) {
+            return {
+                id: result.data.id || verifiedToken.id || "",
+                name: result.data.name || verifiedToken.name || "Unknown User",
+                email: result.data.email || verifiedToken.email || "",
+                role: result.data.role || verifiedToken.role || null,
+                needPasswordChange: result.data.needPasswordChange || false,
+                ...result.data
+            };
         }
 
-        userInfo = {
-            name: result.data?.name || "Unknown User",
-            ...result.data
+        // Fallback to token data if API call failed but token is valid
+        return {
+            id: verifiedToken.id || "",
+            name: verifiedToken.name || "Unknown User",
+            email: verifiedToken.email || "",
+            role: verifiedToken.role || null,
+            needPasswordChange: false,
         };
-
-        return userInfo;
     } catch (error: any) {
-        console.log(error);
-        // Return null role to indicate user is not logged in
+        // Token is invalid or expired, user is not logged in
+        console.log("getUserInfo error:", error);
         return {
             id: "",
             name: "",

@@ -114,8 +114,6 @@ export default function ExplorePage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar />
-
       <main className="flex-1">
         {/* Search Header */}
         <section className="border-b border-border bg-muted/30 py-8">

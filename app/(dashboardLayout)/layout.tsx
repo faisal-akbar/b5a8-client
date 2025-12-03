@@ -10,7 +10,7 @@ const CommonDashboardLayout = async ({
   return (
     <div className="flex h-screen overflow-hidden">
       <div className="flex flex-1 flex-col overflow-hidden">
-        <main className="flex-1 overflow-y-auto bg-muted/10 p-4 md:p-6">
+        <main className="flex-1 overflow-y-auto bg-muted/10">
           <div className="">{children}</div>
         </main>
       </div>
