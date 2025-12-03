@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LocalGuide Platform - Frontend
+
+This is the frontend application for the LocalGuide Platform, built with [Next.js](https://nextjs.org) 16.
+
+## Prerequisites
+
+- Node.js 20.9+ 
+- npm, yarn, pnpm, or bun
+- Backend server running (see Backend Setup below)
 
 ## Getting Started
 
-First, run the development server:
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Environment Setup
+
+Create a `.env.local` file in the root directory:
+
+```bash
+# Backend API URL
+NEXT_PUBLIC_BASE_API_URL=http://localhost:5000/api/v1
+
+# JWT Secret (must match backend JWT_ACCESS_SECRET)
+JWT_ACCESS_SECRET=your-jwt-secret-key-here
+```
+
+**Important:** The `JWT_ACCESS_SECRET` must match the `JWT_ACCESS_SECRET` in your backend server's environment variables.
+
+### 3. Start the Backend Server
+
+**Before starting the frontend, you must start the backend server:**
+
+```bash
+cd b5a8-server
+npm install
+npm run dev
+```
+
+The backend server should be running on `http://localhost:5000`
+
+### 4. Start the Frontend Development Server
+
+In a new terminal (keep the backend server running):
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+app/
+├── (commonLayout)/          # Public pages with navbar/footer
+│   ├── (auth)/             # Authentication pages
+│   ├── explore/            # Tour search/explore
+│   ├── tours/              # Tour detail pages
+│   └── profile/            # User profile pages
+└── (dashboardLayout)/       # Protected dashboard pages
+    ├── admin/dashboard/    # Admin dashboard
+    ├── guide/dashboard/    # Guide dashboard
+    └── tourist/dashboard/  # Tourist dashboard
+
+lib/                        # Utility functions
+services/                   # API service functions
+zod/                        # Validation schemas
+components/                 # React components
+```
+
+## Troubleshooting
+
+### Backend Connection Error
+
+If you see `ECONNREFUSED` or "Cannot connect to backend server" errors:
+
+1. **Check if backend server is running:**
+   ```bash
+   cd b5a8-server
+   npm run dev
+   ```
+
+2. **Verify the backend URL in `.env.local`:**
+   ```bash
+   NEXT_PUBLIC_BASE_API_URL=http://localhost:5000/api/v1
+   ```
+
+3. **Check backend server logs** to ensure it started successfully
+
+### JWT Token Errors
+
+If you see JWT-related errors:
+
+1. Ensure `JWT_ACCESS_SECRET` in `.env.local` matches `JWT_ACCESS_SECRET` in backend `.env`
+2. Restart both frontend and backend servers after changing JWT secrets
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js Documentation](https://nextjs.org/docs)
+- [LocalGuide Requirements](./LocalGuide.md)

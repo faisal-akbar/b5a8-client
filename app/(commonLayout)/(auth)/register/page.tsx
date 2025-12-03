@@ -9,10 +9,20 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import Link from "next/link"
 import { MapPin, User, Compass } from "lucide-react"
-import { useState } from "react"
+import { useState, useActionState, useEffect } from "react"
+import { registerUser } from "@/services/auth/registerUser"
+import { toast } from "sonner"
+import InputFieldError from "@/components/shared/InputFieldError"
 
 export default function RegisterPage() {
   const [userRole, setUserRole] = useState<"tourist" | "guide">("tourist")
+  const [state, formAction, isPending] = useActionState(registerUser, null)
+
+  useEffect(() => {
+    if (state && !state.success && state.message) {
+      toast.error(state.message)
+    }
+  }, [state])
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -28,7 +38,7 @@ export default function RegisterPage() {
             <CardDescription>Join LocalGuide and start your adventure</CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-6">
+            <form action={formAction} className="space-y-6">
               {/* Role Selection */}
               <div className="space-y-3">
                 <Label>I want to</Label>
@@ -60,39 +70,40 @@ export default function RegisterPage() {
                     </Label>
                   </div>
                 </RadioGroup>
+                <input type="hidden" name="role" value={userRole} />
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" type="text" placeholder="John" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" type="text" placeholder="Doe" required />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input id="name" name="name" type="text" placeholder="John Doe" required />
+                <InputFieldError field="name" state={state} />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="name@example.com" required />
+                <Input id="email" name="email" type="email" placeholder="name@example.com" required />
+                <InputFieldError field="email" state={state} />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="Create a strong password" required />
-                <p className="text-xs text-muted-foreground">Must be at least 8 characters with letters and numbers</p>
+                <Input id="password" name="password" type="password" placeholder="Create a strong password" required />
+                <p className="text-xs text-muted-foreground">Must be at least 8 characters with uppercase, number, and special character</p>
+                <InputFieldError field="password" state={state} />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input id="confirmPassword" type="password" placeholder="Re-enter your password" required />
+                <Input id="confirmPassword" name="confirmPassword" type="password" placeholder="Re-enter your password" required />
+                <InputFieldError field="confirmPassword" state={state} />
               </div>
 
               {userRole === "guide" && (
                 <div className="space-y-2">
-                  <Label htmlFor="city">Your City</Label>
-                  <Input id="city" type="text" placeholder="e.g., Paris, Tokyo, New York" required />
+                  <Label htmlFor="dailyRate">Daily Rate (USD)</Label>
+                  <Input id="dailyRate" name="dailyRate" type="number" placeholder="e.g., 100" required min="1" />
+                  <p className="text-xs text-muted-foreground">How much you charge per day</p>
+                  <InputFieldError field="dailyRate" state={state} />
                 </div>
               )}
 
@@ -112,8 +123,8 @@ export default function RegisterPage() {
                 </label>
               </div>
 
-              <Button type="submit" className="w-full" size="lg">
-                Create Account
+              <Button type="submit" className="w-full" size="lg" disabled={isPending}>
+                {isPending ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
 

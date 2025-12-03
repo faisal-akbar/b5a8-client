@@ -1,3 +1,5 @@
+"use client"
+
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -7,8 +9,23 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
 import { MapPin } from "lucide-react"
+import { loginUser } from "@/services/auth/loginUser"
+import { useActionState, useEffect } from "react"
+import { toast } from "sonner"
+import InputFieldError from "@/components/shared/InputFieldError"
+import { useSearchParams } from "next/navigation"
 
 export default function LoginPage() {
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get("redirect")
+  const [state, formAction, isPending] = useActionState(loginUser, null)
+
+  useEffect(() => {
+    if (state && !state.success && state.message) {
+      toast.error(state.message)
+    }
+  }, [state])
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -23,10 +40,12 @@ export default function LoginPage() {
             <CardDescription>Sign in to your account to continue your journey</CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4">
+            <form action={formAction} className="space-y-4">
+              {redirect && <input type="hidden" name="redirect" value={redirect} />}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="name@example.com" required />
+                <Input id="email" name="email" type="email" placeholder="name@example.com" required />
+                <InputFieldError field="email" state={state} />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -35,7 +54,8 @@ export default function LoginPage() {
                     Forgot password?
                   </Link>
                 </div>
-                <Input id="password" type="password" placeholder="Enter your password" required />
+                <Input id="password" name="password" type="password" placeholder="Enter your password" required />
+                <InputFieldError field="password" state={state} />
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox id="remember" />
@@ -43,8 +63,8 @@ export default function LoginPage() {
                   Remember me for 30 days
                 </label>
               </div>
-              <Button type="submit" className="w-full" size="lg">
-                Sign In
+              <Button type="submit" className="w-full" size="lg" disabled={isPending}>
+                {isPending ? "Signing in..." : "Sign In"}
               </Button>
             </form>
 
