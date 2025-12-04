@@ -1,4 +1,4 @@
-export type UserRole = "ADMIN" | "GUIDE" | "TOURIST";
+export type UserRole = "ADMIN" | "SUPER_ADMIN" | "GUIDE" | "TOURIST";
 
 // exact : ["/my-profile", "settings"]
 //   patterns: [/^\/dashboard/, /^\/tourist/], // Routes starting with /dashboard/* /tourist/*
@@ -41,7 +41,7 @@ export const isRouteMatches = (pathname: string, routes: RouteConfig): boolean =
     // if pathname === /tourist/dashboard/bookings => matches /^\/tourist/ => true
 }
 
-export const getRouteOwner = (pathname: string): "ADMIN" | "GUIDE" | "TOURIST" | "COMMON" | null => {
+export const getRouteOwner = (pathname: string): UserRole | "COMMON" | null => {
     if (isRouteMatches(pathname, adminProtectedRoutes)) {
         return "ADMIN";
     }
@@ -58,7 +58,7 @@ export const getRouteOwner = (pathname: string): "ADMIN" | "GUIDE" | "TOURIST" |
 }
 
 export const getDefaultDashboardRoute = (role: UserRole): string => {
-    if (role === "ADMIN") {
+    if (role === "ADMIN" || role === "SUPER_ADMIN") {
         return "/admin/dashboard";
     }
     if (role === "GUIDE") {
@@ -77,10 +77,22 @@ export const isValidRedirectForRole = (redirectPath: string, role: UserRole): bo
         return true;
     }
 
+    // Allow both ADMIN and SUPER_ADMIN to access admin routes
+    if (routeOwner === "ADMIN" && (role === "ADMIN" || role === "SUPER_ADMIN")) {
+        return true;
+    }
+
     if (routeOwner === role) {
         return true;
     }
 
     return false;
+}
+
+/**
+ * Check if a role has access to admin routes
+ */
+export const hasAdminAccess = (role: UserRole | null | undefined): boolean => {
+    return role === "ADMIN" || role === "SUPER_ADMIN";
 }
 

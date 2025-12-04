@@ -36,7 +36,7 @@ export const getUserInfo = async (): Promise<UserInfo | any> => {
         const verifiedToken = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET) as JwtPayload;
 
         // If token is valid, try to get full user info from API
-        const response = await serverFetch.get("/auth/me", {
+        const response = await serverFetch.get("/user/me", {
             cache: "no-store",
             next: { tags: ["user-info"], revalidate: 0 }
         })

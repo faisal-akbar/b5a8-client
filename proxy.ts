@@ -1,7 +1,7 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { getDefaultDashboardRoute, getRouteOwner, isAuthRoute, UserRole } from './lib/auth-utils';
+import { getDefaultDashboardRoute, getRouteOwner, hasAdminAccess, isAuthRoute, UserRole } from './lib/auth-utils';
 import { getUserInfo } from './services/auth/getUserInfo';
 import { deleteCookie, getCookie } from './services/auth/tokenHandlers';
 import { getNewAccessToken } from './services/auth/auth.service';
@@ -108,6 +108,9 @@ export async function proxy(request: NextRequest) {
 
     // Rule 5 : User is trying to access role based protected route
     if (routerOwner === "ADMIN" || routerOwner === "GUIDE" || routerOwner === "TOURIST") {
+        if (hasAdminAccess(userRole as UserRole)) {
+            return NextResponse.next();
+        }
         if (userRole !== routerOwner) {
             return NextResponse.redirect(new URL(getDefaultDashboardRoute(userRole as UserRole), request.url))
         }

@@ -38,7 +38,7 @@ type User = {
   id: string
   name: string
   email: string
-  role: "tourist" | "guide" | "admin"
+  role: "tourist" | "guide" | "admin" | "super_admin"
   status: "active" | "suspended" | "pending"
   joinedDate: string
   bookings?: number

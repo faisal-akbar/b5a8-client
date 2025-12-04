@@ -131,12 +131,13 @@ export function Navbar() {
   }
 
   // Normalize role - handle any case variations
+  // SUPER_ADMIN is treated as ADMIN for navigation purposes
   const getNormalizedRole = (role: string | undefined | null): "TOURIST" | "GUIDE" | "ADMIN" | null => {
     if (!role) return null
     const upperRole = String(role).toUpperCase()
     if (upperRole === "TOURIST") return "TOURIST"
     if (upperRole === "GUIDE") return "GUIDE"
-    if (upperRole === "ADMIN") return "ADMIN"
+    if (upperRole === "ADMIN" || upperRole === "SUPER_ADMIN") return "ADMIN"
     return null
   }
   

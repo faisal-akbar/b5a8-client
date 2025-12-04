@@ -1,6 +1,3 @@
-import { redirect } from "next/navigation"
-import { getUserInfo } from "@/services/auth/getUserInfo"
-import { getDefaultDashboardRoute } from "@/lib/auth-utils"
 import LoginForm from "@/components/login-form"
 
 export const dynamic = "force-dynamic"
@@ -11,20 +8,14 @@ const LoginPage = async ({
   searchParams?: Promise<{ redirect?: string }>
 }) => {
   const params = (await searchParams) || {}
-  
-  // Check if user is already logged in
-  const userInfo = await getUserInfo()
-  
-  if (userInfo?.role && userInfo.role !== null) {
-    // User is already logged in, redirect to their dashboard
-    const role = userInfo.role.toUpperCase() as "ADMIN" | "GUIDE" | "TOURIST"
-    redirect(getDefaultDashboardRoute(role))
-  }
+  const redirectTo = params.redirect
 
+  // Don't check auth here - let the login form handle redirects after successful login
+  // This prevents redirect loops when user is already logged in
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex flex-1 items-center justify-center bg-muted/30 px-4 py-12">
-        <LoginForm redirect={params.redirect} />
+        <LoginForm redirect={redirectTo} />
       </main>
     </div>
   )
