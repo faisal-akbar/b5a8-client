@@ -54,13 +54,19 @@ export const registerUser = async (_currentState: any, formData: any): Promise<a
 
         const result = await res.json();
 
-
-        if (result.success) {
-            // Auto-login after registration
-            const loginFormData = new FormData();
-            loginFormData.append('email', validatedPayload.email);
-            loginFormData.append('password', validatedPayload.password);
-            await loginUser(_currentState, loginFormData);
+        // Don't auto-login after registration - let the form handle OTP sending first
+        // The user will be logged in after OTP verification
+        // Return result with user data so form can send OTP
+        if (result.success && result.data) {
+            return {
+                success: true,
+                message: result.message || "Registration successful",
+                data: {
+                    email: validatedPayload.email,
+                    name: validatedPayload.name,
+                    ...result.data
+                }
+            };
         }
 
         return result;

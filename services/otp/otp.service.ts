@@ -26,7 +26,8 @@ export async function sendOTP({ email, name }: SendOTPParams) {
     
     const data = await response.json();
     
-    if (!response.ok) {
+    // Check both response status and data.success
+    if (!response.ok || !data.success) {
       throw new Error(data.message || "Failed to send OTP");
     }
     
@@ -35,6 +36,7 @@ export async function sendOTP({ email, name }: SendOTPParams) {
       data: data.data,
     };
   } catch (error: any) {
+    console.error("OTP send error:", error);
     return {
       success: false,
       message: error?.message || "Failed to send OTP",

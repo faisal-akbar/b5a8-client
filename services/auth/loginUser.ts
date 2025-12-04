@@ -40,16 +40,28 @@ export const loginUser = async (_currentState: any, formData: any): Promise<any>
         // Check if login was successful BEFORE trying to parse cookies
         // When login fails, backend returns error response without Set-Cookie headers
         if (!result.success) {
+            // Check if the error is due to unverified user
+            const isUnverifiedError = result.message === "User is not verified" ||
+                result.errorMessages?.some((err: any) => err.message === "User is not verified");
+            console.log("isUnverifiedError", isUnverifiedError);
+
+            if (isUnverifiedError) {
+                // Extract email from the form data
+                const email = formData.get('email');
+                // Redirect to OTP verification page
+                redirect(`/verify-otp?email=${encodeURIComponent(email as string)}&name=User`);
+            }
+
             // Backend returns errorMessages array in error response
             const errorMessages = result.errorMessages || [];
             // Convert errorMessages to errors format expected by form
-            const errors = errorMessages.length > 0 
+            const errors = errorMessages.length > 0
                 ? errorMessages.map((err: { path?: string; message: string }) => ({
                     field: err.path || "password",
                     message: err.message
                 }))
                 : [{ field: "password", message: result.message || "Invalid email or password" }];
-            
+
             return {
                 success: false,
                 message: result.message || "Login failed. Please check your credentials.",
@@ -99,12 +111,12 @@ export const loginUser = async (_currentState: any, formData: any): Promise<any>
             path: refreshTokenObject.Path || "/",
             sameSite: refreshTokenObject['SameSite'] || "none",
         });
-        
+
         // Check if JWT_ACCESS_SECRET is configured
         if (!process.env.JWT_ACCESS_SECRET) {
             throw new Error("JWT_ACCESS_SECRET environment variable is not set. Please add it to your .env.local file.");
         }
-        
+
         const verifiedToken: JwtPayload | string = jwt.verify(accessTokenObject.accessToken, process.env.JWT_ACCESS_SECRET);
 
         if (typeof verifiedToken === "string") {
@@ -146,33 +158,33 @@ export const loginUser = async (_currentState: any, formData: any): Promise<any>
             throw error;
         }
         console.log(error);
-        
+
         // Provide user-friendly error message for connection errors
         const errorMessage = error?.message || '';
-        const isConnectionError = 
+        const isConnectionError =
             error?.code === 'ECONNREFUSED' ||
             errorMessage.includes('Cannot connect to backend server') ||
             errorMessage.includes('fetch failed') ||
             errorMessage.includes('ECONNREFUSED') ||
             error?.cause?.code === 'ECONNREFUSED';
-        
+
         if (isConnectionError) {
-            return { 
-                success: false, 
+            return {
+                success: false,
                 message: "Backend server is not running. Please start the backend server first.",
                 errors: [{ field: "server", message: "Backend server connection failed" }]
             };
         }
-        
+
         // Check for JWT_ACCESS_SECRET missing error
         if (errorMessage.includes('secret or public key must be provided') || errorMessage.includes('JWT_ACCESS_SECRET')) {
-            return { 
-                success: false, 
+            return {
+                success: false,
                 message: "JWT_ACCESS_SECRET is not configured. Please add JWT_ACCESS_SECRET to your .env.local file. It must match the backend's JWT_ACCESS_SECRET.",
                 errors: [{ field: "config", message: "JWT_ACCESS_SECRET environment variable is missing" }]
             };
         }
-        
+
         return { success: false, message: `${process.env.NODE_ENV === 'development' ? errorMessage : "Login Failed. You might have entered incorrect email or password."}` };
     }
 }
