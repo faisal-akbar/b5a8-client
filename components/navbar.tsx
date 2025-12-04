@@ -5,126 +5,35 @@ import { Button } from "@/components/ui/button"
 import { Menu, X, MapPin } from "lucide-react"
 import { useState, useEffect } from "react"
 import { logoutUser } from "@/services/auth/logoutUser"
-import { useRouter, usePathname, useSearchParams } from "next/navigation"
-
-interface UserInfo {
-  id?: string
-  name?: string
-  email?: string
-  role?: "ADMIN" | "GUIDE" | "TOURIST" | string
-  needPasswordChange?: boolean
-}
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const { user, clearUser, refreshUser } = useAuth()
   const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
 
-  const fetchUserInfo = async () => {
-    try {
-      const response = await fetch("/api/user-info", { 
-        cache: "no-store",
-        credentials: "include", // Ensure cookies are sent
-        headers: {
-          'Cache-Control': 'no-cache',
-        }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        // Only set user info if role exists and is not null
-        if (data.role && data.role !== null && data.role !== undefined) {
-          setUserInfo(data)
-        } else {
-          setUserInfo(null)
-        }
-      } else {
-        setUserInfo(null)
-      }
-    } catch (error) {
-      // User is not logged in
-      console.error("Navbar fetchUserInfo error:", error)
-      setUserInfo(null)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
+  // Handle loggedIn query parameter for immediate refresh after login
   useEffect(() => {
-    // Fetch user info on mount
-    fetchUserInfo()
-    
-    // Refresh on window focus (e.g., when user returns to tab after login in another tab)
-    const handleFocus = () => {
-      fetchUserInfo()
-    }
-    
-    // Refresh on route change (when user navigates)
-    const handleRouteChange = () => {
-      fetchUserInfo()
-    }
-    
-    window.addEventListener("focus", handleFocus)
-    window.addEventListener("popstate", handleRouteChange)
-    
-    // Also listen for custom events that might be triggered after login
-    window.addEventListener("user-logged-in", handleRouteChange)
-    window.addEventListener("user-logged-out", handleRouteChange)
-    
-    return () => {
-      window.removeEventListener("focus", handleFocus)
-      window.removeEventListener("popstate", handleRouteChange)
-      window.removeEventListener("user-logged-in", handleRouteChange)
-      window.removeEventListener("user-logged-out", handleRouteChange)
-    }
-  }, [])
-
-  // Refresh user info when pathname changes (e.g., after login redirect)
-  useEffect(() => {
-    // Small delay to ensure cookies are set after redirect
-    const timer = setTimeout(() => {
-      fetchUserInfo()
-    }, 100)
-    return () => clearTimeout(timer)
-  }, [pathname])
-
-  // Refresh when loggedIn query parameter is present (after successful login)
-  useEffect(() => {
-    const loggedIn = searchParams.get('loggedIn')
+    const urlParams = new URLSearchParams(window.location.search)
+    const loggedIn = urlParams.get('loggedIn')
     if (loggedIn === 'true') {
-      // Delay to ensure cookies are set
-      const timer = setTimeout(() => {
-        fetchUserInfo()
-        // Remove the query parameter from URL without reload
-        router.replace(pathname)
-      }, 200)
-      return () => clearTimeout(timer)
+      // Trigger refresh and remove query parameter
+      refreshUser()
+      router.replace(window.location.pathname)
     }
-  }, [searchParams, pathname, router])
-
-  // Also refresh when the page becomes visible (handles tab switching after login)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchUserInfo()
-      }
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [])
+  }, [refreshUser, router])
 
   const handleLogout = async () => {
     try {
       await logoutUser()
-      setUserInfo(null)
+      clearUser()
       setIsMenuOpen(false)
       // Router will handle redirect from logoutUser
     } catch (error) {
       console.error("Logout error:", error)
-      // Still clear local state even if logout fails
-      setUserInfo(null)
+      // Still clear context state even if logout fails
+      clearUser()
       setIsMenuOpen(false)
       router.push("/login")
     }
@@ -141,7 +50,7 @@ export function Navbar() {
     return null
   }
   
-  const normalizedRole = getNormalizedRole(userInfo?.role)
+  const normalizedRole = getNormalizedRole(user?.role)
   const isLoggedIn = !!normalizedRole
 
   return (

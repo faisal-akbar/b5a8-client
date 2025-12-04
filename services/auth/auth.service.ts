@@ -1,14 +1,7 @@
 "use server";
-import { getDefaultDashboardRoute, isValidRedirectForRole, UserRole } from "@/lib/auth-utils";
 import { verifyAccessToken } from "@/lib/jwtHanlders";
 import { serverFetch } from "@/lib/server-fetch";
-import { zodValidator } from "@/lib/zodValidator";
-import { resetPasswordSchema } from "@/zod/auth.validation";
 import { parse } from "cookie";
-import jwt from "jsonwebtoken";
-import { revalidateTag } from "next/cache";
-import { redirect } from "next/navigation";
-import { getUserInfo } from "./getUserInfo";
 import { deleteCookie, getCookie, setCookie } from "./tokenHandlers";
 
 export async function getNewAccessToken() {
@@ -58,7 +51,7 @@ export async function getNewAccessToken() {
 
         const result = await response.json();
 
-        console.log("access token refreshed!!");
+        // console.log("access token refreshed!!");
 
         const setCookieHeaders = response.headers.getSetCookie();
 

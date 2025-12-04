@@ -37,6 +37,27 @@ export const loginUser = async (_currentState: any, formData: any): Promise<any>
 
         const result = await res.json();
 
+        // Check if login was successful BEFORE trying to parse cookies
+        // When login fails, backend returns error response without Set-Cookie headers
+        if (!result.success) {
+            // Backend returns errorMessages array in error response
+            const errorMessages = result.errorMessages || [];
+            // Convert errorMessages to errors format expected by form
+            const errors = errorMessages.length > 0 
+                ? errorMessages.map((err: { path?: string; message: string }) => ({
+                    field: err.path || "password",
+                    message: err.message
+                }))
+                : [{ field: "password", message: result.message || "Invalid email or password" }];
+            
+            return {
+                success: false,
+                message: result.message || "Login failed. Please check your credentials.",
+                errors
+            };
+        }
+
+        // Only parse cookies if login was successful
         const setCookieHeaders = res.headers.getSetCookie();
 
         if (setCookieHeaders && setCookieHeaders.length > 0) {
@@ -92,10 +113,6 @@ export const loginUser = async (_currentState: any, formData: any): Promise<any>
         }
 
         const userRole: UserRole = verifiedToken.role as UserRole;
-
-        if (!result.success) {
-            throw new Error(result.message || "Login failed");
-        }
 
         if (redirectTo && result.data.needPasswordChange) {
             const requestedPath = redirectTo.toString();
