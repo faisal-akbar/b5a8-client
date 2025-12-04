@@ -1,3 +1,5 @@
+"use client"
+
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -5,34 +7,47 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { DollarSign, Users, Calendar, TrendingUp, CheckCircle2 } from "lucide-react"
+import { motion } from "framer-motion"
 
 export default function BecomeGuidePage() {
   return (
     <div className="flex min-h-screen flex-col">
-      
+
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="bg-gradient-to-br from-primary/10 via-accent/5 to-background py-20 lg:py-32">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-accent/5 to-background py-20 lg:py-32">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent opacity-50" />
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="text-center">
-              <Badge className="mb-4">Start Earning Today</Badge>
-              <h1 className="text-balance text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-                Share Your City, Earn Money
-              </h1>
-              <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg text-muted-foreground leading-relaxed">
-                Turn your local knowledge into income. Join thousands of guides earning money by showing travelers the
-                authentic side of their city.
-              </p>
-              <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Badge className="mb-4 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20">Start Earning Today</Badge>
+                <h1 className="text-balance text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+                  Share Your City, <span className="text-primary">Earn Money</span>
+                </h1>
+                <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg text-muted-foreground leading-relaxed">
+                  Turn your local knowledge into income. Join thousands of guides earning money by showing travelers the
+                  authentic side of their city.
+                </p>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="mt-10 flex flex-col justify-center gap-4 sm:flex-row"
+              >
                 <Link href="/register">
-                  <Button size="lg" className="h-12 px-8">
+                  <Button size="lg" className="h-12 px-8 shadow-lg transition-transform hover:scale-105">
                     Start Your Journey
                   </Button>
                 </Link>
-                <Button size="lg" variant="outline" className="h-12 px-8 bg-transparent">
+                <Button size="lg" variant="outline" className="h-12 px-8 bg-transparent border-primary/20 hover:bg-primary/5">
                   Learn More
                 </Button>
-              </div>
+              </motion.div>
             </div>
           </div>
         </section>
@@ -69,24 +84,33 @@ export default function BecomeGuidePage() {
                   description:
                     "Build your reputation, earn great reviews, and grow a loyal following of return customers.",
                 },
-              ].map((benefit) => (
-                <Card key={benefit.title} className="border-2">
-                  <CardContent className="p-6 text-center">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <benefit.icon className="h-7 w-7" />
-                    </div>
-                    <h3 className="mt-4 font-semibold text-foreground">{benefit.title}</h3>
-                    <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{benefit.description}</p>
-                  </CardContent>
-                </Card>
+              ].map((benefit, index) => (
+                <motion.div
+                  key={benefit.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <Card className="h-full border-2 border-transparent bg-muted/30 transition-all duration-300 hover:border-primary/20 hover:bg-background hover:shadow-lg">
+                    <CardContent className="p-6 text-center">
+                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform group-hover:scale-110">
+                        <benefit.icon className="h-7 w-7" />
+                      </div>
+                      <h3 className="mt-4 font-semibold text-foreground">{benefit.title}</h3>
+                      <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{benefit.description}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               ))}
             </div>
           </div>
         </section>
 
         {/* How it Works */}
-        <section className="bg-muted/30 py-16 lg:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <section className="bg-muted/30 py-16 lg:py-24 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="text-center">
               <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Getting Started is Easy</h2>
               <p className="mt-4 text-lg text-muted-foreground">From signup to your first tour in 3 simple steps</p>
@@ -116,11 +140,18 @@ export default function BecomeGuidePage() {
                   icon: CheckCircle2,
                 },
               ].map((step, index) => (
-                <div key={step.step} className="relative">
-                  <Card className="h-full border-2">
+                <motion.div
+                  key={step.step}
+                  className="relative"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.2 }}
+                >
+                  <Card className="h-full border-2 transition-all hover:border-primary/50 hover:shadow-xl">
                     <CardContent className="p-8">
                       <div className="absolute -top-6 left-8">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground shadow-lg">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground shadow-lg ring-4 ring-background">
                           {step.step}
                         </div>
                       </div>
@@ -131,7 +162,7 @@ export default function BecomeGuidePage() {
                       <p className="mt-3 text-muted-foreground leading-relaxed">{step.description}</p>
                     </CardContent>
                   </Card>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
@@ -155,20 +186,27 @@ export default function BecomeGuidePage() {
                 "Maintain a 4.0+ star rating",
                 "Respond to bookings within 24 hours",
                 "Provide authentic local experiences",
-              ].map((requirement) => (
-                <div key={requirement} className="flex items-start gap-3">
+              ].map((requirement, index) => (
+                <motion.div
+                  key={requirement}
+                  className="flex items-start gap-3 rounded-lg border border-transparent p-3 transition-colors hover:border-primary/10 hover:bg-primary/5"
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                >
                   <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
                   <span className="text-muted-foreground">{requirement}</span>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
         </section>
 
         {/* CTA */}
-        <section className="bg-gradient-to-br from-primary to-primary/80 py-16 lg:py-24">
+        <section className="bg-gradient-to-br from-primary to-primary/80 py-16 lg:py-24 text-primary-foreground">
           <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-            <h2 className="text-balance text-3xl font-bold tracking-tight text-primary-foreground sm:text-4xl">
+            <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl">
               Ready to Start Your Guiding Journey?
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-pretty text-lg text-primary-foreground/90 leading-relaxed">
@@ -176,7 +214,7 @@ export default function BecomeGuidePage() {
             </p>
             <div className="mt-8">
               <Link href="/register">
-                <Button size="lg" variant="secondary" className="h-12 px-8">
+                <Button size="lg" variant="secondary" className="h-12 px-8 shadow-lg transition-transform hover:scale-105">
                   Create Your Guide Account
                 </Button>
               </Link>

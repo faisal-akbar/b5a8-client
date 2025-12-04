@@ -165,12 +165,12 @@ The tour includes one complimentary drink at each venue and plenty of time to en
                 setCurrentImageIndex(0)
                 setGalleryOpen(true)
               }}
-              className="group relative h-[400px] overflow-hidden rounded-lg sm:col-span-2 sm:row-span-2"
+              className="group relative h-[400px] overflow-hidden rounded-lg sm:col-span-2 sm:row-span-2 shadow-md transition-all hover:shadow-xl"
             >
               <img
                 src={tour.images[0] || "/placeholder.svg"}
                 alt={tour.title}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
             </button>
@@ -181,12 +181,12 @@ The tour includes one complimentary drink at each venue and plenty of time to en
                   setCurrentImageIndex(index + 1)
                   setGalleryOpen(true)
                 }}
-                className="group relative h-[196px] overflow-hidden rounded-lg"
+                className="group relative h-[196px] overflow-hidden rounded-lg shadow-sm transition-all hover:shadow-md"
               >
                 <img
                   src={image || "/placeholder.svg"}
                   alt={`${tour.title} ${index + 2}`}
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
               </button>
@@ -306,7 +306,7 @@ The tour includes one complimentary drink at each venue and plenty of time to en
                 </div>
               </div>
 
-              <Card className="border-slate-200 shadow-sm">
+              <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <Avatar className="h-16 w-16 border-2 border-slate-100">
@@ -363,7 +363,8 @@ The tour includes one complimentary drink at each venue and plenty of time to en
                     <motion.div
                       key={index}
                       initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
                       transition={{ duration: 0.3, delay: index * 0.05 }}
                       className="flex items-start gap-3"
                     >
@@ -381,7 +382,8 @@ The tour includes one complimentary drink at each venue and plenty of time to en
                     <motion.div
                       key={index}
                       initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                       className="relative flex gap-4 pb-6 last:pb-0"
                     >
@@ -405,7 +407,7 @@ The tour includes one complimentary drink at each venue and plenty of time to en
 
               {/* Included/Not Included */}
               <div className="grid gap-6 sm:grid-cols-2">
-                <Card className="border-slate-200">
+                <Card className="border-slate-200 transition-all hover:shadow-md">
                   <CardContent className="p-6">
                     <h3 className="font-semibold text-foreground">What's Included</h3>
                     <ul className="mt-4 space-y-3">
@@ -418,7 +420,7 @@ The tour includes one complimentary drink at each venue and plenty of time to en
                     </ul>
                   </CardContent>
                 </Card>
-                <Card className="border-slate-200">
+                <Card className="border-slate-200 transition-all hover:shadow-md">
                   <CardContent className="p-6">
                     <h3 className="font-semibold text-foreground">What's Not Included</h3>
                     <ul className="mt-4 space-y-3">
@@ -433,10 +435,10 @@ The tour includes one complimentary drink at each venue and plenty of time to en
                 </Card>
               </div>
 
-              <Card className="border-primary/30 bg-primary/5">
+              <Card className="border-primary/30 bg-primary/5 transition-all hover:shadow-md">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary shadow-sm">
                       <MapPin className="h-5 w-5 text-white" />
                     </div>
                     <div className="flex-1">
@@ -457,10 +459,11 @@ The tour includes one complimentary drink at each venue and plenty of time to en
                     <motion.div
                       key={index}
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                     >
-                      <Card className="border-slate-200 shadow-sm">
+                      <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md">
                         <CardContent className="p-6">
                           <div className="flex items-start gap-4">
                             <Avatar className="border-2 border-slate-100">
@@ -500,7 +503,7 @@ The tour includes one complimentary drink at each venue and plenty of time to en
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="sticky top-24"
               >
-                <Card className="border-2 border-slate-200 shadow-lg">
+                <Card className="border-2 border-slate-200 shadow-lg transition-all hover:shadow-xl">
                   <CardContent className="p-6">
                     <div className="flex items-baseline gap-2">
                       <span className="text-3xl font-bold text-foreground">${tour.price}</span>
@@ -563,7 +566,7 @@ The tour includes one complimentary drink at each venue and plenty of time to en
                         </div>
                       </div>
 
-                      <Button size="lg" className="w-full shadow-sm">
+                      <Button size="lg" className="w-full shadow-lg transition-transform hover:scale-105">
                         Request to Book
                       </Button>
 
@@ -601,8 +604,6 @@ The tour includes one complimentary drink at each venue and plenty of time to en
           </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   )
 }

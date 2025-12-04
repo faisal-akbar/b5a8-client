@@ -1,17 +1,20 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Menu, X, MapPin } from "lucide-react"
 import { useState, useEffect } from "react"
 import { logoutUser } from "@/services/auth/logoutUser"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
+import { cn } from "@/lib/utils"
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { user, clearUser, refreshUser } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
 
   // Handle loggedIn query parameter for immediate refresh after login
   useEffect(() => {
@@ -49,13 +52,28 @@ export function Navbar() {
     if (upperRole === "ADMIN" || upperRole === "SUPER_ADMIN") return "ADMIN"
     return null
   }
-  
+
   const normalizedRole = getNormalizedRole(user?.role)
   const isLoggedIn = !!normalizedRole
 
+  const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
+    const isActive = pathname === href
+    return (
+      <Link href={href}>
+        <Button
+          variant={isActive ? "secondary" : "ghost"}
+          size="sm"
+          className={cn("font-medium transition-all", isActive && "bg-secondary text-secondary-foreground")}
+        >
+          {children}
+        </Button>
+      </Link>
+    )
+  }
+
   return (
     <nav className="sticky top-0 z-50 h-16 border-b bg-background/80 backdrop-blur-md supports-backdrop-filter:bg-background/80">
-      <div className="mx-auto h-full max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto h-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <div className="flex h-full items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-sm">
@@ -67,22 +85,10 @@ export function Navbar() {
           <div className="hidden items-center gap-1 md:flex">
             {!isLoggedIn ? (
               <>
-                <Link href="/explore">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    Explore Tours
-                  </Button>
-                </Link>
-                <Link href="/become-guide">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    Become a Guide
-                  </Button>
-                </Link>
+                <NavLink href="/explore">Explore Tours</NavLink>
+                <NavLink href="/become-guide">Become a Guide</NavLink>
                 <div className="ml-2 flex items-center gap-2">
-                  <Link href="/login">
-                    <Button variant="ghost" size="sm" className="font-medium">
-                      Login
-                    </Button>
-                  </Link>
+                  <NavLink href="/login">Login</NavLink>
                   <Link href="/register">
                     <Button size="sm" className="font-medium shadow-sm">
                       Register
@@ -92,68 +98,28 @@ export function Navbar() {
               </>
             ) : normalizedRole === "TOURIST" ? (
               <>
-                <Link href="/explore">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    Explore Tours
-                  </Button>
-                </Link>
-                <Link href="/tourist/dashboard/bookings">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    My Bookings
-                  </Button>
-                </Link>
-                <Link href="/profile">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    Profile
-                  </Button>
-                </Link>
+                <NavLink href="/explore">Explore Tours</NavLink>
+                <NavLink href="/tourist/dashboard/bookings">My Bookings</NavLink>
+                <NavLink href="/profile">Profile</NavLink>
                 <Button variant="ghost" size="sm" className="font-medium" onClick={handleLogout}>
                   Logout
                 </Button>
               </>
             ) : normalizedRole === "GUIDE" ? (
               <>
-                <Link href="/explore">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    Explore Tours
-                  </Button>
-                </Link>
-                <Link href="/guide/dashboard">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    Dashboard
-                  </Button>
-                </Link>
-                <Link href="/profile">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    Profile
-                  </Button>
-                </Link>
+                <NavLink href="/explore">Explore Tours</NavLink>
+                <NavLink href="/guide/dashboard">Dashboard</NavLink>
+                <NavLink href="/profile">Profile</NavLink>
                 <Button variant="ghost" size="sm" className="font-medium" onClick={handleLogout}>
                   Logout
                 </Button>
               </>
             ) : normalizedRole === "ADMIN" ? (
               <>
-                <Link href="/admin/dashboard">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    Admin Dashboard
-                  </Button>
-                </Link>
-                <Link href="/admin/dashboard/users-management">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    Manage Users
-                  </Button>
-                </Link>
-                <Link href="/admin/dashboard/listings-management">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    Manage Listings
-                  </Button>
-                </Link>
-                <Link href="/profile">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    Profile
-                  </Button>
-                </Link>
+                <NavLink href="/admin/dashboard">Admin Dashboard</NavLink>
+                <NavLink href="/admin/dashboard/users-management">Manage Users</NavLink>
+                <NavLink href="/admin/dashboard/listings-management">Manage Listings</NavLink>
+                <NavLink href="/profile">Profile</NavLink>
                 <Button variant="ghost" size="sm" className="font-medium" onClick={handleLogout}>
                   Logout
                 </Button>
@@ -167,8 +133,8 @@ export function Navbar() {
         </div>
 
         {isMenuOpen && (
-          <div className="absolute left-0 right-0 top-16 border-t bg-background/95 backdrop-blur-md py-4 shadow-lg md:hidden">
-            <div className="flex flex-col gap-2">
+          <div className="absolute left-0 right-0 top-16 border-t bg-background/95 backdrop-blur-md py-4 shadow-lg md:hidden animate-in slide-in-from-top-5">
+            <div className="flex flex-col gap-2 px-4">
               {!isLoggedIn ? (
                 <>
                   <Link href="/explore" onClick={() => setIsMenuOpen(false)}>
@@ -270,3 +236,4 @@ export function Navbar() {
     </nav>
   )
 }
+

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, MapPin, Star, Clock, Users, Filter } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
+import { motion } from "framer-motion"
 
 export default function ExplorePage() {
   const [showMobileFilters, setShowMobileFilters] = useState(false)
@@ -116,143 +117,160 @@ export default function ExplorePage() {
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
         {/* Search Header */}
-        <section className="border-b border-border bg-muted/30 py-8">
+        <section className="relative border-b border-border bg-gradient-to-r from-primary/10 via-primary/5 to-background py-12 lg:py-16">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl font-bold text-foreground">Explore Tours</h1>
-            <p className="mt-2 text-muted-foreground">Discover unique experiences with local experts</p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="max-w-3xl"
+            >
+              <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">Explore Tours</h1>
+              <p className="mt-4 text-lg text-muted-foreground">Discover unique experiences with local experts around the world.</p>
+            </motion.div>
 
             {/* Search Bar */}
-            <div className="mt-6 flex flex-col gap-4 sm:flex-row">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="mt-8 flex flex-col gap-4 sm:flex-row"
+            >
               <div className="relative flex-1">
                 <MapPin className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Where do you want to explore?" className="h-12 pl-11" />
+                <Input
+                  placeholder="Where do you want to explore?"
+                  className="h-12 border-primary/20 bg-background pl-11 shadow-sm transition-all focus:border-primary focus:ring-primary"
+                />
               </div>
               <div className="flex gap-2">
-                <Button size="lg" className="h-12">
+                <Button size="lg" className="h-12 px-8 shadow-md transition-all hover:scale-105">
                   <Search className="mr-2 h-5 w-5" />
                   Search
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
-                  className="h-12 lg:hidden bg-transparent"
+                  className="h-12 border-primary/20 bg-background lg:hidden"
                   onClick={() => setShowMobileFilters(!showMobileFilters)}
                 >
                   <Filter className="mr-2 h-5 w-5" />
                   Filters
                 </Button>
               </div>
-            </div>
+            </motion.div>
           </div>
         </section>
 
         {/* Main Content */}
-        <section className="py-8">
+        <section className="py-12">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col gap-8 lg:flex-row">
               {/* Filters Sidebar */}
               <aside
                 className={`w-full space-y-6 lg:w-80 lg:flex-shrink-0 ${showMobileFilters ? "block" : "hidden lg:block"}`}
               >
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-lg font-semibold text-foreground">Filters</h2>
-                      <Button variant="ghost" size="sm">
-                        Clear all
-                      </Button>
-                    </div>
+                <div className="sticky top-24">
+                  <Card className="border-primary/10 shadow-md">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-semibold text-foreground">Filters</h2>
+                        <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80">
+                          Clear all
+                        </Button>
+                      </div>
 
-                    {/* Price Range */}
-                    <div className="mt-6 space-y-4">
-                      <Label>Price Range</Label>
-                      <div className="space-y-4">
-                        <Slider
-                          value={priceRange}
-                          onValueChange={setPriceRange}
-                          max={500}
-                          step={10}
-                          className="w-full"
-                        />
-                        <div className="flex items-center justify-between text-sm text-muted-foreground">
-                          <span>${priceRange[0]}</span>
-                          <span>${priceRange[1]}</span>
+                      {/* Price Range */}
+                      <div className="mt-6 space-y-4">
+                        <Label>Price Range</Label>
+                        <div className="space-y-4">
+                          <Slider
+                            value={priceRange}
+                            onValueChange={setPriceRange}
+                            max={500}
+                            step={10}
+                            className="w-full"
+                          />
+                          <div className="flex items-center justify-between text-sm text-muted-foreground">
+                            <span>${priceRange[0]}</span>
+                            <span>${priceRange[1]}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Duration */}
-                    <div className="mt-6 space-y-3">
-                      <Label>Duration</Label>
-                      <div className="space-y-2">
-                        {[
-                          { label: "1-2 hours", value: "1-2" },
-                          { label: "3-4 hours", value: "3-4" },
-                          { label: "5+ hours", value: "5+" },
-                          { label: "Full day", value: "full-day" },
-                        ].map((option) => (
-                          <div key={option.value} className="flex items-center space-x-2">
-                            <Checkbox id={option.value} />
-                            <label htmlFor={option.value} className="text-sm text-muted-foreground cursor-pointer">
-                              {option.label}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Category */}
-                    <div className="mt-6 space-y-3">
-                      <Label>Category</Label>
-                      <div className="space-y-2">
-                        {categories.map((category) => (
-                          <div key={category} className="flex items-center space-x-2">
-                            <Checkbox id={category} />
-                            <label htmlFor={category} className="text-sm text-muted-foreground cursor-pointer">
-                              {category}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Language */}
-                    <div className="mt-6 space-y-3">
-                      <Label>Language</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select language" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {languages.map((language) => (
-                            <SelectItem key={language} value={language.toLowerCase()}>
-                              {language}
-                            </SelectItem>
+                      {/* Duration */}
+                      <div className="mt-6 space-y-3">
+                        <Label>Duration</Label>
+                        <div className="space-y-2">
+                          {[
+                            { label: "1-2 hours", value: "1-2" },
+                            { label: "3-4 hours", value: "3-4" },
+                            { label: "5+ hours", value: "5+" },
+                            { label: "Full day", value: "full-day" },
+                          ].map((option) => (
+                            <div key={option.value} className="flex items-center space-x-2">
+                              <Checkbox id={option.value} />
+                              <label htmlFor={option.value} className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+                                {option.label}
+                              </label>
+                            </div>
                           ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Rating */}
-                    <div className="mt-6 space-y-3">
-                      <Label>Minimum Rating</Label>
-                      <div className="space-y-2">
-                        {[5, 4.5, 4, 3.5].map((rating) => (
-                          <div key={rating} className="flex items-center space-x-2">
-                            <Checkbox id={`rating-${rating}`} />
-                            <label
-                              htmlFor={`rating-${rating}`}
-                              className="flex items-center gap-1 text-sm text-muted-foreground cursor-pointer"
-                            >
-                              <Star className="h-4 w-4 fill-primary text-primary" />
-                              {rating}+ stars
-                            </label>
-                          </div>
-                        ))}
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+
+                      {/* Category */}
+                      <div className="mt-6 space-y-3">
+                        <Label>Category</Label>
+                        <div className="space-y-2">
+                          {categories.map((category) => (
+                            <div key={category} className="flex items-center space-x-2">
+                              <Checkbox id={category} />
+                              <label htmlFor={category} className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+                                {category}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Language */}
+                      <div className="mt-6 space-y-3">
+                        <Label>Language</Label>
+                        <Select>
+                          <SelectTrigger className="border-input bg-background">
+                            <SelectValue placeholder="Select language" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {languages.map((language) => (
+                              <SelectItem key={language} value={language.toLowerCase()}>
+                                {language}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Rating */}
+                      <div className="mt-6 space-y-3">
+                        <Label>Minimum Rating</Label>
+                        <div className="space-y-2">
+                          {[5, 4.5, 4, 3.5].map((rating) => (
+                            <div key={rating} className="flex items-center space-x-2">
+                              <Checkbox id={`rating-${rating}`} />
+                              <label
+                                htmlFor={`rating-${rating}`}
+                                className="flex items-center gap-1 text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                              >
+                                <Star className="h-4 w-4 fill-primary text-primary" />
+                                {rating}+ stars
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </aside>
 
               {/* Results */}
@@ -262,7 +280,7 @@ export default function ExplorePage() {
                     <span className="font-semibold text-foreground">{tours.length} tours</span> found
                   </p>
                   <Select defaultValue="recommended">
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[180px] border-input bg-background">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -277,60 +295,67 @@ export default function ExplorePage() {
 
                 {/* Tour Cards */}
                 <div className="mt-6 grid gap-6">
-                  {tours.map((tour) => (
-                    <Link key={tour.id} href={`/tours/${tour.id}`}>
-                      <Card className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:border-primary">
-                        <div className="flex flex-col sm:flex-row">
-                          <div className="relative h-64 sm:h-auto sm:w-80">
-                            <img
-                              src={tour.image || "/placeholder.svg"}
-                              alt={tour.title}
-                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            />
-                            <Badge className="absolute right-3 top-3 bg-background/90 text-foreground hover:bg-background/90">
-                              {tour.category}
-                            </Badge>
-                          </div>
-                          <CardContent className="flex flex-1 flex-col p-6">
-                            <div className="flex-1">
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1">
-                                  <h3 className="text-xl font-semibold text-foreground group-hover:text-primary">
-                                    {tour.title}
-                                  </h3>
-                                  <p className="mt-1 text-sm text-muted-foreground">by {tour.guide}</p>
-                                </div>
-                                <div className="text-right">
-                                  <div className="text-2xl font-bold text-foreground">${tour.price}</div>
-                                  <div className="text-xs text-muted-foreground">per person</div>
-                                </div>
-                              </div>
-
-                              <div className="mt-2 flex items-center gap-1 text-sm">
-                                <MapPin className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-muted-foreground">{tour.location}</span>
-                              </div>
-
-                              <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <Star className="h-4 w-4 fill-primary text-primary" />
-                                  <span className="font-medium text-foreground">{tour.rating}</span>
-                                  <span>({tour.reviews} reviews)</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-4 w-4" />
-                                  <span>{tour.duration} hours</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Users className="h-4 w-4" />
-                                  <span>Up to {tour.groupSize} people</span>
-                                </div>
-                              </div>
+                  {tours.map((tour, index) => (
+                    <motion.div
+                      key={tour.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                    >
+                      <Link href={`/tours/${tour.id}`}>
+                        <Card className="group cursor-pointer overflow-hidden border-primary/10 transition-all duration-300 hover:shadow-xl hover:border-primary/50 hover:-translate-y-1">
+                          <div className="flex flex-col sm:flex-row">
+                            <div className="relative h-64 sm:h-auto sm:w-80 overflow-hidden">
+                              <img
+                                src={tour.image || "/placeholder.svg"}
+                                alt={tour.title}
+                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              />
+                              <Badge className="absolute right-3 top-3 bg-background/90 text-foreground backdrop-blur-sm hover:bg-background/90">
+                                {tour.category}
+                              </Badge>
                             </div>
-                          </CardContent>
-                        </div>
-                      </Card>
-                    </Link>
+                            <CardContent className="flex flex-1 flex-col p-6">
+                              <div className="flex-1">
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex-1">
+                                    <h3 className="text-xl font-bold text-foreground transition-colors group-hover:text-primary">
+                                      {tour.title}
+                                    </h3>
+                                    <p className="mt-1 text-sm text-muted-foreground">by {tour.guide}</p>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="text-2xl font-bold text-primary">${tour.price}</div>
+                                    <div className="text-xs text-muted-foreground">per person</div>
+                                  </div>
+                                </div>
+
+                                <div className="mt-3 flex items-center gap-1 text-sm">
+                                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                                  <span className="text-muted-foreground">{tour.location}</span>
+                                </div>
+
+                                <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-1 rounded-full bg-primary/5 px-2 py-1 text-primary">
+                                    <Star className="h-3.5 w-3.5 fill-primary" />
+                                    <span className="font-semibold">{tour.rating}</span>
+                                    <span className="text-muted-foreground">({tour.reviews})</span>
+                                  </div>
+                                  <div className="flex items-center gap-1 rounded-full bg-muted px-2 py-1">
+                                    <Clock className="h-3.5 w-3.5" />
+                                    <span>{tour.duration} hours</span>
+                                  </div>
+                                  <div className="flex items-center gap-1 rounded-full bg-muted px-2 py-1">
+                                    <Users className="h-3.5 w-3.5" />
+                                    <span>Up to {tour.groupSize}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </div>
+                        </Card>
+                      </Link>
+                    </motion.div>
                   ))}
                 </div>
 
@@ -357,8 +382,6 @@ export default function ExplorePage() {
           </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   )
 }

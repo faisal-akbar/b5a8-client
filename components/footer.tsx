@@ -19,25 +19,25 @@ export function Footer() {
             <div className="flex gap-3">
               <a
                 href="#"
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-primary hover:text-primary-foreground hover:scale-110"
               >
                 <Facebook className="h-4.5 w-4.5" />
               </a>
               <a
                 href="#"
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-primary hover:text-primary-foreground hover:scale-110"
               >
                 <Twitter className="h-4.5 w-4.5" />
               </a>
               <a
                 href="#"
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-primary hover:text-primary-foreground hover:scale-110"
               >
                 <Instagram className="h-4.5 w-4.5" />
               </a>
               <a
                 href="#"
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-primary hover:text-primary-foreground hover:scale-110"
               >
                 <Linkedin className="h-4.5 w-4.5" />
               </a>
@@ -48,22 +48,22 @@ export function Footer() {
             <h3 className="mb-5 text-sm font-semibold tracking-tight text-foreground">For Travelers</h3>
             <ul className="space-y-3.5 text-sm">
               <li>
-                <Link href="/explore" className="text-muted-foreground transition-colors hover:text-foreground">
+                <Link href="/explore" className="text-muted-foreground transition-colors hover:text-primary hover:translate-x-1 inline-block">
                   Explore Tours
                 </Link>
               </li>
               <li>
-                <Link href="/how-it-works" className="text-muted-foreground transition-colors hover:text-foreground">
+                <Link href="/how-it-works" className="text-muted-foreground transition-colors hover:text-primary hover:translate-x-1 inline-block">
                   How It Works
                 </Link>
               </li>
               <li>
-                <Link href="/destinations" className="text-muted-foreground transition-colors hover:text-foreground">
+                <Link href="/destinations" className="text-muted-foreground transition-colors hover:text-primary hover:translate-x-1 inline-block">
                   Popular Destinations
                 </Link>
               </li>
               <li>
-                <Link href="/reviews" className="text-muted-foreground transition-colors hover:text-foreground">
+                <Link href="/reviews" className="text-muted-foreground transition-colors hover:text-primary hover:translate-x-1 inline-block">
                   Reviews
                 </Link>
               </li>
@@ -74,22 +74,22 @@ export function Footer() {
             <h3 className="mb-5 text-sm font-semibold tracking-tight text-foreground">For Guides</h3>
             <ul className="space-y-3.5 text-sm">
               <li>
-                <Link href="/become-guide" className="text-muted-foreground transition-colors hover:text-foreground">
+                <Link href="/become-guide" className="text-muted-foreground transition-colors hover:text-primary hover:translate-x-1 inline-block">
                   Become a Guide
                 </Link>
               </li>
               <li>
-                <Link href="/guide-resources" className="text-muted-foreground transition-colors hover:text-foreground">
+                <Link href="/guide-resources" className="text-muted-foreground transition-colors hover:text-primary hover:translate-x-1 inline-block">
                   Resources
                 </Link>
               </li>
               <li>
-                <Link href="/guide-community" className="text-muted-foreground transition-colors hover:text-foreground">
+                <Link href="/guide-community" className="text-muted-foreground transition-colors hover:text-primary hover:translate-x-1 inline-block">
                   Community
                 </Link>
               </li>
               <li>
-                <Link href="/guide-faq" className="text-muted-foreground transition-colors hover:text-foreground">
+                <Link href="/guide-faq" className="text-muted-foreground transition-colors hover:text-primary hover:translate-x-1 inline-block">
                   FAQ
                 </Link>
               </li>
@@ -100,22 +100,22 @@ export function Footer() {
             <h3 className="mb-5 text-sm font-semibold tracking-tight text-foreground">Company</h3>
             <ul className="space-y-3.5 text-sm">
               <li>
-                <Link href="/about" className="text-muted-foreground transition-colors hover:text-foreground">
+                <Link href="/about" className="text-muted-foreground transition-colors hover:text-primary hover:translate-x-1 inline-block">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-muted-foreground transition-colors hover:text-foreground">
+                <Link href="/contact" className="text-muted-foreground transition-colors hover:text-primary hover:translate-x-1 inline-block">
                   Contact
                 </Link>
               </li>
               <li>
-                <Link href="/privacy" className="text-muted-foreground transition-colors hover:text-foreground">
+                <Link href="/privacy" className="text-muted-foreground transition-colors hover:text-primary hover:translate-x-1 inline-block">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="text-muted-foreground transition-colors hover:text-foreground">
+                <Link href="/terms" className="text-muted-foreground transition-colors hover:text-primary hover:translate-x-1 inline-block">
                   Terms of Service
                 </Link>
               </li>
@@ -130,3 +130,4 @@ export function Footer() {
     </footer>
   )
 }
+
