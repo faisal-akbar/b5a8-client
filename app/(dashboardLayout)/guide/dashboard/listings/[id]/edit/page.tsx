@@ -16,6 +16,10 @@ import { toast } from "sonner"
 import { getListingById, updateListing } from "@/services/listing/listing.service"
 import type { Category } from "@/types/profile"
 import { DashboardSkeleton } from "@/components/dashboard-skeleton"
+import { updateListingZodSchema } from "@/zod/listing.validation"
+import { zodValidator } from "@/lib/zodValidator"
+import InputFieldError from "@/components/shared/InputFieldError"
+import type { IInputErrorState } from "@/lib/getInputFieldError"
 
 const categories: { value: Category; label: string }[] = [
   { value: "CULTURE", label: "Culture" },
@@ -79,6 +83,7 @@ export default function EditListingPage() {
   const [existingImages, setExistingImages] = useState<string[]>([])
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const [validationErrors, setValidationErrors] = useState<IInputErrorState | null>(null)
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -155,38 +160,58 @@ export default function EditListingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    // Validation
-    if (!formData.title || !formData.description || !formData.itinerary || !formData.tourFee || 
-        !formData.durationDays || !formData.meetingPoint || !formData.maxGroupSize || 
-        !formData.city || !formData.category) {
-      toast.error("Please fill in all required fields")
+    setValidationErrors(null)
+
+    // Validate images
+    const allImages = [...existingImages]
+    if (allImages.length === 0) {
+      setValidationErrors({
+        success: false,
+        errors: [{ field: "images", message: "At least one image is required." }],
+      })
+      return
+    }
+
+    // Prepare data for validation
+    const validationData = {
+      title: formData.title || undefined,
+      description: formData.description || undefined,
+      itinerary: formData.itinerary || undefined,
+      tourFee: formData.tourFee ? Number.parseFloat(formData.tourFee) : undefined,
+      durationDays: formData.durationDays ? Number.parseInt(formData.durationDays) : undefined,
+      meetingPoint: formData.meetingPoint || undefined,
+      maxGroupSize: formData.maxGroupSize ? Number.parseInt(formData.maxGroupSize) : undefined,
+      city: formData.city || undefined,
+      category: formData.category || undefined,
+      images: allImages,
+    }
+
+    // Zod validation
+    const validation = zodValidator(validationData, updateListingZodSchema)
+    if (!validation.success) {
+      setValidationErrors(validation)
+      const errorCount = validation.errors?.length || 0
+      const firstError = validation.errors?.[0]?.message || "Validation failed"
+      if (errorCount === 1) {
+        toast.error(firstError)
+      } else {
+        toast.error(`${errorCount} validation errors found. Please check the form fields.`)
+      }
       return
     }
 
     setIsSubmitting(true)
 
     try {
-      // Combine existing images (minus removed ones) with new images
-      const allImages = [...existingImages]
-      
       const result = await updateListing({
         id: listingId,
-        title: formData.title,
-        description: formData.description,
-        itinerary: formData.itinerary,
-        tourFee: Number.parseFloat(formData.tourFee),
-        durationDays: Number.parseInt(formData.durationDays),
-        meetingPoint: formData.meetingPoint,
-        maxGroupSize: Number.parseInt(formData.maxGroupSize),
-        city: formData.city,
-        category: formData.category,
-        images: allImages, // For now, we'll keep existing images. New file uploads would need backend support
+        ...validationData,
       })
 
       if (result.success) {
         toast.success("Tour listing updated successfully!")
-        router.push("/guide/dashboard")
+        router.refresh() // Refresh server-side data
+        router.push("/guide/dashboard?refresh=" + Date.now()) // Add timestamp to force client-side refresh
       } else {
         toast.error(result.message || "Failed to update listing")
       }
@@ -227,7 +252,7 @@ export default function EditListingPage() {
               <h1 className="text-2xl font-bold text-foreground">Edit Tour</h1>
               <p className="mt-2 text-muted-foreground">Update your tour listing</p>
 
-              <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+              <form onSubmit={handleSubmit} className="mt-8 space-y-6" noValidate>
                 {/* Basic Info */}
                 <div className="space-y-4">
                   <h2 className="text-lg font-semibold text-foreground">Basic Information</h2>
@@ -240,8 +265,8 @@ export default function EditListingPage() {
                       value={formData.title}
                       onChange={handleInputChange}
                       placeholder="e.g., Hidden Jazz Bars of New Orleans"
-                      required
                     />
+                    <InputFieldError field="title" state={validationErrors} />
                   </div>
 
                   <div className="space-y-2">
@@ -258,6 +283,7 @@ export default function EditListingPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    <InputFieldError field="category" state={validationErrors} />
                   </div>
 
                   <div className="space-y-2">
@@ -268,8 +294,8 @@ export default function EditListingPage() {
                       value={formData.city}
                       onChange={handleInputChange}
                       placeholder="e.g., New Orleans"
-                      required
                     />
+                    <InputFieldError field="city" state={validationErrors} />
                   </div>
 
                   <div className="space-y-2">
@@ -281,8 +307,8 @@ export default function EditListingPage() {
                       onChange={handleInputChange}
                       placeholder="Describe your tour, what makes it special, and what travelers can expect..."
                       rows={6}
-                      required
                     />
+                    <InputFieldError field="description" state={validationErrors} />
                   </div>
                 </div>
 
@@ -301,8 +327,8 @@ export default function EditListingPage() {
                         value={formData.durationDays}
                         onChange={handleInputChange}
                         placeholder="1"
-                        required
                       />
+                      <InputFieldError field="durationDays" state={validationErrors} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="tourFee">Price per Person ($) *</Label>
@@ -315,8 +341,8 @@ export default function EditListingPage() {
                         value={formData.tourFee}
                         onChange={handleInputChange}
                         placeholder="85"
-                        required
                       />
+                      <InputFieldError field="tourFee" state={validationErrors} />
                     </div>
                   </div>
 
@@ -331,8 +357,8 @@ export default function EditListingPage() {
                         value={formData.maxGroupSize}
                         onChange={handleInputChange}
                         placeholder="8"
-                        required
                       />
+                      <InputFieldError field="maxGroupSize" state={validationErrors} />
                     </div>
                   </div>
 
@@ -344,8 +370,8 @@ export default function EditListingPage() {
                       value={formData.meetingPoint}
                       onChange={handleInputChange}
                       placeholder="e.g., Jackson Square, in front of St. Louis Cathedral"
-                      required
                     />
+                    <InputFieldError field="meetingPoint" state={validationErrors} />
                   </div>
                 </div>
 
@@ -363,8 +389,8 @@ export default function EditListingPage() {
                       onChange={handleInputChange}
                       placeholder="Describe the main stops and activities during your tour..."
                       rows={4}
-                      required
                     />
+                    <InputFieldError field="itinerary" state={validationErrors} />
                   </div>
                 </div>
 
@@ -372,6 +398,7 @@ export default function EditListingPage() {
                 <div className="space-y-4 border-t border-border pt-6">
                   <h2 className="text-lg font-semibold text-foreground">Photos</h2>
                   <p className="text-sm text-muted-foreground">Manage your tour photos</p>
+                  <InputFieldError field="images" state={validationErrors} />
 
                   <div className="space-y-4">
                     {existingImages.length > 0 && (

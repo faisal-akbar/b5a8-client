@@ -237,3 +237,4 @@ const result = await createBooking(bookingParams);
 - All date/time parameters should be ISO 8601 strings
 - Pagination parameters (page, limit) are optional with sensible defaults
 
+

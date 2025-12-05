@@ -138,9 +138,15 @@ export async function getMyListings({ page = 1, limit = 10 }: { page?: number; l
       throw new Error(data.message || "Failed to get my listings");
     }
     
+    // Backend returns: { success: true, data: [...listings], meta: {...} }
+    // So data.data is the array of listings, and data.meta is pagination info
+    // Wrap it in the expected structure for consistency with other paginated responses
     return {
       success: true,
-      data: data.data,
+      data: {
+        data: Array.isArray(data.data) ? data.data : (data.data || []),
+        meta: data.meta || {},
+      },
     };
   } catch (error: any) {
     return {
@@ -248,4 +254,5 @@ export async function deleteListing(id: string) {
     };
   }
 }
+
 

@@ -32,6 +32,10 @@ import {
 import { getMyListings } from "@/services/listing/listing.service"
 import type { GuideAvailability, GuideListing } from "@/types/guide"
 import type { ColumnDef } from "@tanstack/react-table"
+import { createAvailabilityZodSchema, updateAvailabilityZodSchema } from "@/zod/availability.validation"
+import { zodValidator } from "@/lib/zodValidator"
+import InputFieldError from "@/components/shared/InputFieldError"
+import type { IInputErrorState } from "@/lib/getInputFieldError"
 
 export default function AvailabilityPage() {
   const [isLoading, setIsLoading] = useState(true)
@@ -48,6 +52,7 @@ export default function AvailabilityPage() {
     isAvailable: true,
   })
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
+  const [validationErrors, setValidationErrors] = useState<IInputErrorState | null>(null)
 
   const fetchData = useCallback(async () => {
     try {
@@ -77,18 +82,34 @@ export default function AvailabilityPage() {
   }, [fetchData])
 
   const handleCreateAvailability = async () => {
-    if (!formData.listingId || !formData.startDateTime || !formData.endDateTime) {
-      toast.error("Please fill in all required fields")
+    setValidationErrors(null)
+
+    // Convert datetime-local to ISO string
+    const startDateTime = formData.startDateTime ? new Date(formData.startDateTime).toISOString() : ""
+    const endDateTime = formData.endDateTime ? new Date(formData.endDateTime).toISOString() : ""
+
+    const validationData = {
+      listingId: formData.listingId,
+      startDateTime,
+      endDateTime,
+      isAvailable: formData.isAvailable,
+    }
+
+    const validation = zodValidator(validationData, createAvailabilityZodSchema)
+    if (!validation.success) {
+      setValidationErrors(validation)
+      const errorCount = validation.errors?.length || 0
+      const firstError = validation.errors?.[0]?.message || "Validation failed"
+      if (errorCount === 1) {
+        toast.error(firstError)
+      } else {
+        toast.error(`${errorCount} validation errors found. Please check the form fields.`)
+      }
       return
     }
 
     try {
-      const result = await createAvailability({
-        listingId: formData.listingId,
-        startDateTime: formData.startDateTime,
-        endDateTime: formData.endDateTime,
-        isAvailable: formData.isAvailable,
-      })
+      const result = await createAvailability(validationData)
 
       if (result.success) {
         toast.success("Availability created successfully")
@@ -99,6 +120,7 @@ export default function AvailabilityPage() {
           endDateTime: "",
           isAvailable: true,
         })
+        setValidationErrors(null)
         fetchData()
       } else {
         toast.error(result.message || "Failed to create availability")
@@ -110,19 +132,42 @@ export default function AvailabilityPage() {
 
   const handleUpdateAvailability = async () => {
     if (!selectedAvailability) return
+    setValidationErrors(null)
+
+    // Convert datetime-local to ISO string if provided
+    const startDateTime = formData.startDateTime ? new Date(formData.startDateTime).toISOString() : undefined
+    const endDateTime = formData.endDateTime ? new Date(formData.endDateTime).toISOString() : undefined
+
+    const validationData = {
+      startDateTime,
+      endDateTime,
+      isAvailable: formData.isAvailable,
+    }
+
+    const validation = zodValidator(validationData, updateAvailabilityZodSchema)
+    if (!validation.success) {
+      setValidationErrors(validation)
+      const errorCount = validation.errors?.length || 0
+      const firstError = validation.errors?.[0]?.message || "Validation failed"
+      if (errorCount === 1) {
+        toast.error(firstError)
+      } else {
+        toast.error(`${errorCount} validation errors found. Please check the form fields.`)
+      }
+      return
+    }
 
     try {
       const result = await updateAvailability({
         id: selectedAvailability.id,
-        startDateTime: formData.startDateTime || undefined,
-        endDateTime: formData.endDateTime || undefined,
-        isAvailable: formData.isAvailable,
+        ...validationData,
       })
 
       if (result.success) {
         toast.success("Availability updated successfully")
         setIsEditDialogOpen(false)
         setSelectedAvailability(null)
+        setValidationErrors(null)
         fetchData()
       } else {
         toast.error(result.message || "Failed to update availability")
@@ -392,6 +437,7 @@ export default function AvailabilityPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <InputFieldError field="listingId" state={validationErrors} />
             </div>
             <div className="space-y-2">
               <Label>Start Date & Time *</Label>
@@ -400,6 +446,7 @@ export default function AvailabilityPage() {
                 value={formData.startDateTime}
                 onChange={(e) => setFormData((prev) => ({ ...prev, startDateTime: e.target.value }))}
               />
+              <InputFieldError field="startDateTime" state={validationErrors} />
             </div>
             <div className="space-y-2">
               <Label>End Date & Time *</Label>
@@ -408,6 +455,7 @@ export default function AvailabilityPage() {
                 value={formData.endDateTime}
                 onChange={(e) => setFormData((prev) => ({ ...prev, endDateTime: e.target.value }))}
               />
+              <InputFieldError field="endDateTime" state={validationErrors} />
             </div>
             <div className="flex items-center space-x-2">
               <input
@@ -444,6 +492,7 @@ export default function AvailabilityPage() {
                 value={formData.startDateTime ? new Date(formData.startDateTime).toISOString().slice(0, 16) : ""}
                 onChange={(e) => setFormData((prev) => ({ ...prev, startDateTime: e.target.value }))}
               />
+              <InputFieldError field="startDateTime" state={validationErrors} />
             </div>
             <div className="space-y-2">
               <Label>End Date & Time *</Label>
@@ -452,6 +501,7 @@ export default function AvailabilityPage() {
                 value={formData.endDateTime ? new Date(formData.endDateTime).toISOString().slice(0, 16) : ""}
                 onChange={(e) => setFormData((prev) => ({ ...prev, endDateTime: e.target.value }))}
               />
+              <InputFieldError field="endDateTime" state={validationErrors} />
             </div>
             <div className="flex items-center space-x-2">
               <input

@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { CalendarDays, DollarSign, Star, TrendingUp, Eye, Check, X, Edit, MoreHorizontal, Trash2, Calendar, CreditCard } from "lucide-react"
+import { CalendarDays, DollarSign, Star, TrendingUp, Eye, Check, X, Edit, MoreHorizontal, Trash2, Calendar, CreditCard, RefreshCw } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import Link from "next/link"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -82,6 +82,7 @@ export default function GuideDashboardPage() {
       // Process listings
       let processedListings: GuideListing[] = []
       if (listingsResult.success && listingsResult.data) {
+        // Service returns: { success: true, data: { data: [...listings], meta: {...} } }
         processedListings = listingsResult.data.data || []
         setMyListings(processedListings)
         
@@ -91,6 +92,10 @@ export default function GuideDashboardPage() {
           totalTours: processedListings.length,
           activeTours: activeListings.length,
         }))
+      } else {
+        // Set empty array if fetch failed
+        setMyListings([])
+        console.error("Failed to fetch listings:", listingsResult.message || "Unknown error")
       }
 
       // Process upcoming bookings
@@ -186,6 +191,25 @@ export default function GuideDashboardPage() {
 
   useEffect(() => {
     fetchDashboardData()
+  }, [fetchDashboardData])
+
+  // Refetch data when refresh query param is present (e.g., after creating a listing)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search)
+      const refresh = urlParams.get("refresh")
+      if (refresh) {
+        // Small delay to ensure the listing is saved on the backend
+        const timeoutId = setTimeout(() => {
+          fetchDashboardData()
+          // Clean up the URL after refresh
+          const newUrl = window.location.pathname
+          window.history.replaceState({}, "", newUrl)
+        }, 1000) // Increased delay to ensure backend has processed the request
+        
+        return () => clearTimeout(timeoutId)
+      }
+    }
   }, [fetchDashboardData])
 
   const handleViewBookingDetails = async (booking: GuideBooking) => {
@@ -573,15 +597,29 @@ export default function GuideDashboardPage() {
                 <h1 className="text-3xl font-bold text-foreground">Guide Dashboard</h1>
                 <p className="mt-2 text-muted-foreground">Manage your tours and bookings</p>
               </div>
-              {badges.length > 0 && (
-                <div className="flex gap-2">
-                  {badges.map((badge) => (
-                    <Badge key={badge.id} variant="outline" className="text-sm">
-                      {badge.badge.replace(/_/g, " ")}
-                    </Badge>
-                  ))}
-                </div>
-              )}
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsLoading(true)
+                    fetchDashboardData()
+                  }}
+                  disabled={isLoading}
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+                  Refresh
+                </Button>
+                {badges.length > 0 && (
+                  <div className="flex gap-2">
+                    {badges.map((badge) => (
+                      <Badge key={badge.id} variant="outline" className="text-sm">
+                        {badge.badge.replace(/_/g, " ")}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

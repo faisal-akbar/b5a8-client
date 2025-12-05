@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { GuideProfile as GuideProfileType } from "@/types/profile"
-import { MapPin, Star, DollarSign, Calendar, Award, TrendingUp, Briefcase, Loader2, LayoutDashboard } from "lucide-react"
+import { MapPin, Star, DollarSign, Calendar, Award, TrendingUp, Briefcase, Loader2, LayoutDashboard, RefreshCw } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { useState, useEffect } from "react"
@@ -67,6 +67,46 @@ export function GuideProfile({ profile }: GuideProfileProps) {
         <div className="space-y-8">
             {/* Quick Actions */}
             <div className="flex gap-2 justify-end">
+                <Button
+                    variant="outline"
+                    onClick={() => {
+                        setIsLoading(true)
+                        const fetchData = async () => {
+                            try {
+                                const [listingsResult, bookingsResult, paymentsResult] = await Promise.all([
+                                    getMyListings({ page: 1, limit: 10 }),
+                                    getMyBookings({ status: "CONFIRMED", type: "upcoming" }),
+                                    getPayments({ page: 1, limit: 100 }),
+                                ])
+
+                                if (listingsResult.success && listingsResult.data) {
+                                    setMyTours(listingsResult.data.data || [])
+                                }
+
+                                if (bookingsResult.success && bookingsResult.data) {
+                                    setUpcomingBookings(bookingsResult.data.data || [])
+                                }
+
+                                if (paymentsResult.success && paymentsResult.data) {
+                                    const payments = paymentsResult.data.data || []
+                                    const earnings = payments
+                                        .filter((p: any) => p.status === "COMPLETED" || p.status === "RELEASED")
+                                        .reduce((sum: number, p: any) => sum + p.amount, 0)
+                                    setTotalEarnings(earnings)
+                                }
+                            } catch (error) {
+                                console.error("Error fetching profile data:", error)
+                            } finally {
+                                setIsLoading(false)
+                            }
+                        }
+                        fetchData()
+                    }}
+                    disabled={isLoading}
+                >
+                    <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+                    Refresh
+                </Button>
                 <Link href="/guide/dashboard">
                     <Button>
                         <LayoutDashboard className="mr-2 h-4 w-4" />

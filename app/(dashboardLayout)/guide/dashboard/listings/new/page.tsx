@@ -15,6 +15,10 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { createListing } from "@/services/listing/listing.service"
 import type { Category } from "@/types/profile"
+import { createListingZodSchema } from "@/zod/listing.validation"
+import { zodValidator } from "@/lib/zodValidator"
+import InputFieldError from "@/components/shared/InputFieldError"
+import type { IInputErrorState } from "@/lib/getInputFieldError"
 
 const categories: { value: Category; label: string }[] = [
   { value: "CULTURE", label: "Culture" },
@@ -73,6 +77,7 @@ export default function CreateTourPage() {
   })
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const [validationErrors, setValidationErrors] = useState<IInputErrorState | null>(null)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -107,39 +112,51 @@ export default function CreateTourPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    // Validation
-    if (!formData.title || !formData.description || !formData.itinerary || !formData.tourFee || 
-        !formData.durationDays || !formData.meetingPoint || !formData.maxGroupSize || 
-        !formData.city || !formData.category) {
-      toast.error("Please fill in all required fields")
-      return
+    setValidationErrors(null)
+
+    // Prepare data for validation - Zod will validate all fields and return all errors
+    const validationData = {
+      title: formData.title.trim(),
+      description: formData.description.trim(),
+      itinerary: formData.itinerary.trim(),
+      tourFee: formData.tourFee && formData.tourFee.trim() !== "" 
+        ? Number.parseFloat(formData.tourFee) 
+        : 0, // Pass 0 so Zod's positive check will catch it
+      durationDays: formData.durationDays && formData.durationDays.trim() !== "" 
+        ? Number.parseInt(formData.durationDays) 
+        : 0, // Pass 0 so Zod's positive check will catch it
+      meetingPoint: formData.meetingPoint.trim(),
+      maxGroupSize: formData.maxGroupSize && formData.maxGroupSize.trim() !== "" 
+        ? Number.parseInt(formData.maxGroupSize) 
+        : 0, // Pass 0 so Zod's positive check will catch it
+      city: formData.city.trim(),
+      category: formData.category || ("" as Category), // Empty string will fail enum validation
+      images: imageFiles,
     }
 
-    if (imageFiles.length === 0) {
-      toast.error("Please upload at least one image")
+    // Zod validation - this will validate all fields including images
+    const validation = zodValidator(validationData, createListingZodSchema)
+    if (!validation.success) {
+      setValidationErrors(validation)
+      const errorCount = validation.errors?.length || 0
+      const firstError = validation.errors?.[0]?.message || "Validation failed"
+      if (errorCount === 1) {
+        toast.error(firstError)
+      } else {
+        toast.error(`${errorCount} validation errors found. Please check the form fields.`)
+      }
       return
     }
 
     setIsSubmitting(true)
 
     try {
-      const result = await createListing({
-        title: formData.title,
-        description: formData.description,
-        itinerary: formData.itinerary,
-        tourFee: Number.parseFloat(formData.tourFee),
-        durationDays: Number.parseInt(formData.durationDays),
-        meetingPoint: formData.meetingPoint,
-        maxGroupSize: Number.parseInt(formData.maxGroupSize),
-        city: formData.city,
-        category: formData.category,
-        images: imageFiles,
-      })
+      const result = await createListing(validationData)
 
       if (result.success) {
         toast.success("Tour listing created successfully!")
-        router.push("/guide/dashboard")
+        router.refresh() // Refresh server-side data
+        router.push("/guide/dashboard?refresh=" + Date.now()) // Add timestamp to force client-side refresh
       } else {
         toast.error(result.message || "Failed to create listing")
       }
@@ -167,7 +184,7 @@ export default function CreateTourPage() {
               <h1 className="text-2xl font-bold text-foreground">Create New Tour</h1>
               <p className="mt-2 text-muted-foreground">Share your unique experience with travelers</p>
 
-              <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+              <form onSubmit={handleSubmit} className="mt-8 space-y-6" noValidate>
                 {/* Basic Info */}
                 <div className="space-y-4">
                   <h2 className="text-lg font-semibold text-foreground">Basic Information</h2>
@@ -180,8 +197,8 @@ export default function CreateTourPage() {
                       value={formData.title}
                       onChange={handleInputChange}
                       placeholder="e.g., Hidden Jazz Bars of New Orleans"
-                      required
                     />
+                    <InputFieldError field="title" state={validationErrors} />
                   </div>
 
                   <div className="space-y-2">
@@ -198,6 +215,7 @@ export default function CreateTourPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    <InputFieldError field="category" state={validationErrors} />
                   </div>
 
                   <div className="space-y-2">
@@ -208,8 +226,8 @@ export default function CreateTourPage() {
                       value={formData.city}
                       onChange={handleInputChange}
                       placeholder="e.g., New Orleans"
-                      required
                     />
+                    <InputFieldError field="city" state={validationErrors} />
                   </div>
 
                   <div className="space-y-2">
@@ -221,8 +239,8 @@ export default function CreateTourPage() {
                       onChange={handleInputChange}
                       placeholder="Describe your tour, what makes it special, and what travelers can expect..."
                       rows={6}
-                      required
                     />
+                    <InputFieldError field="description" state={validationErrors} />
                   </div>
                 </div>
 
@@ -241,8 +259,8 @@ export default function CreateTourPage() {
                         value={formData.durationDays}
                         onChange={handleInputChange}
                         placeholder="1"
-                        required
                       />
+                      <InputFieldError field="durationDays" state={validationErrors} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="tourFee">Price per Person ($) *</Label>
@@ -255,8 +273,8 @@ export default function CreateTourPage() {
                         value={formData.tourFee}
                         onChange={handleInputChange}
                         placeholder="85"
-                        required
                       />
+                      <InputFieldError field="tourFee" state={validationErrors} />
                     </div>
                   </div>
 
@@ -271,8 +289,8 @@ export default function CreateTourPage() {
                         value={formData.maxGroupSize}
                         onChange={handleInputChange}
                         placeholder="8"
-                        required
                       />
+                      <InputFieldError field="maxGroupSize" state={validationErrors} />
                     </div>
                   </div>
 
@@ -284,8 +302,8 @@ export default function CreateTourPage() {
                       value={formData.meetingPoint}
                       onChange={handleInputChange}
                       placeholder="e.g., Jackson Square, in front of St. Louis Cathedral"
-                      required
                     />
+                    <InputFieldError field="meetingPoint" state={validationErrors} />
                   </div>
                 </div>
 
@@ -303,8 +321,8 @@ export default function CreateTourPage() {
                       onChange={handleInputChange}
                       placeholder="Describe the main stops and activities during your tour..."
                       rows={4}
-                      required
                     />
+                    <InputFieldError field="itinerary" state={validationErrors} />
                   </div>
                 </div>
 
@@ -312,6 +330,7 @@ export default function CreateTourPage() {
                 <div className="space-y-4 border-t border-border pt-6">
                   <h2 className="text-lg font-semibold text-foreground">Photos</h2>
                   <p className="text-sm text-muted-foreground">Add at least 1 high-quality photo of your tour</p>
+                  <InputFieldError field="images" state={validationErrors} />
 
                   <div className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-3">

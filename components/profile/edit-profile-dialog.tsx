@@ -19,6 +19,10 @@ import { Camera, X, Loader2 } from "lucide-react"
 import { updateUser } from "@/services/user/user.service"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { updateUserZodSchema } from "@/zod/user.validation"
+import { zodValidator } from "@/lib/zodValidator"
+import InputFieldError from "@/components/shared/InputFieldError"
+import type { IInputErrorState } from "@/lib/getInputFieldError"
 
 interface EditProfileDialogProps {
     open: boolean
@@ -65,6 +69,7 @@ export function EditProfileDialog({
     const [newLanguage, setNewLanguage] = useState("")
     const [newExpertise, setNewExpertise] = useState("")
     const [newTravelPreference, setNewTravelPreference] = useState("")
+    const [validationErrors, setValidationErrors] = useState<IInputErrorState | null>(null)
 
     // Reset form when profile changes
     useEffect(() => {
@@ -147,28 +152,47 @@ export function EditProfileDialog({
 
     const handleSave = async () => {
         setIsLoading(true)
+        setValidationErrors(null)
+        
         try {
             const updatePayload: any = {
-                id: profile.id,
-                name: formData.name,
-                bio: formData.bio,
-                languages: formData.languages,
+                name: formData.name || undefined,
+                bio: formData.bio || undefined,
+                languages: formData.languages.length > 0 ? formData.languages : undefined,
             }
 
             // Add role-specific fields
             if (profile.role === "GUIDE") {
-                updatePayload.expertise = formData.expertise
+                updatePayload.expertise = formData.expertise.length > 0 ? formData.expertise : undefined
                 if (formData.dailyRate) {
                     updatePayload.dailyRate = parseFloat(formData.dailyRate)
                 }
             } else if (profile.role === "TOURIST") {
-                updatePayload.travelPreferences = formData.travelPreferences
+                updatePayload.travelPreferences = formData.travelPreferences.length > 0 ? formData.travelPreferences : undefined
             }
 
-            // Add profile picture if selected
+            // Validate with Zod
+            const validation = zodValidator(updatePayload, updateUserZodSchema)
+            if (!validation.success) {
+                setValidationErrors(validation)
+                const errorCount = validation.errors?.length || 0
+                const firstError = validation.errors?.[0]?.message || "Validation failed"
+                if (errorCount === 1) {
+                    toast.error(firstError)
+                } else {
+                    toast.error(`${errorCount} validation errors found. Please check the form fields.`)
+                }
+                setIsLoading(false)
+                return
+            }
+
+            // Add profile picture if selected (not validated by Zod as it's a file)
             if (selectedFile) {
                 updatePayload.profilePic = selectedFile
             }
+
+            // Add ID for the API call
+            updatePayload.id = profile.id
 
             const result = await updateUser(updatePayload)
 
@@ -247,6 +271,7 @@ export function EditProfileDialog({
                             placeholder="Enter your full name"
                             className="h-11"
                         />
+                        <InputFieldError field="name" state={validationErrors} />
                     </div>
 
                     {/* Email (Read-only) */}
@@ -276,6 +301,7 @@ export function EditProfileDialog({
                         <p className="text-xs text-muted-foreground">
                             {formData.bio.length}/500 characters
                         </p>
+                        <InputFieldError field="bio" state={validationErrors} />
                     </div>
 
                     {/* Languages */}
@@ -383,6 +409,7 @@ export function EditProfileDialog({
                                 <p className="text-xs text-muted-foreground">
                                     How much you charge per day for guiding services
                                 </p>
+                                <InputFieldError field="dailyRate" state={validationErrors} />
                             </div>
                         </>
                     )}
