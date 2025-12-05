@@ -7,9 +7,15 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { GuideProfile as GuideProfileType } from "@/types/profile"
-import { MapPin, Star, DollarSign, Calendar, Award, TrendingUp, Briefcase } from "lucide-react"
+import { MapPin, Star, DollarSign, Calendar, Award, TrendingUp, Briefcase, Loader2, LayoutDashboard } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
+import { useState, useEffect } from "react"
+import { getMyListings } from "@/services/listing/listing.service"
+import { getMyBookings } from "@/services/booking/booking.service"
+import { getPayments } from "@/services/payment/payment.service"
+import type { GuideListing, GuideBooking } from "@/types/guide"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface GuideProfileProps {
     profile: GuideProfileType
@@ -17,48 +23,58 @@ interface GuideProfileProps {
 
 export function GuideProfile({ profile }: GuideProfileProps) {
     const { guide } = profile
+    const [isLoading, setIsLoading] = useState(true)
+    const [myTours, setMyTours] = useState<GuideListing[]>([])
+    const [upcomingBookings, setUpcomingBookings] = useState<GuideBooking[]>([])
+    const [totalEarnings, setTotalEarnings] = useState(0)
 
-    // Mock data - in real app, fetch from API
-    const upcomingBookings = [
-        {
-            id: "1",
-            tourTitle: "Hidden Jazz Bars Tour",
-            date: new Date("2024-02-15"),
-            touristName: "John Doe",
-            status: "confirmed" as const,
-        },
-        {
-            id: "2",
-            tourTitle: "Food Walking Tour",
-            date: new Date("2024-02-18"),
-            touristName: "Jane Smith",
-            status: "pending" as const,
-        },
-    ]
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setIsLoading(true)
+                const [listingsResult, bookingsResult, paymentsResult] = await Promise.all([
+                    getMyListings({ page: 1, limit: 10 }),
+                    getMyBookings({ status: "CONFIRMED", type: "upcoming" }),
+                    getPayments({ page: 1, limit: 100 }),
+                ])
 
-    const myTours = [
-        {
-            id: "1",
-            title: "Hidden Jazz Bars of New Orleans",
-            image: "/new-orleans-jazz-bar.jpg",
-            price: 85,
-            bookings: 127,
-            rating: 4.9,
-            isActive: true,
-        },
-        {
-            id: "2",
-            title: "French Quarter Culinary History",
-            image: "/new-orleans-food-tour.jpg",
-            price: 75,
-            bookings: 94,
-            rating: 4.8,
-            isActive: true,
-        },
-    ]
+                if (listingsResult.success && listingsResult.data) {
+                    setMyTours(listingsResult.data.data || [])
+                }
+
+                if (bookingsResult.success && bookingsResult.data) {
+                    setUpcomingBookings(bookingsResult.data.data || [])
+                }
+
+                if (paymentsResult.success && paymentsResult.data) {
+                    const payments = paymentsResult.data.data || []
+                    const earnings = payments
+                        .filter((p: any) => p.status === "COMPLETED" || p.status === "RELEASED")
+                        .reduce((sum: number, p: any) => sum + p.amount, 0)
+                    setTotalEarnings(earnings)
+                }
+            } catch (error) {
+                console.error("Error fetching profile data:", error)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        fetchData()
+    }, [])
 
     return (
         <div className="space-y-8">
+            {/* Quick Actions */}
+            <div className="flex gap-2 justify-end">
+                <Link href="/guide/dashboard">
+                    <Button>
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        Go to Dashboard
+                    </Button>
+                </Link>
+            </div>
+
             {/* Profile Header */}
             <ProfileHeader
                 name={profile.name}
@@ -101,7 +117,7 @@ export function GuideProfile({ profile }: GuideProfileProps) {
                     />
                     <ProfileStatsCard
                         title="Total Earnings"
-                        value={`$${guide.totalEarnings.toLocaleString()}`}
+                        value={`$${(totalEarnings || guide.totalEarnings).toLocaleString()}`}
                         description="Lifetime"
                         icon={DollarSign}
                         index={3}
@@ -125,11 +141,15 @@ export function GuideProfile({ profile }: GuideProfileProps) {
                         </CardHeader>
                         <CardContent>
                             <div className="flex flex-wrap gap-2">
-                                {guide.expertise.map((skill) => (
-                                    <Badge key={skill} variant="secondary" className="px-3 py-1">
-                                        {skill}
-                                    </Badge>
-                                ))}
+                                {guide.expertise && guide.expertise.length > 0 ? (
+                                    guide.expertise.map((skill) => (
+                                        <Badge key={skill} variant="secondary" className="px-3 py-1">
+                                            {skill}
+                                        </Badge>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">No expertise listed</p>
+                                )}
                             </div>
                             <div className="mt-4 flex items-center justify-between rounded-lg bg-muted/50 p-4">
                                 <div>
@@ -156,7 +176,7 @@ export function GuideProfile({ profile }: GuideProfileProps) {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
-                                {guide.badges.length > 0 ? (
+                                {guide.badges && guide.badges.length > 0 ? (
                                     guide.badges.map((badgeData) => (
                                         <div
                                             key={badgeData.id}
@@ -194,87 +214,152 @@ export function GuideProfile({ profile }: GuideProfileProps) {
             >
                 <Tabs defaultValue="tours" className="w-full">
                     <TabsList className="w-full justify-start">
-                        <TabsTrigger value="tours">My Tours ({myTours.length})</TabsTrigger>
-                        <TabsTrigger value="bookings">Bookings ({upcomingBookings.length})</TabsTrigger>
+                        <TabsTrigger value="tours">My Tours ({isLoading ? "..." : myTours.length})</TabsTrigger>
+                        <TabsTrigger value="bookings">Bookings ({isLoading ? "..." : upcomingBookings.length})</TabsTrigger>
                         <TabsTrigger value="earnings">Earnings</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="tours" className="mt-6">
-                        <div className="grid gap-6 sm:grid-cols-2">
-                            {myTours.map((tour, index) => (
-                                <motion.div
-                                    key={tour.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                                >
-                                    <Link href={`/tours/${tour.id}`}>
-                                        <Card className="group overflow-hidden transition-all hover:-translate-y-1 hover:shadow-lg">
-                                            <div className="relative h-48 overflow-hidden">
-                                                <img
-                                                    src={tour.image}
-                                                    alt={tour.title}
-                                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                                />
-                                                <Badge
-                                                    className={`absolute right-3 top-3 ${tour.isActive
-                                                            ? "bg-green-500 text-white"
-                                                            : "bg-slate-500 text-white"
-                                                        }`}
-                                                >
-                                                    {tour.isActive ? "Active" : "Inactive"}
-                                                </Badge>
-                                            </div>
-                                            <CardContent className="p-4">
-                                                <h3 className="font-semibold text-foreground group-hover:text-primary">
-                                                    {tour.title}
-                                                </h3>
-                                                <div className="mt-2 flex items-center justify-between text-sm">
-                                                    <div className="flex items-center gap-1 text-muted-foreground">
-                                                        <Star className="h-4 w-4 fill-primary text-primary" />
-                                                        <span className="font-medium text-foreground">{tour.rating}</span>
+                        {isLoading ? (
+                            <div className="grid gap-6 sm:grid-cols-2">
+                                {[1, 2].map((i) => (
+                                    <Card key={i}>
+                                        <Skeleton className="h-48 w-full" />
+                                        <CardContent className="p-4">
+                                            <Skeleton className="h-6 w-3/4 mb-2" />
+                                            <Skeleton className="h-4 w-1/2" />
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                        ) : myTours.length > 0 ? (
+                            <>
+                                <div className="grid gap-6 sm:grid-cols-2">
+                                    {myTours.map((tour, index) => (
+                                        <motion.div
+                                            key={tour.id}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3, delay: index * 0.1 }}
+                                        >
+                                            <Link href={`/tours/${tour.id}`}>
+                                                <Card className="group overflow-hidden transition-all hover:-translate-y-1 hover:shadow-lg">
+                                                    <div className="relative h-48 overflow-hidden">
+                                                        {tour.images && tour.images.length > 0 ? (
+                                                            <img
+                                                                src={tour.images[0]}
+                                                                alt={tour.title}
+                                                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                            />
+                                                        ) : (
+                                                            <div className="flex h-full w-full items-center justify-center bg-muted">
+                                                                <MapPin className="h-12 w-12 text-muted-foreground" />
+                                                            </div>
+                                                        )}
+                                                        <Badge
+                                                            className={`absolute right-3 top-3 ${
+                                                                tour.isActive
+                                                                    ? "bg-green-500 text-white"
+                                                                    : "bg-slate-500 text-white"
+                                                            }`}
+                                                        >
+                                                            {tour.isActive ? "Active" : "Inactive"}
+                                                        </Badge>
                                                     </div>
-                                                    <span className="font-medium text-foreground">${tour.price}</span>
-                                                </div>
-                                                <p className="mt-1 text-xs text-muted-foreground">
-                                                    {tour.bookings} bookings
-                                                </p>
-                                            </CardContent>
-                                        </Card>
+                                                    <CardContent className="p-4">
+                                                        <h3 className="font-semibold text-foreground group-hover:text-primary">
+                                                            {tour.title}
+                                                        </h3>
+                                                        <div className="mt-2 flex items-center justify-between text-sm">
+                                                            <div className="flex items-center gap-1 text-muted-foreground">
+                                                                <Star className="h-4 w-4 fill-primary text-primary" />
+                                                                <span className="font-medium text-foreground">
+                                                                    {tour.averageRating ? tour.averageRating.toFixed(1) : "N/A"}
+                                                                </span>
+                                                            </div>
+                                                            <span className="font-medium text-foreground">${tour.tourFee}</span>
+                                                        </div>
+                                                        <p className="mt-1 text-xs text-muted-foreground">
+                                                            {tour.bookingsCount || 0} bookings
+                                                        </p>
+                                                    </CardContent>
+                                                </Card>
+                                            </Link>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                                <div className="mt-6">
+                                    <Link href="/guide/dashboard/listings/new">
+                                        <Button className="w-full sm:w-auto">
+                                            <MapPin className="mr-2 h-4 w-4" />
+                                            Create New Tour
+                                        </Button>
                                     </Link>
-                                </motion.div>
-                            ))}
-                        </div>
-                        <div className="mt-6">
-                            <Link href="/guide/dashboard/listings/new">
-                                <Button className="w-full sm:w-auto">
-                                    <MapPin className="mr-2 h-4 w-4" />
-                                    Create New Tour
-                                </Button>
-                            </Link>
-                        </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="text-center py-12">
+                                <MapPin className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                                <h3 className="text-lg font-semibold mb-2">No tours yet</h3>
+                                <p className="text-muted-foreground mb-4">Create your first tour listing to get started</p>
+                                <Link href="/guide/dashboard/listings/new">
+                                    <Button>
+                                        <MapPin className="mr-2 h-4 w-4" />
+                                        Create New Tour
+                                    </Button>
+                                </Link>
+                            </div>
+                        )}
                     </TabsContent>
 
                     <TabsContent value="bookings" className="mt-6">
-                        <div className="space-y-4">
-                            {upcomingBookings.map((booking) => (
-                                <Card key={booking.id}>
-                                    <CardContent className="flex items-center justify-between p-6">
-                                        <div>
-                                            <h3 className="font-semibold text-foreground">{booking.tourTitle}</h3>
-                                            <p className="text-sm text-muted-foreground">
-                                                {booking.touristName} • {booking.date.toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                        <Badge
-                                            variant={booking.status === "confirmed" ? "default" : "secondary"}
-                                        >
-                                            {booking.status}
-                                        </Badge>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
+                        {isLoading ? (
+                            <div className="space-y-4">
+                                {[1, 2].map((i) => (
+                                    <Card key={i}>
+                                        <CardContent className="p-6">
+                                            <Skeleton className="h-6 w-1/3 mb-2" />
+                                            <Skeleton className="h-4 w-1/2" />
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                        ) : upcomingBookings.length > 0 ? (
+                            <div className="space-y-4">
+                                {upcomingBookings.map((booking) => (
+                                    <Card key={booking.id}>
+                                        <CardContent className="flex items-center justify-between p-6">
+                                            <div>
+                                                <h3 className="font-semibold text-foreground">
+                                                    {booking.listing?.title || "N/A"}
+                                                </h3>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {booking.tourist?.user?.name || "N/A"} •{" "}
+                                                    {new Date(booking.date).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                            <Badge
+                                                variant={
+                                                    booking.status === "CONFIRMED"
+                                                        ? "default"
+                                                        : booking.status === "PENDING"
+                                                          ? "secondary"
+                                                          : "outline"
+                                                }
+                                            >
+                                                {booking.status}
+                                            </Badge>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-12">
+                                <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                                <h3 className="text-lg font-semibold mb-2">No upcoming bookings</h3>
+                                <p className="text-muted-foreground">Bookings will appear here when tourists book your tours</p>
+                            </div>
+                        )}
                     </TabsContent>
 
                     <TabsContent value="earnings" className="mt-6">
@@ -291,17 +376,21 @@ export function GuideProfile({ profile }: GuideProfileProps) {
                                         <div>
                                             <p className="text-sm text-muted-foreground">Total Lifetime Earnings</p>
                                             <p className="text-3xl font-bold text-foreground">
-                                                ${guide.totalEarnings.toLocaleString()}
+                                                ${(totalEarnings || guide.totalEarnings).toLocaleString()}
                                             </p>
                                         </div>
                                         <DollarSign className="h-12 w-12 text-muted-foreground" />
                                     </div>
-                                    <p className="text-sm text-muted-foreground">
-                                        Connect your Stripe account to receive payments
-                                    </p>
-                                    <Button variant="outline">
-                                        {guide.stripeAccountId ? "Manage Stripe Account" : "Connect Stripe"}
-                                    </Button>
+                                    <div className="flex gap-2">
+                                        <Link href="/guide/dashboard/payments" className="flex-1">
+                                            <Button variant="outline" className="w-full">
+                                                View Payments
+                                            </Button>
+                                        </Link>
+                                        <Button variant="outline" disabled>
+                                            {guide.stripeAccountId ? "Manage Stripe Account" : "Connect Stripe"}
+                                        </Button>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>

@@ -10,11 +10,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Upload, X, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useParams } from "next/navigation"
 import { toast } from "sonner"
-import { createListing } from "@/services/listing/listing.service"
+import { getListingById, updateListing } from "@/services/listing/listing.service"
 import type { Category } from "@/types/profile"
+import { DashboardSkeleton } from "@/components/dashboard-skeleton"
 
 const categories: { value: Category; label: string }[] = [
   { value: "CULTURE", label: "Culture" },
@@ -57,8 +58,12 @@ const categories: { value: Category; label: string }[] = [
   { value: "STREET_FOOD", label: "Street Food" },
 ]
 
-export default function CreateTourPage() {
+export default function EditListingPage() {
   const router = useRouter()
+  const params = useParams()
+  const listingId = params.id as string
+  
+  const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     title: "",
@@ -71,8 +76,47 @@ export default function CreateTourPage() {
     city: "",
     category: "" as Category | "",
   })
+  const [existingImages, setExistingImages] = useState<string[]>([])
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
+
+  useEffect(() => {
+    const fetchListing = async () => {
+      try {
+        setIsLoading(true)
+        const result = await getListingById(listingId)
+        
+        if (result.success && result.data) {
+          const listing = result.data
+          setFormData({
+            title: listing.title || "",
+            description: listing.description || "",
+            itinerary: listing.itinerary || "",
+            tourFee: listing.tourFee?.toString() || "",
+            durationDays: listing.durationDays?.toString() || "",
+            meetingPoint: listing.meetingPoint || "",
+            maxGroupSize: listing.maxGroupSize?.toString() || "",
+            city: listing.city || "",
+            category: listing.category || ("" as Category | ""),
+          })
+          setExistingImages(listing.images || [])
+        } else {
+          toast.error("Failed to load listing")
+          router.push("/guide/dashboard")
+        }
+      } catch (error) {
+        console.error("Error fetching listing:", error)
+        toast.error("An error occurred while loading the listing")
+        router.push("/guide/dashboard")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (listingId) {
+      fetchListing()
+    }
+  }, [listingId, router])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -100,7 +144,11 @@ export default function CreateTourPage() {
     }
   }
 
-  const removeImage = (index: number) => {
+  const removeExistingImage = (index: number) => {
+    setExistingImages((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const removeNewImage = (index: number) => {
     setImageFiles((prev) => prev.filter((_, i) => i !== index))
     setImagePreviews((prev) => prev.filter((_, i) => i !== index))
   }
@@ -116,15 +164,14 @@ export default function CreateTourPage() {
       return
     }
 
-    if (imageFiles.length === 0) {
-      toast.error("Please upload at least one image")
-      return
-    }
-
     setIsSubmitting(true)
 
     try {
-      const result = await createListing({
+      // Combine existing images (minus removed ones) with new images
+      const allImages = [...existingImages]
+      
+      const result = await updateListing({
+        id: listingId,
         title: formData.title,
         description: formData.description,
         itinerary: formData.itinerary,
@@ -134,21 +181,34 @@ export default function CreateTourPage() {
         maxGroupSize: Number.parseInt(formData.maxGroupSize),
         city: formData.city,
         category: formData.category,
-        images: imageFiles,
+        images: allImages, // For now, we'll keep existing images. New file uploads would need backend support
       })
 
       if (result.success) {
-        toast.success("Tour listing created successfully!")
+        toast.success("Tour listing updated successfully!")
         router.push("/guide/dashboard")
       } else {
-        toast.error(result.message || "Failed to create listing")
+        toast.error(result.message || "Failed to update listing")
       }
     } catch (error) {
-      console.error("Error creating listing:", error)
-      toast.error("An error occurred while creating the listing")
+      console.error("Error updating listing:", error)
+      toast.error("An error occurred while updating the listing")
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <main className="flex-1 bg-muted/30 py-8">
+          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+            <DashboardSkeleton />
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
   }
 
   return (
@@ -164,8 +224,8 @@ export default function CreateTourPage() {
 
           <Card>
             <CardContent className="p-8">
-              <h1 className="text-2xl font-bold text-foreground">Create New Tour</h1>
-              <p className="mt-2 text-muted-foreground">Share your unique experience with travelers</p>
+              <h1 className="text-2xl font-bold text-foreground">Edit Tour</h1>
+              <p className="mt-2 text-muted-foreground">Update your tour listing</p>
 
               <form onSubmit={handleSubmit} className="mt-8 space-y-6">
                 {/* Basic Info */}
@@ -311,44 +371,76 @@ export default function CreateTourPage() {
                 {/* Photos */}
                 <div className="space-y-4 border-t border-border pt-6">
                   <h2 className="text-lg font-semibold text-foreground">Photos</h2>
-                  <p className="text-sm text-muted-foreground">Add at least 1 high-quality photo of your tour</p>
+                  <p className="text-sm text-muted-foreground">Manage your tour photos</p>
 
                   <div className="space-y-4">
-                    <div className="grid gap-4 sm:grid-cols-3">
-                      {imagePreviews.map((preview, index) => (
-                        <div
-                          key={index}
-                          className="relative aspect-video overflow-hidden rounded-lg border-2 border-border"
-                        >
-                          <img
-                            src={preview}
-                            alt={`Upload ${index + 1}`}
-                            className="h-full w-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute right-2 top-2 rounded-full bg-destructive p-1 text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
+                    {existingImages.length > 0 && (
+                      <div>
+                        <Label className="mb-2 block">Existing Photos</Label>
+                        <div className="grid gap-4 sm:grid-cols-3">
+                          {existingImages.map((imageUrl, index) => (
+                            <div
+                              key={index}
+                              className="relative aspect-video overflow-hidden rounded-lg border-2 border-border"
+                            >
+                              <img
+                                src={imageUrl}
+                                alt={`Existing ${index + 1}`}
+                                className="h-full w-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeExistingImage(index)}
+                                className="absolute right-2 top-2 rounded-full bg-destructive p-1 text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+                    )}
 
-                      {imageFiles.length < 10 && (
-                        <label className="flex aspect-video cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 hover:bg-muted">
-                          <Upload className="h-8 w-8 text-muted-foreground" />
-                          <span className="mt-2 text-sm text-muted-foreground">Upload Photo</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            className="hidden"
-                            onChange={handleImageUpload}
-                          />
-                        </label>
-                      )}
-                    </div>
+                    {imagePreviews.length > 0 && (
+                      <div>
+                        <Label className="mb-2 block">New Photos</Label>
+                        <div className="grid gap-4 sm:grid-cols-3">
+                          {imagePreviews.map((preview, index) => (
+                            <div
+                              key={index}
+                              className="relative aspect-video overflow-hidden rounded-lg border-2 border-border"
+                            >
+                              <img
+                                src={preview}
+                                alt={`New ${index + 1}`}
+                                className="h-full w-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeNewImage(index)}
+                                className="absolute right-2 top-2 rounded-full bg-destructive p-1 text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {(existingImages.length + imageFiles.length) < 10 && (
+                      <label className="flex aspect-video cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 hover:bg-muted">
+                        <Upload className="h-8 w-8 text-muted-foreground" />
+                        <span className="mt-2 text-sm text-muted-foreground">Upload Photo</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={handleImageUpload}
+                        />
+                      </label>
+                    )}
                   </div>
                 </div>
 
@@ -358,10 +450,10 @@ export default function CreateTourPage() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating...
+                        Updating...
                       </>
                     ) : (
-                      "Create Tour"
+                      "Update Tour"
                     )}
                   </Button>
                   <Link href="/guide/dashboard" className="flex-1 sm:flex-none">
@@ -380,3 +472,4 @@ export default function CreateTourPage() {
     </div>
   )
 }
+

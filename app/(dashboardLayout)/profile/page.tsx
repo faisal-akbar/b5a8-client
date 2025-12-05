@@ -1,6 +1,10 @@
 import { getUserInfo } from "@/services/auth/getUserInfo"
 import { getMyProfile } from "@/services/user/user.service"
 import { getOverviewStats } from "@/services/stats/stats.service"
+import { getPayments } from "@/services/payment/payment.service"
+import { getMyListings } from "@/services/listing/listing.service"
+import { getMyBookings } from "@/services/booking/booking.service"
+import { getReviews } from "@/services/review/review.service"
 import { redirect } from "next/navigation"
 import { AdminProfile } from "@/components/profile/admin-profile"
 import { GuideProfile } from "@/components/profile/guide-profile"
@@ -62,7 +66,45 @@ export default async function ProfilePage() {
     }
 
     if (userInfo.role === "GUIDE") {
-        const stats = profileData.stats || {}
+        // Fetch real data from APIs
+        const [listingsResult, bookingsResult, paymentsResult] = await Promise.all([
+            getMyListings({ page: 1, limit: 100 }),
+            getMyBookings({ page: 1, limit: 100 }),
+            getPayments({ page: 1, limit: 100 }),
+        ])
+
+        // Calculate listings count
+        const listings = listingsResult.success && listingsResult.data ? listingsResult.data.data || [] : []
+        const activeListings = listings.filter((l: any) => l.isActive)
+        const listingsCount = activeListings.length
+
+        // Calculate bookings count
+        const bookings = bookingsResult.success && bookingsResult.data ? bookingsResult.data.data || [] : []
+        const bookingsCount = bookings.length
+
+        // Calculate reviews and average rating from all listings
+        let allReviews: any[] = []
+        for (const listing of listings) {
+            const listingReviewsResult = await getReviews({ listingId: listing.id, page: 1, limit: 100 })
+            if (listingReviewsResult.success && listingReviewsResult.data) {
+                allReviews.push(...(listingReviewsResult.data.data || []))
+            }
+        }
+        const reviewsCount = allReviews.length
+        const averageRating = allReviews.length > 0
+            ? allReviews.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / allReviews.length
+            : 0
+
+        // Calculate total earnings from payments
+        let totalEarnings = 0
+        if (paymentsResult.success && paymentsResult.data) {
+            const payments = paymentsResult.data.data || []
+            totalEarnings = payments
+                .filter((p: any) => p.status === "COMPLETED" || p.status === "RELEASED")
+                .reduce((sum: number, p: any) => sum + p.amount, 0)
+        }
+
+        // Get badges from profile data or fetch from badges API
         const badges = (profileData.badges || []).map((badge: string, index: number) => ({
             id: `badge-${index}`,
             badge: badge as any,
@@ -77,11 +119,11 @@ export default async function ProfilePage() {
                 expertise: profileData.expertise || [],
                 dailyRate: profileData.dailyRate || 0,
                 stripeAccountId: profileData.stripeAccountId || null,
-                listingsCount: stats.activeListings || 0,
-                bookingsCount: stats.toursGiven || 0,
-                reviewsCount: stats.reviewsCount || 0,
-                averageRating: stats.averageRating || 0,
-                totalEarnings: 0, // This would need to be calculated from payments
+                listingsCount: listingsCount,
+                bookingsCount: bookingsCount,
+                reviewsCount: reviewsCount,
+                averageRating: averageRating,
+                totalEarnings: totalEarnings,
                 badges: badges,
             },
         }
