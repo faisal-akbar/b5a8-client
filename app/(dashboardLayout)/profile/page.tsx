@@ -1,4 +1,6 @@
 import { getUserInfo } from "@/services/auth/getUserInfo"
+import { getMyProfile } from "@/services/user/user.service"
+import { getOverviewStats } from "@/services/stats/stats.service"
 import { redirect } from "next/navigation"
 import { AdminProfile } from "@/components/profile/admin-profile"
 import { GuideProfile } from "@/components/profile/guide-profile"
@@ -15,65 +17,72 @@ export default async function ProfilePage() {
         redirect("/login?redirect=/profile")
     }
 
-    // Mock profile data - in real app, fetch from API based on user ID and role
-    const mockBaseProfile = {
-        id: userInfo.id || "1",
-        email: userInfo.email || "user@example.com",
-        name: userInfo.name || "User Name",
-        bio: "Passionate about exploring new cultures and sharing experiences with travelers from around the world.",
-        profilePic: userInfo.profilePic || null,
-        languages: ["English", "Spanish"],
-        isActive: "ACTIVE" as const,
-        isVerified: true,
-        createdAt: new Date("2023-06-15"),
-        updatedAt: new Date(),
+    // Fetch real profile data from API
+    const profileResult = await getMyProfile()
+    
+    if (!profileResult.success || !profileResult.data) {
+        redirect("/login?redirect=/profile")
+    }
+
+    const profileData = profileResult.data
+    const baseProfile = {
+        id: profileData.id,
+        email: profileData.email,
+        name: profileData.name,
+        bio: profileData.bio || null,
+        profilePic: profileData.profilePic || null,
+        languages: profileData.languages || [],
+        isActive: profileData.isActive || "ACTIVE",
+        isVerified: profileData.isVerified || false,
+        createdAt: new Date(profileData.createdAt),
+        updatedAt: new Date(profileData.updatedAt),
     }
 
     // Render appropriate profile based on role
     if (userInfo.role === "ADMIN" || userInfo.role === "SUPER_ADMIN") {
+        // Fetch admin stats
+        const statsResult = await getOverviewStats()
+        const stats = statsResult.success ? statsResult.data : null
+
         const adminProfile: AdminProfileType = {
-            ...mockBaseProfile,
+            ...baseProfile,
             role: userInfo.role as "ADMIN" | "SUPER_ADMIN",
             admin: {
-                id: mockBaseProfile.id,
+                id: baseProfile.id,
             },
         }
 
         return (
             <div className="min-h-screen bg-muted/30 py-8">
                 <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-                    <AdminProfile profile={adminProfile} />
+                    <AdminProfile profile={adminProfile} stats={stats} />
                 </div>
             </div>
         )
     }
 
     if (userInfo.role === "GUIDE") {
+        const stats = profileData.stats || {}
+        const badges = (profileData.badges || []).map((badge: string, index: number) => ({
+            id: `badge-${index}`,
+            badge: badge as any,
+            createdAt: new Date(),
+        }))
+
         const guideProfile: GuideProfileType = {
-            ...mockBaseProfile,
+            ...baseProfile,
             role: "GUIDE",
             guide: {
-                id: mockBaseProfile.id,
-                expertise: ["History", "Food & Drink", "Music", "Architecture"],
-                dailyRate: 150,
-                stripeAccountId: "acct_123456789",
-                listingsCount: 8,
-                bookingsCount: 127,
-                reviewsCount: 94,
-                averageRating: 4.9,
-                totalEarnings: 18500,
-                badges: [
-                    {
-                        id: "1",
-                        badge: "SUPER_GUIDE" as const,
-                        createdAt: new Date("2023-12-01"),
-                    },
-                    {
-                        id: "2",
-                        badge: "HIGHLY_RATED" as const,
-                        createdAt: new Date("2024-01-15"),
-                    },
-                ],
+                id: baseProfile.id,
+                expertise: profileData.expertise || [],
+                dailyRate: profileData.dailyRate || 0,
+                stripeAccountId: profileData.stripeAccountId || null,
+                listingsCount: stats.activeListings || 0,
+                bookingsCount: stats.toursGiven || 0,
+                reviewsCount: stats.reviewsCount || 0,
+                averageRating: stats.averageRating || 0,
+                totalEarnings: 0, // This would need to be calculated from payments
+                badges: badges,
             },
         }
 
@@ -87,15 +96,17 @@ export default async function ProfilePage() {
     }
 
     if (userInfo.role === "TOURIST") {
+        // For tourist, we need to fetch additional stats (bookings, reviews, wishlist)
+        // These would ideally come from the API, but for now we'll use defaults
         const touristProfile: TouristProfileType = {
-            ...mockBaseProfile,
+            ...baseProfile,
             role: "TOURIST",
             tourist: {
-                id: mockBaseProfile.id,
-                travelPreferences: ["Culture", "Food", "History", "Adventure"],
-                bookingsCount: 12,
-                reviewsCount: 8,
-                wishlistCount: 5,
+                id: baseProfile.id,
+                travelPreferences: profileData.travelPreferences || [],
+                bookingsCount: 0, // Would need to fetch from bookings API
+                reviewsCount: 0, // Would need to fetch from reviews API
+                wishlistCount: 0, // Would need to fetch from wishlist API
             },
         }
 

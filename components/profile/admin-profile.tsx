@@ -11,15 +11,23 @@ import Link from "next/link"
 
 interface AdminProfileProps {
     profile: AdminProfileType
+    stats?: {
+        totalUsers?: number
+        totalGuides?: number
+        totalTours?: number
+        totalTourists?: number
+        totalBookings?: number
+        pendingVerifications?: number
+    } | null
 }
 
-export function AdminProfile({ profile }: AdminProfileProps) {
-    // Mock stats - in real app, fetch from API
-    const stats = {
-        totalUsers: 12847,
-        totalGuides: 3421,
-        totalTours: 8934,
-        pendingVerifications: 23,
+export function AdminProfile({ profile, stats }: AdminProfileProps) {
+    // Use real stats if available, otherwise show defaults
+    const displayStats = {
+        totalUsers: stats?.totalUsers ?? 0,
+        totalGuides: stats?.totalGuides ?? 0,
+        totalTours: stats?.totalTours ?? 0,
+        pendingVerifications: stats?.pendingVerifications ?? 0,
     }
 
     const recentActivity = [
@@ -39,6 +47,8 @@ export function AdminProfile({ profile }: AdminProfileProps) {
                 joinedDate={profile.createdAt}
                 isVerified={profile.isVerified}
                 languages={profile.languages}
+                profileId={profile.id}
+                role={profile.role}
             />
 
             {/* Admin Badge */}
@@ -68,28 +78,28 @@ export function AdminProfile({ profile }: AdminProfileProps) {
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     <ProfileStatsCard
                         title="Total Users"
-                        value={stats.totalUsers.toLocaleString()}
+                        value={displayStats.totalUsers.toLocaleString()}
                         description="Platform members"
                         icon={Users}
                         index={0}
                     />
                     <ProfileStatsCard
                         title="Active Guides"
-                        value={stats.totalGuides.toLocaleString()}
+                        value={displayStats.totalGuides.toLocaleString()}
                         description="Verified guides"
                         icon={Shield}
                         index={1}
                     />
                     <ProfileStatsCard
                         title="Total Tours"
-                        value={stats.totalTours.toLocaleString()}
+                        value={displayStats.totalTours.toLocaleString()}
                         description="Active listings"
                         icon={MapPin}
                         index={2}
                     />
                     <ProfileStatsCard
                         title="Pending Reviews"
-                        value={stats.pendingVerifications}
+                        value={displayStats.pendingVerifications}
                         description="Awaiting approval"
                         icon={TrendingUp}
                         index={3}

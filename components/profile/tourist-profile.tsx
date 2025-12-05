@@ -74,6 +74,9 @@ export function TouristProfile({ profile }: TouristProfileProps) {
                 joinedDate={profile.createdAt}
                 isVerified={profile.isVerified}
                 languages={profile.languages}
+                profileId={profile.id}
+                role={profile.role}
+                travelPreferences={profile.tourist.travelPreferences}
             />
 
             {/* Tourist Stats */}

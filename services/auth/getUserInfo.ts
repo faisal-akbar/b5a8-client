@@ -50,7 +50,6 @@ export const getUserInfo = async (): Promise<UserInfo | any> => {
                 name: result.data.name || verifiedToken.name || "Unknown User",
                 email: result.data.email || verifiedToken.email || "",
                 role: result.data.role || verifiedToken.role || null,
-                needPasswordChange: result.data.needPasswordChange || false,
                 ...result.data
             };
         }
@@ -61,7 +60,6 @@ export const getUserInfo = async (): Promise<UserInfo | any> => {
             name: verifiedToken.name || "Unknown User",
             email: verifiedToken.email || "",
             role: verifiedToken.role || null,
-            needPasswordChange: false,
         };
     } catch (error: any) {
         // Token is invalid or expired, user is not logged in

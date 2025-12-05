@@ -6,7 +6,7 @@ const BACKEND_API_URL = process.env.NEXT_PUBLIC_BASE_API_URL || "http://localhos
 
 // /auth/login
 const serverFetchHelper = async (endpoint: string, options: RequestInit): Promise<Response> => {
-    const { headers, ...restOptions } = options;
+    const { headers, body, ...restOptions } = options;
     const accessToken = await getCookie("accessToken");
 
     //to stop recursion loop
@@ -14,12 +14,22 @@ const serverFetchHelper = async (endpoint: string, options: RequestInit): Promis
         await getNewAccessToken();
     }
 
+    // For FormData, don't set Content-Type - let fetch set it with boundary
+    const isFormData = body instanceof FormData;
+    const requestHeaders: HeadersInit = {
+        Cookie: accessToken ? `accessToken=${accessToken}` : "",
+        ...(isFormData ? {} : headers), // Only include custom headers if not FormData
+    };
+
+    // If not FormData, merge any additional headers
+    if (!isFormData && headers) {
+        Object.assign(requestHeaders, headers);
+    }
+
     try {
         const response = await fetch(`${BACKEND_API_URL}${endpoint}`, {
-            headers: {
-                Cookie: accessToken ? `accessToken=${accessToken}` : "",
-                ...headers,
-            },
+            headers: requestHeaders,
+            body,
             ...restOptions,
         })
 

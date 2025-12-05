@@ -68,6 +68,10 @@ export function GuideProfile({ profile }: GuideProfileProps) {
                 joinedDate={profile.createdAt}
                 isVerified={profile.isVerified}
                 languages={profile.languages}
+                profileId={profile.id}
+                role={profile.role}
+                expertise={profile.guide.expertise}
+                dailyRate={profile.guide.dailyRate}
             />
 
             {/* Guide Stats */}

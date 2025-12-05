@@ -8,6 +8,7 @@ export interface GetUserByIdParams {
 
 export interface UpdateUserParams {
   id: string;
+  name?: string;
   bio?: string;
   languages?: string[];
   travelPreferences?: string[];
@@ -141,16 +142,20 @@ export async function updateUser({ id, ...params }: UpdateUserParams) {
   try {
     const formData = new FormData();
     
-    if (params.bio) formData.append("bio", params.bio);
+    if (params.name) formData.append("name", params.name);
+    if (params.bio !== undefined) formData.append("bio", params.bio || "");
     if (params.languages) formData.append("languages", JSON.stringify(params.languages));
     if (params.travelPreferences) formData.append("travelPreferences", JSON.stringify(params.travelPreferences));
     if (params.expertise) formData.append("expertise", JSON.stringify(params.expertise));
     if (params.dailyRate !== undefined) formData.append("dailyRate", params.dailyRate.toString());
     if (params.profilePic) formData.append("profilePic", params.profilePic);
     
+    // For FormData, we need to let the browser set Content-Type with boundary
+    // So we don't set it explicitly - the fetch API will handle it
     const response = await serverFetch.patch(`/user/${id}`, {
       body: formData,
-    });
+      // Don't set Content-Type - fetch will set it automatically for FormData
+    } as any);
     
     const data = await response.json();
     

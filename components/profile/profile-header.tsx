@@ -20,6 +20,12 @@ interface ProfileHeaderProps {
     coverImage?: string
     languages?: string[]
     onEditClick?: () => void
+    // Full profile data for edit dialog
+    profileId?: string
+    role?: "TOURIST" | "GUIDE" | "ADMIN" | "SUPER_ADMIN"
+    expertise?: string[]
+    dailyRate?: number
+    travelPreferences?: string[]
 }
 
 export function ProfileHeader({
@@ -33,6 +39,11 @@ export function ProfileHeader({
     coverImage,
     languages,
     onEditClick,
+    profileId,
+    role,
+    expertise,
+    dailyRate,
+    travelPreferences,
 }: ProfileHeaderProps) {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
@@ -44,9 +55,9 @@ export function ProfileHeader({
         }
     }
 
-    const handleSaveProfile = (data: any) => {
-        console.log("Saving profile data:", data)
-        // TODO: Implement API call to save profile
+    const handleSaveProfile = () => {
+        // Profile is saved in EditProfileDialog, this is just a callback
+        // The dialog handles the API call and refresh
     }
 
     return (
@@ -216,18 +227,25 @@ export function ProfileHeader({
             </Card>
 
             {/* Edit Profile Dialog */}
-            <EditProfileDialog
-                open={isEditDialogOpen}
-                onOpenChange={setIsEditDialogOpen}
-                profile={{
-                    name,
-                    email,
-                    bio,
-                    profilePic,
-                    languages: languages || [],
-                }}
-                onSave={handleSaveProfile}
-            />
+            {profileId && (
+                <EditProfileDialog
+                    open={isEditDialogOpen}
+                    onOpenChange={setIsEditDialogOpen}
+                    profile={{
+                        id: profileId,
+                        name,
+                        email,
+                        bio,
+                        profilePic,
+                        languages: languages || [],
+                        role,
+                        expertise,
+                        dailyRate,
+                        travelPreferences,
+                    }}
+                    onSave={handleSaveProfile}
+                />
+            )}
         </>
     )
 }
