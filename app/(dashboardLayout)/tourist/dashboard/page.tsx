@@ -3,6 +3,7 @@ import { TouristDashboardClient } from "./tourist-dashboard-client"
 import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton"
 import { getMyBookings } from "@/services/booking/booking.service"
 import { getMyWishlist } from "@/services/wishlist/wishlist.service"
+import { getMyReviews } from "@/services/review/review.service"
 
 export const dynamic = "force-dynamic"
 
@@ -111,6 +112,21 @@ type WishlistTableItem = {
   listingId: string
 }
 
+type TouristReview = {
+  id: string
+  rating: number
+  comment: string
+  createdAt: string
+  listing: {
+    title: string
+  } | null
+  guide: {
+    user: {
+      name: string
+    }
+  } | null
+}
+
 // Transform API booking to table booking
 function transformBooking(apiBooking: ApiBooking): Booking {
   try {
@@ -159,11 +175,12 @@ function transformWishlistItem(item: WishlistItem): WishlistTableItem {
 export default async function TouristDashboardPage() {
   try {
     // Fetch all data in parallel
-    const [upcomingResult, pendingResult, pastResult, wishlistResult] = await Promise.all([
+    const [upcomingResult, pendingResult, pastResult, wishlistResult, reviewsResult] = await Promise.all([
       getMyBookings({ type: "upcoming", status: "CONFIRMED" }),
       getMyBookings({ status: "PENDING" }),
       getMyBookings({ type: "past", status: "COMPLETED" }),
       getMyWishlist({}),
+      getMyReviews({ limit: 50 }),
     ])
 
     // Process upcoming bookings
@@ -184,6 +201,11 @@ export default async function TouristDashboardPage() {
     // Process wishlist
     const wishlistItems: WishlistTableItem[] = wishlistResult.success && wishlistResult.data
       ? (wishlistResult.data.wishlist || []).map(transformWishlistItem)
+      : []
+
+    // Process reviews
+    const reviews: TouristReview[] = reviewsResult.success && reviewsResult.data
+      ? (reviewsResult.data.data || [])
       : []
 
     // Calculate stats from real data
@@ -209,6 +231,7 @@ export default async function TouristDashboardPage() {
           pendingBookings={pendingBookings}
           pastBookings={pastBookings}
           wishlistItems={wishlistItems}
+          reviews={reviews}
           stats={stats}
         />
       </Suspense>

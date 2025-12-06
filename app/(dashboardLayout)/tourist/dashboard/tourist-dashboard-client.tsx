@@ -7,6 +7,7 @@ import { DataTable } from "@/components/dashboard/data-table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent } from "@/components/ui/card"
 import { CalendarDays, MapPin, Heart, Star, MessageCircle, MoreHorizontal, Eye, Loader2, Trash2, Users } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
@@ -51,6 +52,21 @@ type WishlistTableItem = {
   listingId: string
 }
 
+type TouristReview = {
+  id: string
+  rating: number
+  comment: string
+  createdAt: string
+  listing: {
+    title: string
+  } | null
+  guide: {
+    user: {
+      name: string
+    }
+  } | null
+}
+
 type Stats = {
   upcomingTrips: number
   completedTrips: number
@@ -63,6 +79,7 @@ interface TouristDashboardClientProps {
   pendingBookings: Booking[]
   pastBookings: Booking[]
   wishlistItems: WishlistTableItem[]
+  reviews: TouristReview[]
   stats: Stats
 }
 
@@ -71,6 +88,7 @@ export function TouristDashboardClient({
   pendingBookings: initialPending,
   pastBookings: initialPast,
   wishlistItems: initialWishlist,
+  reviews,
   stats,
 }: TouristDashboardClientProps) {
   const [wishlistItems, setWishlistItems] = useState<WishlistTableItem[]>(initialWishlist)
@@ -503,6 +521,10 @@ export function TouristDashboardClient({
                       </Badge>
                     )}
                   </TabsTrigger>
+                  <TabsTrigger value="reviews">
+                    <Star className="mr-1 h-4 w-4" />
+                    Reviews
+                  </TabsTrigger>
                 </TabsList>
                 <Link href="/explore">
                   <Button>Discover More Tours</Button>
@@ -547,6 +569,64 @@ export function TouristDashboardClient({
                   searchPlaceholder="Search wishlist..."
                   initialColumnVisibility={{ id: false }}
                 />
+              </TabsContent>
+
+              <TabsContent value="reviews">
+                {reviews.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Star className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No reviews yet</h3>
+                    <p className="text-muted-foreground">Complete a trip and leave a review to see it here</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {reviews.map((review) => (
+                      <Card key={review.id}>
+                        <CardContent className="p-6">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="flex items-center gap-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`h-4 w-4 ${
+                                        i < review.rating
+                                          ? "fill-primary text-primary"
+                                          : "text-muted-foreground"
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-sm font-medium">{review.rating}/5</span>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-2">
+                                {review.listing?.title || "N/A"}
+                              </p>
+                              {review.guide?.user?.name && (
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  Guide: {review.guide.user.name}
+                                </p>
+                              )}
+                              {review.comment && (
+                                <p className="text-foreground">{review.comment}</p>
+                              )}
+                              <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
+                                <span>
+                                  {new Date(review.createdAt).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </motion.div>
