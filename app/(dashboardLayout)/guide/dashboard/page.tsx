@@ -7,7 +7,6 @@ import { getMyBookings } from "@/services/booking/booking.service"
 import { getMyProfile } from "@/services/user/user.service"
 import { getMyReviews } from "@/services/review/review.service"
 import { getGuideBadges } from "@/services/badge/badge.service"
-import { getReviews } from "@/services/review/review.service"
 import { getGuideInfoStats } from "@/services/stats/stats.service"
 import type { GuideListing, GuideBooking, GuideStats, GuideReview, GuideBadge, GuidePayment } from "@/types/guide"
 
@@ -48,13 +47,14 @@ export default async function GuideDashboardPage({ searchParams }: PageProps) {
       getGuideInfoStats(),
     ])
 
-    // Process listings - fetch reviews for each to calculate average rating
+    // Process listings - use averageRating from API response
     let processedListings: GuideListing[] = []
     let listingsTotal = 0
     let listingsTotalPages = 0
     
     if (listingsResult.success && listingsResult.data) {
       // Listing service returns: { success: true, data: { data: [...listings], meta: {...} } }
+      // averageRating is already included in the API response
       const listings = Array.isArray(listingsResult.data)
         ? listingsResult.data
         : (listingsResult.data.data || [])
@@ -65,57 +65,18 @@ export default async function GuideDashboardPage({ searchParams }: PageProps) {
       listingsTotal = listingsMeta.total ?? listings.length
       listingsTotalPages = listingsMeta.totalPages ?? (listings.length > 0 ? Math.max(1, Math.ceil(listingsTotal / listingsLimit)) : 0)
 
-      // Debug logging for listings pagination
-      // console.log("[SERVER] Listings pagination:", {
-      //   activeTab,
-      //   page,
-      //   listingsLimit,
-      //   listingsResultSuccess: listingsResult.success,
-      //   listingsDataStructure: listingsResult.data ? (Array.isArray(listingsResult.data) ? "array" : "object") : "null",
-      //   listingsCount: listings.length,
-      //   listingsTotal,
-      //   listingsTotalPages,
-      //   listingsMeta,
-      //   firstListing: listings[0]?.id,
-      // })
-      
-      // Fetch reviews for each listing to calculate average rating
-      const listingsWithRatings = await Promise.all(
-        listings.map(async (listing: any) => {
-          try {
-            // Fetch reviews for this specific listing
-            const reviewsResult = await getReviews({ listingId: listing.id, page: 1, limit: 100 })
-            if (reviewsResult.success && reviewsResult.data) {
-              const listingReviews = reviewsResult.data.data || []
-
-              if (listingReviews.length > 0) {
-                const totalRating = listingReviews.reduce(
-                  (sum: number, review: any) => sum + (review.rating || 0),
-                  0
-                )
-                const averageRating = totalRating / listingReviews.length
-                return {
-                  ...listing,
-                  averageRating: Math.round(averageRating * 10) / 10,
-                  reviewsCount: listingReviews.length,
-                  bookingsCount: listing._count?.bookings || 0,
-                }
-              }
-            }
-          } catch (error) {
-            console.error(`Error fetching reviews for listing ${listing.id}:`, error)
-          }
-          // Return listing with reviewsCount from _count if no reviews found
-          return {
-            ...listing,
-            averageRating: 0,
-            reviewsCount: listing._count?.reviews || 0,
-            bookingsCount: listing._count?.bookings || 0,
-          }
-        })
-      )
-      
-      processedListings = listingsWithRatings
+      // Use averageRating directly from API response
+      // Also ensure reviewsCount and bookingsCount are available from _count
+      processedListings = listings.map((listing: any) => ({
+        ...listing,
+        // averageRating is already in the API response, use it as-is
+        // If not present, default to null
+        averageRating: listing.averageRating ?? null,
+        // Support both _count.reviews (from API) and reviewsCount (if already transformed)
+        reviewsCount: listing._count?.reviews ?? listing.reviewsCount ?? 0,
+        // Support both _count.bookings (from API) and bookingsCount (if already transformed)
+        bookingsCount: listing._count?.bookings ?? listing.bookingsCount ?? 0,
+      }))
     }
 
     // Process upcoming bookings with pagination

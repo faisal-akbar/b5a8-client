@@ -647,14 +647,22 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
       accessorKey: "averageRating",
       header: "Rating",
       cell: ({ row }) => {
-        // averageRating can be null from API
-        const rating = row.original.averageRating ?? null
+        // averageRating can be null, undefined, or a number from API
+        // Server sets averageRating: 0 when there are no reviews
+        // Server sets averageRating: <calculated value> when there are reviews
+        const rating = row.original.averageRating
         // Support both _count.reviews (from API) and reviewsCount (transformed)
         const reviews = row.original._count?.reviews ?? row.original.reviewsCount ?? 0
+        // Show rating if it's a valid number > 0, or if it's 0 but there are reviews (edge case)
+        // Otherwise show N/A (no reviews or invalid rating)
+        const hasValidRating = 
+          typeof rating === "number" && 
+          !isNaN(rating) && 
+          (rating > 0 || (rating === 0 && reviews > 0))
         return (
           <div className="flex items-center gap-1">
             <Star className="h-3 w-3 fill-primary text-primary" />
-            {rating !== null && rating > 0 ? rating.toFixed(1) : "N/A"} ({reviews})
+            {hasValidRating ? rating.toFixed(1) : "N/A"} ({reviews})
           </div>
         )
       },
