@@ -6,6 +6,7 @@ import { DataTable } from "@/components/data-table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -35,7 +36,7 @@ import { getMyBookings, updateBookingStatus, getBookingById } from "@/services/b
 import { getPayments } from "@/services/payment/payment.service"
 import { getMyProfile } from "@/services/user/user.service"
 import { deleteListing } from "@/services/listing/listing.service"
-import { getReviews } from "@/services/review/review.service"
+import { getMyReviews } from "@/services/review/review.service"
 import { getGuideBadges } from "@/services/badge/badge.service"
 import type { GuideListing, GuideBooking, GuideStats, GuideReview, GuideBadge, GuidePayment } from "@/types/guide"
 import { useRouter } from "next/navigation"
@@ -63,6 +64,11 @@ export default function GuideDashboardPage() {
   const [pendingRequests, setPendingRequests] = useState<GuideBooking[]>([])
   const [myListings, setMyListings] = useState<GuideListing[]>([])
   const [reviews, setReviews] = useState<GuideReview[]>([])
+  const [reviewsPage, setReviewsPage] = useState(1)
+  const [reviewsLimit, setReviewsLimit] = useState(5)
+  const [reviewsTotal, setReviewsTotal] = useState(0)
+  const [reviewsTotalPages, setReviewsTotalPages] = useState(0)
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false)
   const [badges, setBadges] = useState<GuideBadge[]>([])
   const [guideId, setGuideId] = useState<string | null>(null)
 
@@ -70,7 +76,7 @@ export default function GuideDashboardPage() {
     try {
       setIsLoading(true)
       
-      // Fetch all data in parallel
+      // Fetch all data in parallel (reviews will be fetched separately with pagination)
       const [listingsResult, upcomingBookingsResult, pendingBookingsResult, paymentsResult, profileResult] = await Promise.all([
         getMyListings({ page: 1, limit: 100 }),
         getMyBookings({ status: "CONFIRMED", type: "upcoming" }),
@@ -83,11 +89,20 @@ export default function GuideDashboardPage() {
       let processedListings: GuideListing[] = []
       if (listingsResult.success && listingsResult.data) {
         // Service returns: { success: true, data: { data: [...listings], meta: {...} } }
-        processedListings = listingsResult.data.data || []
+        // API response includes averageRating, _count.reviews, and _count.bookings
+        processedListings = (listingsResult.data.data || []).map((listing: any) => {
+          return {
+            ...listing,
+            reviewsCount: listing._count?.reviews || 0,
+            bookingsCount: listing._count?.bookings || 0,
+            averageRating: listing.averageRating || 0,
+          }
+        })
+        
         setMyListings(processedListings)
         
         const activeListings = processedListings.filter((l) => l.isActive)
-        setStats((prev) => ({
+        setStats((prev: GuideStats) => ({
           ...prev,
           totalTours: processedListings.length,
           activeTours: activeListings.length,
@@ -111,7 +126,7 @@ export default function GuideDashboardPage() {
           return bookingDate >= now && bookingDate <= thirtyDaysFromNow
         }).length
         
-        setStats((prev) => ({
+        setStats((prev: GuideStats) => ({
           ...prev,
           upcomingTours: upcomingCount,
         }))
@@ -144,7 +159,7 @@ export default function GuideDashboardPage() {
           })
           .reduce((sum: number, p: GuidePayment) => sum + p.amount, 0)
         
-        setStats((prev) => ({
+        setStats((prev: GuideStats) => ({
           ...prev,
           totalEarnings,
           thisMonthEarnings,
@@ -154,30 +169,32 @@ export default function GuideDashboardPage() {
       // Process profile for ratings and badges
       if (profileResult.success && profileResult.data) {
         const profile = profileResult.data
-        if (profile.role === "GUIDE" && profile.guide) {
-          setGuideId(profile.guide.id)
-          setStats((prev) => ({
-            ...prev,
-            totalReviews: profile.guide.reviewsCount || 0,
-            averageRating: profile.guide.averageRating || 0,
-          }))
-
-          // Fetch badges
-          const badgesResult = await getGuideBadges(profile.guide.id)
-          if (badgesResult.success && badgesResult.data) {
-            setBadges(badgesResult.data.data || [])
+        if (profile.role === "GUIDE") {
+          // Get guide ID - it might be in profile.guide.id or we need to fetch it
+          // For now, we'll use stats if available, or calculate from reviews
+          const stats = (profile as any).stats || {}
+          const guideId = (profile as any).guide?.id || null
+          
+          if (guideId) {
+            setGuideId(guideId)
           }
 
-          // Fetch reviews for all listings
-          if (processedListings.length > 0) {
-            const allReviews: GuideReview[] = []
-            for (const listing of processedListings) {
-              const reviewsResult = await getReviews({ listingId: listing.id, page: 1, limit: 100 })
-              if (reviewsResult.success && reviewsResult.data) {
-                allReviews.push(...(reviewsResult.data.data || []))
-              }
+          // Get average rating and reviews count from stats (calculated by backend)
+          const averageRating = stats.averageRating ?? 0
+          const reviewsCount = stats.reviewsCount ?? 0
+          
+          setStats((prev: GuideStats) => ({
+            ...prev,
+            totalReviews: reviewsCount,
+            averageRating: averageRating,
+          }))
+
+          // Fetch badges if we have guide ID
+          if (guideId) {
+            const badgesResult = await getGuideBadges(guideId)
+            if (badgesResult.success && badgesResult.data) {
+              setBadges(badgesResult.data.data || [])
             }
-            setReviews(allReviews)
           }
         }
       }
@@ -192,6 +209,51 @@ export default function GuideDashboardPage() {
   useEffect(() => {
     fetchDashboardData()
   }, [fetchDashboardData])
+
+  // Fetch reviews with pagination
+  const fetchReviews = useCallback(async (page: number, limit: number) => {
+    try {
+      setIsLoadingReviews(true)
+      const reviewsResult = await getMyReviews({ page, limit })
+      
+      if (reviewsResult.success && reviewsResult.data) {
+        const reviewsData = reviewsResult.data.data || []
+        const meta = reviewsResult.data.meta || {}
+        const total = meta.total ?? reviewsData.length
+        const totalPages = meta.totalPages ?? (reviewsData.length > 0 ? Math.max(1, Math.ceil(total / limit)) : 0)
+        
+        setReviews(reviewsData)
+        setReviewsTotal(total)
+        setReviewsTotalPages(totalPages)
+        
+        console.log("Reviews pagination:", { 
+          total, 
+          totalPages, 
+          currentPage: page,
+          limit: reviewsLimit,
+          reviewsCount: reviewsData.length,
+          meta
+        })
+      } else {
+        console.error("Failed to fetch reviews:", reviewsResult)
+        setReviews([])
+        setReviewsTotal(0)
+        setReviewsTotalPages(0)
+      }
+    } catch (error) {
+      console.error("Error fetching reviews:", error)
+      setReviews([])
+      setReviewsTotal(0)
+      setReviewsTotalPages(0)
+    } finally {
+      setIsLoadingReviews(false)
+    }
+  }, [])
+
+  // Handle reviews pagination
+  useEffect(() => {
+    fetchReviews(reviewsPage, reviewsLimit)
+  }, [reviewsPage, reviewsLimit, fetchReviews])
 
   // Refetch data when refresh query param is present (e.g., after creating a listing)
   useEffect(() => {
@@ -627,14 +689,13 @@ export default function GuideDashboardPage() {
             <StatCard
               title="Total Earnings"
               value={`$${stats.totalEarnings.toLocaleString()}`}
-              description={`+$${stats.thisMonthEarnings.toLocaleString()} this month`}
+              description={stats.thisMonthEarnings > 0 ? `+$${stats.thisMonthEarnings.toLocaleString()} this month` : "No earnings this month"}
               icon={DollarSign}
-              trend={{ value: 12.5, isPositive: true }}
               index={0}
             />
             <StatCard
               title="Upcoming Tours"
-              value={stats.upcomingTours}
+              value={stats.upcomingTours.toString()}
               description="Next 30 days"
               icon={CalendarDays}
               index={1}
@@ -642,14 +703,13 @@ export default function GuideDashboardPage() {
             <StatCard
               title="Average Rating"
               value={stats.averageRating > 0 ? stats.averageRating.toFixed(1) : "0.0"}
-              description={`From ${stats.totalReviews} reviews`}
+              description={stats.totalReviews > 0 ? `From ${stats.totalReviews} review${stats.totalReviews !== 1 ? "s" : ""}` : "No reviews yet"}
               icon={Star}
-              trend={{ value: 2.3, isPositive: true }}
               index={2}
             />
             <StatCard
               title="Active Tours"
-              value={stats.activeTours}
+              value={stats.activeTours.toString()}
               description={`${stats.totalTours} total listings`}
               icon={TrendingUp}
               index={3}
@@ -675,11 +735,6 @@ export default function GuideDashboardPage() {
                   <TabsTrigger value="listings">My Tours</TabsTrigger>
                   <TabsTrigger value="reviews">
                     Reviews
-                    {reviews.length > 0 && (
-                      <Badge className="ml-2" variant="secondary">
-                        {reviews.length}
-                      </Badge>
-                    )}
                   </TabsTrigger>
                 </TabsList>
                 <div className="flex gap-2">
@@ -729,56 +784,131 @@ export default function GuideDashboardPage() {
               </TabsContent>
 
               <TabsContent value="reviews">
-                {reviews.length === 0 ? (
+                {isLoadingReviews ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    <p className="mt-4 text-muted-foreground">Loading reviews...</p>
+                  </div>
+                ) : reviews.length === 0 ? (
                   <div className="text-center py-12">
                     <Star className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold mb-2">No reviews yet</h3>
                     <p className="text-muted-foreground">Reviews from tourists will appear here</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {reviews.map((review) => (
-                      <Card key={review.id}>
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <div className="flex items-center gap-1">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className={`h-4 w-4 ${
-                                        i < review.rating
-                                          ? "fill-primary text-primary"
-                                          : "text-muted-foreground"
-                                      }`}
-                                    />
-                                  ))}
+                  <>
+                    <div className="space-y-4">
+                      {reviews.map((review) => (
+                        <Card key={review.id}>
+                          <CardContent className="p-6">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <div className="flex items-center gap-1">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star
+                                        key={i}
+                                        className={`h-4 w-4 ${
+                                          i < review.rating
+                                            ? "fill-primary text-primary"
+                                            : "text-muted-foreground"
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                  <span className="text-sm font-medium">{review.rating}/5</span>
                                 </div>
-                                <span className="text-sm font-medium">{review.rating}/5</span>
-                              </div>
-                              <p className="text-sm text-muted-foreground mb-2">
-                                {review.listing?.title || "N/A"}
-                              </p>
-                              {review.comment && (
-                                <p className="text-foreground">{review.comment}</p>
-                              )}
-                              <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
-                                <span>{review.tourist?.user?.name || "Anonymous"}</span>
-                                <span>
-                                  {new Date(review.createdAt).toLocaleDateString("en-US", {
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                  })}
-                                </span>
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  {review.listing?.title || "N/A"}
+                                </p>
+                                {review.comment && (
+                                  <p className="text-foreground">{review.comment}</p>
+                                )}
+                                <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
+                                  <span>{review.tourist?.user?.name || "Anonymous"}</span>
+                                  <span>
+                                    {new Date(review.createdAt).toLocaleDateString("en-US", {
+                                      year: "numeric",
+                                      month: "short",
+                                      day: "numeric",
+                                    })}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                    
+                    {/* Pagination Controls */}
+                    {reviews.length > 0 && (
+                      <div className="mt-6 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-muted-foreground">Rows per page</p>
+                          <Select
+                            value={reviewsLimit.toString()}
+                            onValueChange={(value) => {
+                              setReviewsLimit(Number(value))
+                              setReviewsPage(1) // Reset to first page when changing limit
+                            }}
+                          >
+                            <SelectTrigger className="h-8 w-[70px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[5, 10, 20, 50].map((size) => (
+                                <SelectItem key={size} value={size.toString()}>
+                                  {size}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-muted-foreground">
+                            Page {reviewsPage} of {reviewsTotalPages || 1} ({reviewsTotal || reviews.length} total)
+                          </p>
+                          {reviewsTotalPages > 1 && (
+                            <div className="flex gap-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setReviewsPage(1)}
+                                disabled={reviewsPage === 1 || isLoadingReviews}
+                              >
+                                First
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setReviewsPage((prev) => Math.max(1, prev - 1))}
+                                disabled={reviewsPage === 1 || isLoadingReviews}
+                              >
+                                Previous
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setReviewsPage((prev) => Math.min(reviewsTotalPages, prev + 1))}
+                                disabled={reviewsPage === reviewsTotalPages || isLoadingReviews}
+                              >
+                                Next
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setReviewsPage(reviewsTotalPages)}
+                                disabled={reviewsPage === reviewsTotalPages || isLoadingReviews}
+                              >
+                                Last
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </TabsContent>
             </Tabs>

@@ -42,3 +42,4 @@ next-env.d.ts
 
 /b5a8-server
 /reference_project
+.cursor/

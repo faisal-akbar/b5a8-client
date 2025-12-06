@@ -164,4 +164,37 @@ export async function deleteReview(id: string) {
   }
 }
 
+/**
+ * Get my reviews for a guide
+ */
+export async function getMyReviews({ page = 1, limit = 10 }: { page?: number; limit?: number } = {}) {
+  try {
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    
+    const response = await serverFetch.get(`/reviews/my/reviews?${queryParams}`);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to get my reviews");
+    }
+    
+    // Backend returns: { success: true, data: [...reviews], meta: {...} }
+    // So data.data is the array of reviews, and data.meta is pagination info
+    return {
+      success: true,
+      data: {
+        data: Array.isArray(data.data) ? data.data : [],
+        meta: data.meta || {},
+      },
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error?.message || "Failed to get my reviews",
+    };
+  }
+}
 

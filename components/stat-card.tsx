@@ -21,14 +21,14 @@ export function StatCard({ title, value, description, icon: Icon, trend, index =
       className="animate-in fade-in slide-in-from-bottom-4"
       style={{ animationDelay: `${index * 100}ms`, animationFillMode: "backwards" }}
     >
-      <Card className="overflow-hidden transition-all hover:shadow-lg">
+      <Card className="overflow-hidden transition-all hover:shadow-lg h-full flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">{title}</CardTitle>
           <div className="rounded-full bg-primary/10 p-2">
             <Icon className="h-4 w-4 text-primary" />
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 flex flex-col">
           <div className="text-2xl font-bold">{value}</div>
           {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
           {trend && (
