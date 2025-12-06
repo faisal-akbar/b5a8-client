@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -12,9 +11,7 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { MapPin, CalendarDays, Users, Loader2, Mail, Clock, Tag, User } from "lucide-react"
-import { toast } from "sonner"
-import { updateBookingStatus } from "@/services/booking/booking.service"
+import { MapPin, CalendarDays, Users, Mail, Clock, Tag, User } from "lucide-react"
 
 interface BookingDetailsModalProps {
   isOpen: boolean
@@ -44,40 +41,7 @@ interface BookingDetailsModalProps {
 }
 
 export function BookingDetailsModal({ isOpen, onClose, booking, onSuccess }: BookingDetailsModalProps) {
-  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false)
-  const [isCancelling, setIsCancelling] = useState(false)
-
   if (!booking) return null
-
-  // Check if booking can be canceled (only CONFIRMED status)
-  const bookingStatus = booking.status.toUpperCase()
-  const canCancel = bookingStatus === "CONFIRMED"
-
-  const handleCancelBooking = async () => {
-    if (!booking.id) return
-
-    try {
-      setIsCancelling(true)
-      const result = await updateBookingStatus({ id: booking.id, status: "CANCELLED" })
-
-      if (result.success) {
-        toast.success("Booking canceled successfully. The date is now available for booking.")
-        setIsCancelDialogOpen(false)
-        onClose()
-        // Call onSuccess callback to refresh data
-        if (onSuccess) {
-          onSuccess()
-        }
-      } else {
-        toast.error(result.message || "Failed to cancel booking")
-      }
-    } catch (error) {
-      console.error("Error canceling booking:", error)
-      toast.error("An error occurred while canceling the booking")
-    } finally {
-      setIsCancelling(false)
-    }
-  }
 
   return (
     <>
@@ -217,53 +181,7 @@ export function BookingDetailsModal({ isOpen, onClose, booking, onSuccess }: Boo
               </div>
             </div>
 
-            <Separator />
-
-            {canCancel && (
-              <Button
-                variant="destructive"
-                className="w-full"
-                onClick={() => setIsCancelDialogOpen(true)}
-              >
-                Cancel Booking
-              </Button>
-            )}
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Cancel Booking Confirmation Dialog */}
-      <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cancel Booking</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to cancel this booking? Once canceled, the date will become available for other bookings. This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsCancelDialogOpen(false)}
-              disabled={isCancelling}
-            >
-              Keep Booking
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleCancelBooking}
-              disabled={isCancelling}
-            >
-              {isCancelling ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Canceling...
-                </>
-              ) : (
-                "Cancel Booking"
-              )}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

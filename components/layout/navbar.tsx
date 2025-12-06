@@ -99,7 +99,7 @@ export function Navbar() {
             ) : normalizedRole === "TOURIST" ? (
               <>
                 <NavLink href="/explore">Explore Tours</NavLink>
-                <NavLink href="/tourist/dashboard/bookings">My Bookings</NavLink>
+                <NavLink href="/tourist/dashboard">My Bookings</NavLink>
                 <NavLink href="/profile">Profile</NavLink>
                 <Button variant="ghost" size="sm" className="font-medium" onClick={handleLogout}>
                   Logout
@@ -167,7 +167,7 @@ export function Navbar() {
                       Explore Tours
                     </Button>
                   </Link>
-                  <Link href="/tourist/dashboard/bookings" onClick={() => setIsMenuOpen(false)}>
+                  <Link href="/tourist/dashboard" onClick={() => setIsMenuOpen(false)}>
                     <Button variant="ghost" size="sm" className="w-full justify-start font-medium">
                       My Bookings
                     </Button>

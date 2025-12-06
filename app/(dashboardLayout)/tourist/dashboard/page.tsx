@@ -17,6 +17,7 @@ interface Listing {
   price?: number
   tourFee: number
   duration?: number
+  durationDays?: number
   maxGroupSize?: number
   images: string[]
   category?: string
@@ -26,6 +27,15 @@ interface Listing {
     email: string
     profileImage?: string
     averageRating?: number
+    user?: {
+      id: string
+      name: string
+      profilePic: string | null
+    }
+  }
+  _count?: {
+    bookings: number
+    reviews: number
   }
 }
 
@@ -104,11 +114,14 @@ type Booking = {
 type WishlistTableItem = {
   id: string
   tourTitle: string
+  tourImage: string
   guide: string
   location: string
   category: string
   price: number
-  duration: number
+  durationDays: number
+  bookingsCount: number
+  reviewsCount: number
   listingId: string
 }
 
@@ -159,11 +172,14 @@ function transformWishlistItem(item: WishlistItem): WishlistTableItem {
     return {
       id: item.id,
       tourTitle: item.listing?.title || "Unknown Tour",
-      guide: item.listing?.guide?.name || "N/A",
-      location: item.listing?.location || item.listing?.city || "Unknown",
+      tourImage: item.listing?.images?.[0] || "/placeholder.svg",
+      guide: item.listing?.guide?.user?.name || "N/A",
+      location: item.listing?.city || "Unknown",
       category: item.listing?.category || "General",
-      price: item.listing?.price || item.listing?.tourFee || 0,
-      duration: item.listing?.duration || 0,
+      price: item.listing?.tourFee || 0,
+      durationDays: item.listing?.durationDays || item.listing?.duration || 0,
+      bookingsCount: item.listing?._count?.bookings || 0,
+      reviewsCount: item.listing?._count?.reviews || 0,
       listingId: item.listingId,
     }
   } catch (error) {

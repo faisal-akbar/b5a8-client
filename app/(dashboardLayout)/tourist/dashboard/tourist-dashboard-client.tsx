@@ -21,6 +21,9 @@ import {
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { removeFromWishlist } from "@/services/wishlist/wishlist.service"
+import { BookingDetailsModal } from "@/components/modals/booking-details-modal"
+import { getBookingById } from "@/services/booking/booking.service"
+import { toast } from "sonner"
 
 // Types
 type Booking = {
@@ -44,11 +47,14 @@ type Booking = {
 type WishlistTableItem = {
   id: string
   tourTitle: string
+  tourImage: string
   guide: string
   location: string
   category: string
   price: number
-  duration: number
+  durationDays: number
+  bookingsCount: number
+  reviewsCount: number
   listingId: string
 }
 
@@ -93,6 +99,8 @@ export function TouristDashboardClient({
 }: TouristDashboardClientProps) {
   const [wishlistItems, setWishlistItems] = useState<WishlistTableItem[]>(initialWishlist)
   const [removingWishlistId, setRemovingWishlistId] = useState<string | null>(null)
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
 
   // Handle removing item from wishlist
   const handleRemoveFromWishlist = async (listingId: string) => {
@@ -102,6 +110,39 @@ export function TouristDashboardClient({
       setWishlistItems(prev => prev.filter(item => item.listingId !== listingId))
     }
     setRemovingWishlistId(null)
+  }
+
+  // Handle viewing booking details
+  const handleViewBookingDetails = async (booking: Booking) => {
+    try {
+      const result = await getBookingById(booking.id)
+      if (result.success && result.data) {
+        // Transform the API data to match the Booking type
+        const transformedBooking: Booking = {
+          id: result.data.id,
+          tourTitle: result.data.listing?.title || "N/A",
+          tourImage: result.data.listing?.images?.[0] || "",
+          guide: result.data.listing?.guide?.user?.name || "N/A",
+          guideImage: result.data.listing?.guide?.user?.image || null,
+          location: result.data.listing?.location || "N/A",
+          city: result.data.listing?.city || "N/A",
+          date: result.data.date,
+          guests: result.data.numberOfGuests || 0,
+          price: result.data.listing?.tourFee || 0,
+          status: result.data.status.toLowerCase() as "confirmed" | "pending" | "completed" | "cancelled",
+          createdAt: result.data.createdAt,
+          paymentStatus: result.data.paymentStatus || "Pending",
+          rating: booking.rating,
+          reviewed: booking.reviewed,
+        }
+        setSelectedBooking(transformedBooking)
+        setIsDetailsModalOpen(true)
+      } else {
+        toast.error("Failed to load booking details")
+      }
+    } catch (error) {
+      toast.error("Failed to load booking details")
+    }
   }
 
   const upcomingColumns: ColumnDef<Booking>[] = [
@@ -216,6 +257,7 @@ export function TouristDashboardClient({
     {
       id: "actions",
       cell: ({ row }) => {
+        const booking = row.original
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -226,7 +268,7 @@ export function TouristDashboardClient({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleViewBookingDetails(booking)}>
                 <Eye className="mr-2 h-4 w-4" />
                 View details
               </DropdownMenuItem>
@@ -234,8 +276,6 @@ export function TouristDashboardClient({
                 <MessageCircle className="mr-2 h-4 w-4" />
                 Contact guide
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">Cancel booking</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )
@@ -337,7 +377,7 @@ export function TouristDashboardClient({
       header: "Rating",
       cell: ({ row }) => {
         const rating = row.original.rating
-        
+
         return rating ? (
           <div className="flex items-center gap-1">
             <Star className="h-3 w-3 fill-primary text-primary" />
@@ -354,6 +394,15 @@ export function TouristDashboardClient({
         const booking = row.original
         return (
           <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 bg-transparent"
+              onClick={() => handleViewBookingDetails(booking)}
+            >
+              <Eye className="mr-1 h-3 w-3" />
+              View Details
+            </Button>
             {!booking.reviewed ? (
               <Button size="sm" className="h-8">
                 <Star className="mr-1 h-3 w-3" />
@@ -381,11 +430,20 @@ export function TouristDashboardClient({
       header: "Tour",
       cell: ({ row }) => {
         return (
-          <div>
-            <div className="font-medium">{row.getValue("tourTitle")}</div>
-            <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-              <MapPin className="h-3 w-3" />
-              {row.original.location}
+          <div className="flex items-center gap-3">
+            <div className="relative h-12 w-16 overflow-hidden rounded">
+              <img
+                src={row.original.tourImage || "/placeholder.svg"}
+                alt={row.getValue("tourTitle")}
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div>
+              <div className="font-medium">{row.getValue("tourTitle")}</div>
+              <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                <MapPin className="h-3 w-3" />
+                {row.original.location}
+              </div>
             </div>
           </div>
         )
@@ -403,10 +461,11 @@ export function TouristDashboardClient({
       },
     },
     {
-      accessorKey: "duration",
+      accessorKey: "durationDays",
       header: "Duration",
       cell: ({ row }) => {
-        return `${row.getValue("duration")} hours`
+        const days = row.getValue("durationDays") as number
+        return `${days} ${days === 1 ? "day" : "days"}`
       },
     },
     {
@@ -419,6 +478,26 @@ export function TouristDashboardClient({
           currency: "USD",
         }).format(amount)
         return <div className="font-medium">{formatted}</div>
+      },
+    },
+    {
+      accessorKey: "bookingsCount",
+      header: "Bookings",
+      cell: ({ row }) => {
+        return <span className="text-sm">{row.getValue("bookingsCount")}</span>
+      },
+    },
+    {
+      accessorKey: "reviewsCount",
+      header: "Reviews",
+      cell: ({ row }) => {
+        const reviews = row.getValue("reviewsCount") as number
+        return (
+          <div className="flex items-center gap-1">
+            <Star className="h-3 w-3 text-muted-foreground" />
+            <span className="text-sm">{reviews}</span>
+          </div>
+        )
       },
     },
     {
@@ -590,11 +669,10 @@ export function TouristDashboardClient({
                                   {[...Array(5)].map((_, i) => (
                                     <Star
                                       key={i}
-                                      className={`h-4 w-4 ${
-                                        i < review.rating
-                                          ? "fill-primary text-primary"
-                                          : "text-muted-foreground"
-                                      }`}
+                                      className={`h-4 w-4 ${i < review.rating
+                                        ? "fill-primary text-primary"
+                                        : "text-muted-foreground"
+                                        }`}
                                     />
                                   ))}
                                 </div>
@@ -634,6 +712,35 @@ export function TouristDashboardClient({
       </main>
 
       <Footer />
+
+      <BookingDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => {
+          setIsDetailsModalOpen(false)
+          setSelectedBooking(null)
+        }}
+        booking={
+          selectedBooking
+            ? {
+              id: selectedBooking.id,
+              tourTitle: selectedBooking.tourTitle,
+              guide: selectedBooking.guide,
+              date: selectedBooking.date,
+              time: new Date(selectedBooking.date).toLocaleTimeString("en-US", {
+                hour: "numeric",
+                minute: "2-digit",
+              }),
+              guests: selectedBooking.guests,
+              numberOfGuests: selectedBooking.guests,
+              price: selectedBooking.price,
+              status: selectedBooking.status,
+              location: selectedBooking.location,
+              meetingPoint: selectedBooking.location, // Using location as fallback
+              confirmationNumber: selectedBooking.id.slice(0, 8),
+            }
+            : undefined
+        }
+      />
     </div>
   )
 }
