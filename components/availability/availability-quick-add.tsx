@@ -119,11 +119,11 @@ export function AvailabilityQuickAdd({ listings, availabilities, onSuccess }: Av
               hasAvailability: "bg-primary/10 text-primary font-semibold",
             }}
           />
-          {availabilities.length > 0 && (
+          {/* {availabilities.length > 0 && (
             <p className="text-xs text-muted-foreground">
               {availabilities.filter((a) => a.isAvailable).length} available date{availabilities.filter((a) => a.isAvailable).length !== 1 ? "s" : ""} set
             </p>
-          )}
+          )} */}
         </div>
 
         <Button

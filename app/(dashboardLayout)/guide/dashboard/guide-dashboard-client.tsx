@@ -86,7 +86,11 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
     params.set("tab", tab)
     params.set("page", page.toString())
     params.set("limit", limit.toString())
-    router.push(`/guide/dashboard?${params.toString()}`, { scroll: false })
+    const url = `/guide/dashboard?${params.toString()}`
+    // Update URL and refresh server component
+    router.push(url)
+    // Force server component to re-fetch with new params
+    router.refresh()
   }, [router])
 
   // Update pagination for current tab
@@ -786,45 +790,54 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                   searchPlaceholder="Search by tourist name..."
                 />
                 {/* Pagination for upcoming bookings */}
-                {activeTab === "upcoming" && initialData.upcomingBookings.length > 0 && initialData.upcomingBookingsTotalPages > 1 && (
+                {activeTab === "upcoming" && initialData.upcomingBookings.length > 0 && (
                   <div className="mt-6 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-muted-foreground">
-                        Page {currentPage} of {initialData.upcomingBookingsTotalPages} ({initialData.upcomingBookingsTotal} total)
+                        {initialData.upcomingBookingsTotal} total
                       </p>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updatePagination(1, currentLimit)}
-                          disabled={currentPage === 1}
+                    </div>
+                    <div className="flex items-center space-x-6 lg:space-x-8">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Page</p>
+                        <Select
+                          value={`${currentPage}`}
+                          onValueChange={(value) => {
+                            updatePagination(Number(value), currentLimit)
+                          }}
                         >
-                          First
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updatePagination(Math.max(1, currentPage - 1), currentLimit)}
-                          disabled={currentPage === 1}
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={currentPage} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {Array.from({ length: initialData.upcomingBookingsTotalPages }, (_, i) => i + 1).map((pageNum) => (
+                              <SelectItem key={pageNum} value={`${pageNum}`}>
+                                {pageNum}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-sm text-muted-foreground">of {initialData.upcomingBookingsTotalPages}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Rows per page</p>
+                        <Select
+                          value={`${currentLimit}`}
+                          onValueChange={(value) => {
+                            updatePagination(1, Number(value)) // Reset to page 1 when limit changes
+                          }}
                         >
-                          Previous
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updatePagination(Math.min(initialData.upcomingBookingsTotalPages, currentPage + 1), currentLimit)}
-                          disabled={currentPage === initialData.upcomingBookingsTotalPages}
-                        >
-                          Next
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updatePagination(initialData.upcomingBookingsTotalPages, currentLimit)}
-                          disabled={currentPage === initialData.upcomingBookingsTotalPages}
-                        >
-                          Last
-                        </Button>
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={currentLimit} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {[10, 20, 30, 40, 50].map((pageSize) => (
+                              <SelectItem key={pageSize} value={`${pageSize}`}>
+                                {pageSize}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
@@ -839,45 +852,54 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                   searchPlaceholder="Search by tourist name..."
                 />
                 {/* Pagination for pending bookings */}
-                {activeTab === "pending" && initialData.pendingRequests.length > 0 && initialData.pendingBookingsTotalPages > 1 && (
+                {activeTab === "pending" && initialData.pendingRequests.length > 0 && (
                   <div className="mt-6 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-muted-foreground">
-                        Page {currentPage} of {initialData.pendingBookingsTotalPages} ({initialData.pendingBookingsTotal} total)
+                        {initialData.pendingBookingsTotal} total
                       </p>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updatePagination(1, currentLimit)}
-                          disabled={currentPage === 1}
+                    </div>
+                    <div className="flex items-center space-x-6 lg:space-x-8">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Page</p>
+                        <Select
+                          value={`${currentPage}`}
+                          onValueChange={(value) => {
+                            updatePagination(Number(value), currentLimit)
+                          }}
                         >
-                          First
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updatePagination(Math.max(1, currentPage - 1), currentLimit)}
-                          disabled={currentPage === 1}
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={currentPage} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {Array.from({ length: initialData.pendingBookingsTotalPages }, (_, i) => i + 1).map((pageNum) => (
+                              <SelectItem key={pageNum} value={`${pageNum}`}>
+                                {pageNum}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-sm text-muted-foreground">of {initialData.pendingBookingsTotalPages}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Rows per page</p>
+                        <Select
+                          value={`${currentLimit}`}
+                          onValueChange={(value) => {
+                            updatePagination(1, Number(value)) // Reset to page 1 when limit changes
+                          }}
                         >
-                          Previous
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updatePagination(Math.min(initialData.pendingBookingsTotalPages, currentPage + 1), currentLimit)}
-                          disabled={currentPage === initialData.pendingBookingsTotalPages}
-                        >
-                          Next
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updatePagination(initialData.pendingBookingsTotalPages, currentLimit)}
-                          disabled={currentPage === initialData.pendingBookingsTotalPages}
-                        >
-                          Last
-                        </Button>
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={currentLimit} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {[10, 20, 30, 40, 50].map((pageSize) => (
+                              <SelectItem key={pageSize} value={`${pageSize}`}>
+                                {pageSize}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
@@ -892,45 +914,54 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                   searchPlaceholder="Search by tourist name..."
                 />
                 {/* Pagination for completed bookings */}
-                {activeTab === "completed" && initialData.completedBookings.length > 0 && initialData.completedBookingsTotalPages > 1 && (
+                {activeTab === "completed" && initialData.completedBookings.length > 0 && (
                   <div className="mt-6 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-muted-foreground">
-                        Page {currentPage} of {initialData.completedBookingsTotalPages} ({initialData.completedBookingsTotal} total)
+                        {initialData.completedBookingsTotal} total
                       </p>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updatePagination(1, currentLimit)}
-                          disabled={currentPage === 1}
+                    </div>
+                    <div className="flex items-center space-x-6 lg:space-x-8">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Page</p>
+                        <Select
+                          value={`${currentPage}`}
+                          onValueChange={(value) => {
+                            updatePagination(Number(value), currentLimit)
+                          }}
                         >
-                          First
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updatePagination(Math.max(1, currentPage - 1), currentLimit)}
-                          disabled={currentPage === 1}
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={currentPage} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {Array.from({ length: initialData.completedBookingsTotalPages }, (_, i) => i + 1).map((pageNum) => (
+                              <SelectItem key={pageNum} value={`${pageNum}`}>
+                                {pageNum}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-sm text-muted-foreground">of {initialData.completedBookingsTotalPages}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Rows per page</p>
+                        <Select
+                          value={`${currentLimit}`}
+                          onValueChange={(value) => {
+                            updatePagination(1, Number(value)) // Reset to page 1 when limit changes
+                          }}
                         >
-                          Previous
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updatePagination(Math.min(initialData.completedBookingsTotalPages, currentPage + 1), currentLimit)}
-                          disabled={currentPage === initialData.completedBookingsTotalPages}
-                        >
-                          Next
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updatePagination(initialData.completedBookingsTotalPages, currentLimit)}
-                          disabled={currentPage === initialData.completedBookingsTotalPages}
-                        >
-                          Last
-                        </Button>
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={currentLimit} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {[10, 20, 30, 40, 50].map((pageSize) => (
+                              <SelectItem key={pageSize} value={`${pageSize}`}>
+                                {pageSize}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
