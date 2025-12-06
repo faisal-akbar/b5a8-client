@@ -724,47 +724,57 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                   data={initialData.listings}
                   searchKey="title"
                   searchPlaceholder="Search tours..."
+                  disablePagination={true}
                 />
                 {/* Pagination for listings */}
-                {activeTab === "listings" && initialData.listings.length > 0 && initialData.listingsTotalPages > 1 && (
+                {activeTab === "listings" && initialData.listings.length > 0 && (
                   <div className="mt-6 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-muted-foreground">
-                        Page {currentPage} of {initialData.listingsTotalPages} ({initialData.listingsTotal} total)
+                        {initialData.listingsTotal} total
                       </p>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updatePagination(1, currentLimit)}
-                          disabled={currentPage === 1}
+                    </div>
+                    <div className="flex items-center space-x-6 lg:space-x-8">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Page</p>
+                        <Select
+                          value={`${currentPage}`}
+                          onValueChange={(value) => {
+                            updatePagination(Number(value), currentLimit)
+                          }}
                         >
-                          First
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updatePagination(Math.max(1, currentPage - 1), currentLimit)}
-                          disabled={currentPage === 1}
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={currentPage} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {Array.from({ length: initialData.listingsTotalPages }, (_, i) => i + 1).map((pageNum) => (
+                              <SelectItem key={pageNum} value={`${pageNum}`}>
+                                {pageNum}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-sm text-muted-foreground">of {initialData.listingsTotalPages}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Rows per page</p>
+                        <Select
+                          value={`${currentLimit}`}
+                          onValueChange={(value) => {
+                            updatePagination(1, Number(value)) // Reset to page 1 when limit changes
+                          }}
                         >
-                          Previous
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updatePagination(Math.min(initialData.listingsTotalPages, currentPage + 1), currentLimit)}
-                          disabled={currentPage === initialData.listingsTotalPages}
-                        >
-                          Next
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updatePagination(initialData.listingsTotalPages, currentLimit)}
-                          disabled={currentPage === initialData.listingsTotalPages}
-                        >
-                          Last
-                        </Button>
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={currentLimit} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {[10, 20, 30, 40, 50].map((pageSize) => (
+                              <SelectItem key={pageSize} value={`${pageSize}`}>
+                                {pageSize}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
@@ -909,7 +919,7 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
         booking={
           selectedBooking
             ? {
-                id: Number.parseInt(selectedBooking.id.slice(-6), 16) || 0,
+                id: selectedBooking.id, // Pass the actual booking ID string
                 tourTitle: selectedBooking.listing?.title || "N/A",
                 guide: "You (Guide)",
                 date: selectedBooking.date,
@@ -927,6 +937,10 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
               }
             : undefined
         }
+        onSuccess={() => {
+          // Refresh the page to get updated data from server
+          router.refresh()
+        }}
       />
 
       {/* Delete Listing Dialog */}

@@ -53,11 +53,30 @@ export default async function GuideDashboardPage({ searchParams }: PageProps) {
     let listingsTotalPages = 0
     
     if (listingsResult.success && listingsResult.data) {
-      const listings = listingsResult.data.data || []
-      const listingsMeta = listingsResult.data.meta || {}
+      // Listing service returns: { success: true, data: { data: [...listings], meta: {...} } }
+      const listings = Array.isArray(listingsResult.data)
+        ? listingsResult.data
+        : (listingsResult.data.data || [])
+      const listingsMeta = Array.isArray(listingsResult.data)
+        ? {}
+        : (listingsResult.data.meta || {})
       
       listingsTotal = listingsMeta.total ?? listings.length
       listingsTotalPages = listingsMeta.totalPages ?? (listings.length > 0 ? Math.max(1, Math.ceil(listingsTotal / listingsLimit)) : 0)
+
+      // Debug logging for listings pagination
+      console.log("[SERVER] Listings pagination:", {
+        activeTab,
+        page,
+        listingsLimit,
+        listingsResultSuccess: listingsResult.success,
+        listingsDataStructure: listingsResult.data ? (Array.isArray(listingsResult.data) ? "array" : "object") : "null",
+        listingsCount: listings.length,
+        listingsTotal,
+        listingsTotalPages,
+        listingsMeta,
+        firstListing: listings[0]?.id,
+      })
       
       // Fetch reviews for each listing to calculate average rating
       const listingsWithRatings = await Promise.all(
