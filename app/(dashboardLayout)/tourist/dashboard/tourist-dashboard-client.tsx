@@ -42,6 +42,11 @@ type Booking = {
   paymentStatus: string
   rating?: number
   reviewed?: boolean
+  meetingPoint?: string
+  category?: string
+  durationDays?: number
+  guideEmail?: string
+  totalPrice?: number
 }
 
 type WishlistTableItem = {
@@ -117,23 +122,28 @@ export function TouristDashboardClient({
     try {
       const result = await getBookingById(booking.id)
       if (result.success && result.data) {
-        // Transform the API data to match the Booking type
+        // Transform the API data to match the Booking type with full details
         const transformedBooking: Booking = {
           id: result.data.id,
           tourTitle: result.data.listing?.title || "N/A",
           tourImage: result.data.listing?.images?.[0] || "",
-          guide: result.data.listing?.guide?.user?.name || "N/A",
-          guideImage: result.data.listing?.guide?.user?.image || null,
-          location: result.data.listing?.location || "N/A",
+          guide: result.data.guide?.user?.name || "N/A",
+          guideImage: result.data.guide?.user?.profilePic || null,
+          location: result.data.listing?.city || "N/A",
           city: result.data.listing?.city || "N/A",
           date: result.data.date,
           guests: result.data.numberOfGuests || 0,
           price: result.data.listing?.tourFee || 0,
           status: result.data.status.toLowerCase() as "confirmed" | "pending" | "completed" | "cancelled",
           createdAt: result.data.createdAt,
-          paymentStatus: result.data.paymentStatus || "Pending",
+          paymentStatus: result.data.payment?.status || "Pending",
           rating: booking.rating,
           reviewed: booking.reviewed,
+          meetingPoint: result.data.listing?.meetingPoint || "N/A",
+          category: result.data.listing?.category || undefined,
+          durationDays: result.data.listing?.durationDays || undefined,
+          guideEmail: result.data.guide?.user?.email || undefined,
+          totalPrice: result.data.totalPrice || result.data.listing?.tourFee || 0,
         }
         setSelectedBooking(transformedBooking)
         setIsDetailsModalOpen(true)
@@ -732,10 +742,13 @@ export function TouristDashboardClient({
               }),
               guests: selectedBooking.guests,
               numberOfGuests: selectedBooking.guests,
-              price: selectedBooking.price,
+              price: selectedBooking.totalPrice || selectedBooking.price,
               status: selectedBooking.status,
-              location: selectedBooking.location,
-              meetingPoint: selectedBooking.location, // Using location as fallback
+              location: selectedBooking.city,
+              meetingPoint: selectedBooking.meetingPoint || selectedBooking.city,
+              category: selectedBooking.category,
+              durationDays: selectedBooking.durationDays,
+              createdAt: selectedBooking.createdAt,
               confirmationNumber: selectedBooking.id.slice(0, 8),
             }
             : undefined

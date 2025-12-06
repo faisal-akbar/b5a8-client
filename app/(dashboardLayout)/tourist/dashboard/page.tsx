@@ -56,6 +56,9 @@ interface ApiBooking {
     images: string[]
     tourFee: number
     city: string
+    meetingPoint?: string
+    category?: string
+    durationDays?: number
   }
   tourist: {
     id: string
@@ -74,6 +77,7 @@ interface ApiBooking {
     user: {
       id: string
       name: string
+      email: string
       profilePic: string | null
     }
   }
@@ -109,6 +113,11 @@ type Booking = {
   paymentStatus: string
   rating?: number
   reviewed?: boolean
+  meetingPoint?: string
+  category?: string
+  durationDays?: number
+  guideEmail?: string
+  totalPrice?: number
 }
 
 type WishlistTableItem = {
@@ -159,6 +168,11 @@ function transformBooking(apiBooking: ApiBooking): Booking {
       paymentStatus: apiBooking.payment ? "Paid" : "Pending",
       rating: apiBooking.review?.rating,
       reviewed: !!apiBooking.review,
+      meetingPoint: apiBooking.listing?.meetingPoint,
+      category: apiBooking.listing?.category,
+      durationDays: apiBooking.listing?.durationDays,
+      guideEmail: apiBooking.guide?.user?.email,
+      totalPrice: apiBooking.totalPrice || apiBooking.listing?.tourFee || 0,
     }
   } catch (error) {
     console.error("Error transforming booking:", error, apiBooking)
