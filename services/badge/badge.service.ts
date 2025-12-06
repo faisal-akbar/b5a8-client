@@ -10,6 +10,7 @@ export async function getGuideBadges(guideId: string) {
     const response = await serverFetch.get(`/badges/guide/${guideId}`);
     const data = await response.json();
     
+    
     if (!response.ok) {
       throw new Error(data.message || "Failed to get guide badges");
     }

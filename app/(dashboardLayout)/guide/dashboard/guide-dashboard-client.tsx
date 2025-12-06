@@ -684,7 +684,7 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                 <p className="mt-2 text-muted-foreground">Manage your tours and bookings</p>
               </div>
               <div className="flex items-center gap-3">
-                <Button
+                {/* <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
@@ -693,8 +693,8 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                 >
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Refresh
-                </Button>
-                {initialData.badges.length > 0 && (
+                </Button> */}
+                {/* {initialData.badges.length > 0 && (
                   <div className="flex gap-2">
                     {initialData.badges.map((badge) => (
                       <Badge key={badge.id} variant="outline" className="text-sm">
@@ -702,7 +702,7 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                       </Badge>
                     ))}
                   </div>
-                )}
+                )} */}
               </div>
             </div>
           </div>

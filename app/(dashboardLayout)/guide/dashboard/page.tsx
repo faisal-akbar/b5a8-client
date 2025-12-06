@@ -66,18 +66,18 @@ export default async function GuideDashboardPage({ searchParams }: PageProps) {
       listingsTotalPages = listingsMeta.totalPages ?? (listings.length > 0 ? Math.max(1, Math.ceil(listingsTotal / listingsLimit)) : 0)
 
       // Debug logging for listings pagination
-      console.log("[SERVER] Listings pagination:", {
-        activeTab,
-        page,
-        listingsLimit,
-        listingsResultSuccess: listingsResult.success,
-        listingsDataStructure: listingsResult.data ? (Array.isArray(listingsResult.data) ? "array" : "object") : "null",
-        listingsCount: listings.length,
-        listingsTotal,
-        listingsTotalPages,
-        listingsMeta,
-        firstListing: listings[0]?.id,
-      })
+      // console.log("[SERVER] Listings pagination:", {
+      //   activeTab,
+      //   page,
+      //   listingsLimit,
+      //   listingsResultSuccess: listingsResult.success,
+      //   listingsDataStructure: listingsResult.data ? (Array.isArray(listingsResult.data) ? "array" : "object") : "null",
+      //   listingsCount: listings.length,
+      //   listingsTotal,
+      //   listingsTotalPages,
+      //   listingsMeta,
+      //   firstListing: listings[0]?.id,
+      // })
       
       // Fetch reviews for each listing to calculate average rating
       const listingsWithRatings = await Promise.all(
@@ -172,13 +172,13 @@ export default async function GuideDashboardPage({ searchParams }: PageProps) {
       : []
 
     // Debug logging for payments
-    console.log("[SERVER] Dashboard payments:", {
-      paymentsResultSuccess: paymentsResult.success,
-      paymentsDataStructure: paymentsResult.data ? (Array.isArray(paymentsResult.data) ? "array" : "object") : "null",
-      paymentsCount: payments.length,
-      firstPayment: payments[0]?.id,
-      samplePayment: payments[0],
-    })
+    // console.log("[SERVER] Dashboard payments:", {
+    //   paymentsResultSuccess: paymentsResult.success,
+    //   paymentsDataStructure: paymentsResult.data ? (Array.isArray(paymentsResult.data) ? "array" : "object") : "null",
+    //   paymentsCount: payments.length,
+    //   firstPayment: payments[0]?.id,
+    //   samplePayment: payments[0],
+    // })
 
     const totalEarnings = payments
       .filter((p: GuidePayment) => p.status === "COMPLETED" || p.status === "RELEASED")
@@ -279,6 +279,7 @@ export default async function GuideDashboardPage({ searchParams }: PageProps) {
       currentPage: page,
       currentLimit: limit,
     }
+   // console.log("[SERVER] Initial data:", initialData)
 
     return (
       <Suspense fallback={
