@@ -128,9 +128,23 @@ export default async function GuideDashboardPage({ searchParams }: PageProps) {
     const pendingBookingsTotalPages = pendingBookingsMeta.totalPages ?? (pendingRequests.length > 0 ? Math.max(1, Math.ceil(pendingBookingsTotal / bookingsLimit)) : 0)
 
     // Process payments for earnings
+    // Payment service returns: { success: true, data: { data: [...payments], meta: {...} } }
     const payments: GuidePayment[] = paymentsResult.success && paymentsResult.data
-      ? paymentsResult.data.data || []
+      ? (Array.isArray(paymentsResult.data)
+          ? paymentsResult.data
+          : (Array.isArray(paymentsResult.data.data)
+              ? paymentsResult.data.data
+              : []))
       : []
+
+    // Debug logging for payments
+    console.log("[SERVER] Dashboard payments:", {
+      paymentsResultSuccess: paymentsResult.success,
+      paymentsDataStructure: paymentsResult.data ? (Array.isArray(paymentsResult.data) ? "array" : "object") : "null",
+      paymentsCount: payments.length,
+      firstPayment: payments[0]?.id,
+      samplePayment: payments[0],
+    })
 
     const totalEarnings = payments
       .filter((p: GuidePayment) => p.status === "COMPLETED" || p.status === "RELEASED")

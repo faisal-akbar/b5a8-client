@@ -65,8 +65,8 @@ export function AvailabilityQuickAdd({ listings, availabilities, onSuccess }: Av
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label>Select Listing</Label>
-          <Select value={listingId} onValueChange={setListingId}>
-            <SelectTrigger>
+          <Select value={listingId} onValueChange={setListingId} >
+            <SelectTrigger  className="w-full">
               <SelectValue placeholder="Choose a listing" />
             </SelectTrigger>
             <SelectContent>
@@ -97,6 +97,7 @@ export function AvailabilityQuickAdd({ listings, availabilities, onSuccess }: Av
           <Label>Select Date</Label>
           <Calendar
             mode="single"
+            className="w-full"
             selected={selectedDate}
             onSelect={setSelectedDate}
             disabled={(date) => {

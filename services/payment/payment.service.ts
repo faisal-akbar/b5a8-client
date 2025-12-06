@@ -58,9 +58,14 @@ export async function getPayments(params: GetPaymentsParams = {}) {
       throw new Error(data.message || "Failed to get payments");
     }
     
+    // Backend returns: { success: true, data: [...payments], meta: {...} }
+    // Wrap it in the expected structure for consistency with other paginated responses
     return {
       success: true,
-      data: data.data,
+      data: {
+        data: Array.isArray(data.data) ? data.data : (data.data || []),
+        meta: data.meta || {},
+      },
     };
   } catch (error: any) {
     return {

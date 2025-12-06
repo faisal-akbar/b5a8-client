@@ -1,233 +1,158 @@
-"use client"
-
 import { Footer } from "@/components/layout/footer"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { DataTable } from "@/components/dashboard/data-table"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { ArrowLeft, DollarSign, Loader2 } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { useState, useEffect, useCallback } from "react"
-import { toast } from "sonner"
 import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton"
-import { getPayments, releasePaymentToGuide } from "@/services/payment/payment.service"
+import { getPayments } from "@/services/payment/payment.service"
+import { PaymentsClient } from "@/components/payments/payments-client"
 import type { GuidePayment } from "@/types/guide"
-import type { ColumnDef } from "@tanstack/react-table"
 
-export default function PaymentsPage() {
-  const [isLoading, setIsLoading] = useState(true)
-  const [payments, setPayments] = useState<GuidePayment[]>([])
-  const [isReleaseDialogOpen, setIsReleaseDialogOpen] = useState(false)
-  const [paymentToRelease, setPaymentToRelease] = useState<string | null>(null)
-  const [isReleasing, setIsReleasing] = useState(false)
-  const [filter, setFilter] = useState<"all" | "PENDING" | "COMPLETED" | "RELEASED">("all")
+export const dynamic = "force-dynamic"
 
-  const fetchPayments = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      const result = await getPayments({ page: 1, limit: 100 })
+interface PageProps {
+  searchParams: Promise<{
+    page?: string
+    limit?: string
+    filter?: string
+  }>
+}
 
-      if (result.success && result.data) {
-        setPayments(result.data.data || [])
-      } else {
-        toast.error("Failed to load payments")
-      }
-    } catch (error) {
-      console.error("Error fetching payments:", error)
-      toast.error("An error occurred while loading payments")
-    } finally {
-      setIsLoading(false)
+export default async function PaymentsPage({ searchParams }: PageProps) {
+  // Await searchParams (Next.js 15+ requirement)
+  const params = await searchParams
+  
+  // Get pagination and filter from URL
+  const page = parseInt(params.page || "1", 10)
+  const limit = parseInt(params.limit || "10", 10)
+  const filter = (params.filter as "all" | "PENDING" | "COMPLETED" | "RELEASED") || "all"
+
+  try {
+    // Fetch all payments for totals calculation and filtering
+    // Note: If the API supports status filtering, we should pass it to getPayments instead
+    const [paymentsResult, allPaymentsResult] = await Promise.all([
+      // Fetch paginated payments for the table
+      getPayments({ page, limit }),
+      // Fetch all payments for totals calculation (limit 1000 should cover most cases)
+      getPayments({ page: 1, limit: 1000 }),
+    ])
+
+    // Process paginated payments
+    // Payment service returns: { success: true, data: { data: [...payments], meta: {...} } }
+    const paginatedPayments: GuidePayment[] =
+      paymentsResult.success && paymentsResult.data
+        ? (Array.isArray(paymentsResult.data)
+            ? paymentsResult.data
+            : (Array.isArray(paymentsResult.data.data)
+                ? paymentsResult.data.data
+                : []))
+        : []
+
+    // Process all payments for totals and filtering
+    const allPayments: GuidePayment[] =
+      allPaymentsResult.success && allPaymentsResult.data
+        ? (Array.isArray(allPaymentsResult.data)
+            ? allPaymentsResult.data
+            : (Array.isArray(allPaymentsResult.data.data)
+                ? allPaymentsResult.data.data
+                : []))
+        : []
+
+    const paymentsMeta = paymentsResult.success && paymentsResult.data
+      ? (Array.isArray(paymentsResult.data)
+          ? {}
+          : (paymentsResult.data.meta || {}))
+      : {}
+
+    // Debug logging - check server console
+    console.log("[SERVER] Payments pagination:", {
+      searchParams: params,
+      page,
+      limit,
+      filter,
+      paymentsResultSuccess: paymentsResult.success,
+      paymentsDataStructure: paymentsResult.data ? (Array.isArray(paymentsResult.data) ? "array" : "object") : "null",
+      paginatedPaymentsCount: paginatedPayments.length,
+      allPaymentsCount: allPayments.length,
+      paymentsMeta,
+      firstPayment: paginatedPayments[0]?.id,
+    })
+
+    // Filter payments by status if filter is not "all"
+    const filteredPayments = filter === "all" 
+      ? allPayments 
+      : allPayments.filter((p) => p.status === filter)
+
+    // Apply pagination to filtered results (if filtering, we need to paginate the filtered list)
+    let finalPayments: GuidePayment[]
+    let paymentsTotal: number
+    let paymentsTotalPages: number
+
+    if (filter === "all") {
+      // Use API pagination when no filter
+      finalPayments = paginatedPayments
+      paymentsTotal = paymentsMeta.total ?? allPayments.length
+      paymentsTotalPages = paymentsMeta.totalPages ?? Math.max(1, Math.ceil(paymentsTotal / limit))
+    } else {
+      // Client-side pagination when filtering
+      const startIndex = (page - 1) * limit
+      const endIndex = startIndex + limit
+      finalPayments = filteredPayments.slice(startIndex, endIndex)
+      paymentsTotal = filteredPayments.length
+      paymentsTotalPages = Math.max(1, Math.ceil(paymentsTotal / limit))
     }
-  }, [])
 
-  useEffect(() => {
-    fetchPayments()
-  }, [fetchPayments])
+    // Calculate summary totals from ALL payments (not filtered, not paginated)
+    // These totals should always reflect the complete picture
+    const totalReadyToRelease = allPayments
+      .filter((p) => 
+        p.status === "COMPLETED" && 
+        p.booking?.status === "COMPLETED"
+      )
+      .reduce((sum, p) => sum + p.amount, 0)
 
-  const handleReleasePayment = async () => {
-    if (!paymentToRelease) return
+    const totalReleased = allPayments
+      .filter((p) => p.status === "RELEASED")
+      .reduce((sum, p) => sum + p.amount, 0)
 
-    try {
-      setIsReleasing(true)
-      const result = await releasePaymentToGuide(paymentToRelease)
+    const totalEarnings = allPayments
+      .filter((p) => p.status === "COMPLETED" || p.status === "RELEASED")
+      .reduce((sum, p) => sum + p.amount, 0)
 
-      if (result.success) {
-        toast.success("Payment released successfully")
-        setIsReleaseDialogOpen(false)
-        setPaymentToRelease(null)
-        fetchPayments()
-      } else {
-        toast.error(result.message || "Failed to release payment")
-      }
-    } catch (error) {
-      console.error("Error releasing payment:", error)
-      toast.error("An error occurred while releasing payment")
-    } finally {
-      setIsReleasing(false)
-    }
-  }
-
-  const filteredPayments = payments.filter((payment) => {
-    if (filter === "all") return true
-    return payment.status === filter
-  })
-
-  // Total pending = payments that are completed but not yet released
-  const totalPending = payments
-    .filter((p) => p.status === "COMPLETED" && p.status !== "RELEASED")
-    .reduce((sum, p) => sum + p.amount, 0)
-
-  // Total ready to release = payments where both payment and booking are completed
-  const totalReadyToRelease = payments
-    .filter((p) => 
-      p.status === "COMPLETED" && 
-      p.booking?.status === "COMPLETED" &&
-      p.status !== "RELEASED"
-    )
-    .reduce((sum, p) => sum + p.amount, 0)
-
-  const totalReleased = payments
-    .filter((p) => p.status === "RELEASED")
-    .reduce((sum, p) => sum + p.amount, 0)
-
-  const columns: ColumnDef<GuidePayment>[] = [
-    {
-      accessorKey: "id",
-      header: "Payment ID",
-      cell: ({ row }) => {
-        return <span className="font-mono text-sm">{row.getValue("id").slice(0, 8)}</span>
-      },
-    },
-    {
-      accessorKey: "booking.listing.title",
-      header: "Tour",
-      cell: ({ row }) => {
-        return row.original.booking?.listing?.title || "N/A"
-      },
-    },
-    {
-      accessorKey: "booking.tourist.user.name",
-      header: "Tourist",
-      cell: ({ row }) => {
-        return row.original.booking?.tourist?.user?.name || "N/A"
-      },
-    },
-    {
-      accessorKey: "amount",
-      header: "Amount",
-      cell: ({ row }) => {
-        const amount = Number.parseFloat(row.getValue("amount"))
-        const formatted = new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(amount)
-        return <div className="font-medium">{formatted}</div>
-      },
-    },
-    {
-      accessorKey: "status",
-      header: "Payment Status",
-      cell: ({ row }) => {
-        const status = row.getValue("status") as string
-        return (
-          <Badge
-            variant={
-              status === "RELEASED"
-                ? "default"
-                : status === "COMPLETED"
-                  ? "outline"
-                  : status === "PENDING"
-                    ? "secondary"
-                    : "destructive"
-            }
-          >
-            {status}
-          </Badge>
-        )
-      },
-    },
-    {
-      id: "bookingStatus",
-      header: "Tour Status",
-      cell: ({ row }) => {
-        const bookingStatus = row.original.booking?.status || "PENDING"
-        return (
-          <Badge
-            variant={
-              bookingStatus === "COMPLETED"
-                ? "default"
-                : bookingStatus === "CONFIRMED"
-                  ? "outline"
-                  : bookingStatus === "PENDING"
-                    ? "secondary"
-                    : "destructive"
-            }
-          >
-            {bookingStatus}
-          </Badge>
-        )
-      },
-    },
-    {
-      accessorKey: "createdAt",
-      header: "Date",
-      cell: ({ row }) => {
-        const date = new Date(row.getValue("createdAt"))
-        return date.toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        })
-      },
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => {
-        const payment = row.original
-        // Guide can only release payment if:
-        // 1. Payment status is COMPLETED (tourist has paid)
-        // 2. Booking status is COMPLETED (tour has been completed)
-        const bookingStatus = payment.booking?.status || "PENDING"
-        const paymentStatus = payment.status
-        const canRelease = 
-          paymentStatus === "COMPLETED" && 
-          bookingStatus === "COMPLETED" &&
-          payment.status !== "RELEASED"
-        
-        return (
-          <div className="flex gap-2">
-            {canRelease ? (
-              <Button
-                size="sm"
-                onClick={() => {
-                  setPaymentToRelease(payment.id)
-                  setIsReleaseDialogOpen(true)
-                }}
-              >
-                Release Payment
+    return (
+      <div className="flex min-h-screen flex-col">
+        <main className="flex-1 bg-muted/30 py-8">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <Link href="/guide/dashboard">
+              <Button variant="ghost" className="mb-6">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Dashboard
               </Button>
-            ) : bookingStatus !== "COMPLETED" ? (
-              <span className="text-sm text-muted-foreground">Complete tour first</span>
-            ) : paymentStatus !== "COMPLETED" ? (
-              <span className="text-sm text-muted-foreground">Payment pending</span>
-            ) : payment.status === "RELEASED" ? (
-              <Badge variant="default">Released</Badge>
-            ) : null}
-          </div>
-        )
-      },
-    },
-  ]
+            </Link>
 
-  if (isLoading) {
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-foreground">Payment Management</h1>
+              <p className="mt-2 text-muted-foreground">View and manage your payments</p>
+            </div>
+
+            <PaymentsClient
+              key={`${page}-${limit}-${filter}`}
+              initialPayments={finalPayments}
+              initialPage={page}
+              initialLimit={limit}
+              initialTotal={paymentsTotal}
+              initialTotalPages={paymentsTotalPages}
+              initialFilter={filter}
+              initialTotalReadyToRelease={totalReadyToRelease}
+              initialTotalReleased={totalReleased}
+              initialTotalEarnings={totalEarnings}
+            />
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  } catch (error) {
+    console.error("Error fetching payments data:", error)
     return (
       <div className="flex min-h-screen flex-col">
         <main className="flex-1 bg-muted/30 py-8">
@@ -239,152 +164,6 @@ export default function PaymentsPage() {
       </div>
     )
   }
-
-  return (
-    <div className="flex min-h-screen flex-col">
-      <main className="flex-1 bg-muted/30 py-8">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Link href="/guide/dashboard">
-            <Button variant="ghost" className="mb-6">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Dashboard
-            </Button>
-          </Link>
-
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground">Payment Management</h1>
-            <p className="mt-2 text-muted-foreground">View and manage your payments</p>
-          </div>
-
-          <div className="grid gap-6 mb-6 sm:grid-cols-2 lg:grid-cols-3">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Ready to Release</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {new Intl.NumberFormat("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                  }).format(totalReadyToRelease)}
-                </div>
-                <p className="text-xs text-muted-foreground">Tours completed, ready to release</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Released</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {new Intl.NumberFormat("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                  }).format(totalReleased)}
-                </div>
-                <p className="text-xs text-muted-foreground">Already released</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {new Intl.NumberFormat("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                  }).format(totalPending + totalReleased)}
-                </div>
-                <p className="text-xs text-muted-foreground">All time</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Payments</CardTitle>
-                <div className="flex gap-2">
-                  <Button
-                    variant={filter === "all" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFilter("all")}
-                  >
-                    All
-                  </Button>
-                  <Button
-                    variant={filter === "PENDING" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFilter("PENDING")}
-                  >
-                    Pending
-                  </Button>
-                  <Button
-                    variant={filter === "COMPLETED" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFilter("COMPLETED")}
-                  >
-                    Completed
-                  </Button>
-                  <Button
-                    variant={filter === "RELEASED" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFilter("RELEASED")}
-                  >
-                    Released
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={columns}
-                data={filteredPayments}
-                searchKey="booking.listing.title"
-                searchPlaceholder="Search by tour..."
-              />
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-
-      <Footer />
-
-      {/* Release Payment Dialog */}
-      <Dialog open={isReleaseDialogOpen} onOpenChange={setIsReleaseDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Release Payment</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to release this payment? This action will transfer the funds to your account. 
-              This can only be done after the tour has been completed.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsReleaseDialogOpen(false)} disabled={isReleasing}>
-              Cancel
-            </Button>
-            <Button onClick={handleReleasePayment} disabled={isReleasing}>
-              {isReleasing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Releasing...
-                </>
-              ) : (
-                "Release Payment"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  )
 }
 
 
