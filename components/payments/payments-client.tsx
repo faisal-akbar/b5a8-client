@@ -94,7 +94,7 @@ export function PaymentsClient({
 
   return (
     <>
-      <div className="grid gap-6 mb-6 sm:grid-cols-2 lg:grid-cols-3">
+      {/* <div className="grid gap-6 mb-6 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Ready to Release</CardTitle>
@@ -142,13 +142,13 @@ export function PaymentsClient({
             <p className="text-xs text-muted-foreground">All time</p>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Payments</CardTitle>
-            <div className="flex gap-2">
+            {/* <div className="flex gap-2">
               <Button
                 variant={currentFilter === "all" ? "default" : "outline"}
                 size="sm"
@@ -177,7 +177,7 @@ export function PaymentsClient({
               >
                 Released
               </Button>
-            </div>
+            </div> */}
           </div>
         </CardHeader>
         <CardContent>

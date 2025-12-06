@@ -38,10 +38,14 @@ export function PaymentsTable({
       },
     },
     {
+      id: "tourTitle", // Add explicit id for search
       accessorKey: "booking.listing.title",
       header: "Tour",
       cell: ({ row }) => {
         return row.original.booking?.listing?.title || "N/A"
+      },
+      accessorFn: (row) => {
+        return row.booking?.listing?.title || ""
       },
       filterFn: (row, id, value) => {
         const title = row.original.booking?.listing?.title || ""
@@ -170,7 +174,7 @@ export function PaymentsTable({
       <DataTable
         columns={columns}
         data={payments}
-        searchKey="booking.listing.title"
+        searchKey="tourTitle"
         searchPlaceholder="Search by tour..."
         disablePagination={true}
       />

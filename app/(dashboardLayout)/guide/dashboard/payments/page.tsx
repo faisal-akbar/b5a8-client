@@ -148,7 +148,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
             />
           </div>
         </main>
-        <Footer />
+        
       </div>
     )
   } catch (error) {
@@ -160,7 +160,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
             <DashboardSkeleton />
           </div>
         </main>
-        <Footer />
+    
       </div>
     )
   }
