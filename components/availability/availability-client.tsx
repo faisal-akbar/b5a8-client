@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Plus, Calendar as CalendarIcon } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { AvailabilityTable } from "./availability-table"
 import { AvailabilityCreateDialog } from "./availability-create-dialog"
 import { AvailabilityEditDialog } from "./availability-edit-dialog"
@@ -15,10 +15,27 @@ import type { GuideAvailability, GuideListing } from "@/types/guide"
 interface AvailabilityClientProps {
   initialAvailabilities: GuideAvailability[]
   initialListings: GuideListing[]
+  initialPage: number
+  initialLimit: number
+  initialTotal: number
+  initialTotalPages: number
 }
 
-export function AvailabilityClient({ initialAvailabilities, initialListings }: AvailabilityClientProps) {
+export function AvailabilityClient({
+  initialAvailabilities,
+  initialListings,
+  initialPage,
+  initialLimit,
+  initialTotal,
+  initialTotalPages,
+}: AvailabilityClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // Get pagination from URL or initial props
+  const currentPage = parseInt(searchParams.get("page") || initialPage.toString(), 10)
+  const currentLimit = parseInt(searchParams.get("limit") || initialLimit.toString(), 10)
+  
   const [availabilities, setAvailabilities] = useState<GuideAvailability[]>(initialAvailabilities)
   const [listings] = useState<GuideListing[]>(initialListings)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -30,6 +47,26 @@ export function AvailabilityClient({ initialAvailabilities, initialListings }: A
   useEffect(() => {
     setAvailabilities(initialAvailabilities)
   }, [initialAvailabilities])
+
+  // Update URL with pagination params
+  const updatePagination = useCallback((page: number, limit: number) => {
+    const params = new URLSearchParams()
+    params.set("page", page.toString())
+    params.set("limit", limit.toString())
+    
+    const newUrl = `/guide/dashboard/availability?${params.toString()}`
+    
+    // Use push to update URL - Next.js will automatically re-render server component
+    router.push(newUrl, { scroll: false })
+  }, [router])
+
+  const handlePageChange = useCallback((page: number) => {
+    updatePagination(page, currentLimit)
+  }, [currentLimit, updatePagination])
+
+  const handleLimitChange = useCallback((limit: number) => {
+    updatePagination(1, limit) // Reset to page 1 when limit changes
+  }, [updatePagination])
 
   const handleRefresh = () => {
     router.refresh()
@@ -77,6 +114,12 @@ export function AvailabilityClient({ initialAvailabilities, initialListings }: A
                 listings={listings}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                currentPage={currentPage}
+                totalPages={initialTotalPages}
+                total={initialTotal}
+                limit={currentLimit}
+                onPageChange={handlePageChange}
+                onLimitChange={handleLimitChange}
               />
             )}
           </CardContent>

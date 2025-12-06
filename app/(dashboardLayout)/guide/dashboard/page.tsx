@@ -14,22 +14,25 @@ import type { GuideListing, GuideBooking, GuideStats, GuideReview, GuideBadge, G
 export const dynamic = "force-dynamic"
 
 interface PageProps {
-  searchParams: {
+  searchParams: Promise<{
     tab?: string
     page?: string
     limit?: string
     refresh?: string
-  }
+  }>
 }
 
 export default async function GuideDashboardPage({ searchParams }: PageProps) {
+  // Await searchParams (Next.js 15+ requirement)
+  const params = await searchParams
+  
   // Get active tab and pagination from URL
-  const activeTab = searchParams.tab || "upcoming"
-  const page = parseInt(searchParams.page || "1", 10)
-  const limit = parseInt(searchParams.limit || "10", 10)
+  const activeTab = params.tab || "upcoming"
+  const page = parseInt(params.page || "1", 10)
+  const limit = parseInt(params.limit || "10", 10)
   
   // Different default limits for different tabs
-  const reviewsLimit = activeTab === "reviews" ? parseInt(searchParams.limit || "5", 10) : limit
+  const reviewsLimit = activeTab === "reviews" ? parseInt(params.limit || "5", 10) : limit
   const listingsLimit = activeTab === "listings" ? limit : 100
   const bookingsLimit = (activeTab === "upcoming" || activeTab === "pending") ? limit : 100
 

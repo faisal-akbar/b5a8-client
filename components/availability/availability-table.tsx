@@ -6,22 +6,50 @@ import { Badge } from "@/components/ui/badge"
 import { Edit, Trash2 } from "lucide-react"
 import type { GuideAvailability, GuideListing } from "@/types/guide"
 import type { ColumnDef } from "@tanstack/react-table"
+import { AvailabilityPagination } from "./availability-pagination"
 
 interface AvailabilityTableProps {
   availabilities: GuideAvailability[]
   listings: GuideListing[]
   onEdit: (availability: GuideAvailability) => void
   onDelete: (availability: GuideAvailability) => void
+  currentPage: number
+  totalPages: number
+  total: number
+  limit: number
+  onPageChange: (page: number) => void
+  onLimitChange: (limit: number) => void
 }
 
-export function AvailabilityTable({ availabilities, listings, onEdit, onDelete }: AvailabilityTableProps) {
+export function AvailabilityTable({
+  availabilities,
+  listings,
+  onEdit,
+  onDelete,
+  currentPage,
+  totalPages,
+  total,
+  limit,
+  onPageChange,
+  onLimitChange,
+}: AvailabilityTableProps) {
+  // Create a helper function to get listing title
+  const getListingTitle = (availability: GuideAvailability): string => {
+    const listing = listings.find((l) => l.id === availability.listingId)
+    return listing?.title || availability.listing?.title || "N/A"
+  }
+
   const columns: ColumnDef<GuideAvailability>[] = [
     {
-      accessorKey: "listing.title",
+      accessorFn: (row) => getListingTitle(row),
+      id: "listingTitle",
       header: "Tour/Listing",
       cell: ({ row }) => {
-        const listing = listings.find((l) => l.id === row.original.listingId)
-        return listing?.title || row.original.listing?.title || "N/A"
+        return getListingTitle(row.original)
+      },
+      filterFn: (row, id, value) => {
+        const title = getListingTitle(row.original)
+        return title.toLowerCase().includes(value.toLowerCase())
       },
     },
     {
@@ -123,12 +151,25 @@ export function AvailabilityTable({ availabilities, listings, onEdit, onDelete }
   ]
 
   return (
-    <DataTable
-      columns={columns}
-      data={availabilities}
-      searchKey="listing.title"
-      searchPlaceholder="Search by listing..."
-    />
+    <div className="space-y-4">
+      <DataTable
+        columns={columns}
+        data={availabilities}
+        searchKey="listingTitle"
+        searchPlaceholder="Search by listing..."
+        disablePagination={true}
+      />
+      {availabilities.length > 0 && (
+        <AvailabilityPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          total={total}
+          limit={limit}
+          onPageChange={onPageChange}
+          onLimitChange={onLimitChange}
+        />
+      )}
+    </div>
   )
 }
 
