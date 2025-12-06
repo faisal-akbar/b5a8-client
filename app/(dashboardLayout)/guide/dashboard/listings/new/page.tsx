@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { Footer } from "@/components/footer"
+import { Footer } from "@/components/layout/footer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

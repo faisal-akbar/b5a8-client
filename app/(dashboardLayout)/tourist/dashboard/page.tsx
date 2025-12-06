@@ -1,9 +1,9 @@
 "use client"
 
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { StatCard } from "@/components/stat-card"
-import { DataTable } from "@/components/data-table"
+import { Navbar } from "@/components/layout/navbar"
+import { Footer } from "@/components/layout/footer"
+import { StatCard } from "@/components/dashboard/stat-card"
+import { DataTable } from "@/components/dashboard/data-table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"

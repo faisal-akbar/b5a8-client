@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import { getUserInfo } from "@/services/auth/getUserInfo"
 import { getDefaultDashboardRoute } from "@/lib/auth-utils"
-import RegisterForm from "@/components/register-form"
+import RegisterForm from "@/components/auth/register-form"
 
 export const dynamic = "force-dynamic"
 

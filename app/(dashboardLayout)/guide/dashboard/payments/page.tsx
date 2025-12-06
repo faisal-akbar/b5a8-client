@@ -1,10 +1,10 @@
 "use client"
 
-import { Footer } from "@/components/footer"
+import { Footer } from "@/components/layout/footer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { DataTable } from "@/components/data-table"
+import { DataTable } from "@/components/dashboard/data-table"
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,7 @@ import { ArrowLeft, DollarSign, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
-import { DashboardSkeleton } from "@/components/dashboard-skeleton"
+import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton"
 import { getPayments, releasePaymentToGuide } from "@/services/payment/payment.service"
 import type { GuidePayment } from "@/types/guide"
 import type { ColumnDef } from "@tanstack/react-table"

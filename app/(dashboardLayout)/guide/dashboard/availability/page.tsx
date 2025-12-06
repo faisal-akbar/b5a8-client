@@ -1,6 +1,6 @@
 "use client"
 
-import { Footer } from "@/components/footer"
+import { Footer } from "@/components/layout/footer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,14 +14,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { DataTable } from "@/components/data-table"
+import { DataTable } from "@/components/dashboard/data-table"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Plus, Calendar as CalendarIcon, Edit, Trash2, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
 import { Calendar } from "@/components/ui/calendar"
-import { DashboardSkeleton } from "@/components/dashboard-skeleton"
+import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton"
 import {
   getMyAvailabilities,
   createAvailability,
