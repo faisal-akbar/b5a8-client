@@ -41,6 +41,7 @@ export interface GuideBooking {
   id: string
   date: string
   status: BookingStatus
+  numberOfGuests: number
   listing: {
     id: string
     title: string
@@ -50,6 +51,7 @@ export interface GuideBooking {
     images: string[]
     meetingPoint: string
     maxGroupSize: number
+    durationDays?: number
   }
   tourist: {
     id: string

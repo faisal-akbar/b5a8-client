@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { MapPin, CalendarDays, Users, Loader2 } from "lucide-react"
+import { MapPin, CalendarDays, Users, Loader2, Mail, Clock, Tag, User } from "lucide-react"
 import { toast } from "sonner"
 import { updateBookingStatus } from "@/services/booking/booking.service"
 
@@ -26,10 +26,17 @@ interface BookingDetailsModalProps {
     date: string
     time: string
     guests: number
+    numberOfGuests: number
     price: number
     status: string
     location: string
     meetingPoint: string
+    category?: string
+    durationDays?: number
+    touristName?: string
+    touristEmail?: string
+    createdAt?: string
+    updatedAt?: string
     guidePhone?: string
     confirmationNumber?: string
   }
@@ -127,8 +134,16 @@ export function BookingDetailsModal({ isOpen, onClose, booking, onSuccess }: Boo
                 <div>
                   <div className="font-medium text-foreground">Number of Guests</div>
                   <div className="text-sm text-muted-foreground">
-                    {booking.guests} {booking.guests === 1 ? "person" : "people"}
+                    {booking.numberOfGuests || booking.guests} {(booking.numberOfGuests || booking.guests) === 1 ? "person" : "people"}
                   </div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <MapPin className="mt-0.5 h-5 w-5 text-muted-foreground" />
+                <div>
+                  <div className="font-medium text-foreground">Location</div>
+                  <div className="text-sm text-muted-foreground">{booking.location}</div>
                 </div>
               </div>
 
@@ -142,6 +157,44 @@ export function BookingDetailsModal({ isOpen, onClose, booking, onSuccess }: Boo
                   </Button>
                 </div>
               </div>
+
+              {booking.category && (
+                <div className="flex items-start gap-3">
+                  <Tag className="mt-0.5 h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <div className="font-medium text-foreground">Category</div>
+                    <div className="text-sm text-muted-foreground">{booking.category}</div>
+                  </div>
+                </div>
+              )}
+
+              {booking.durationDays && (
+                <div className="flex items-start gap-3">
+                  <Clock className="mt-0.5 h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <div className="font-medium text-foreground">Duration</div>
+                    <div className="text-sm text-muted-foreground">
+                      {booking.durationDays} {booking.durationDays === 1 ? "day" : "days"}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {booking.touristName && (
+                <div className="flex items-start gap-3">
+                  <User className="mt-0.5 h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <div className="font-medium text-foreground">Tourist</div>
+                    <div className="text-sm text-muted-foreground">{booking.touristName}</div>
+                    {booking.touristEmail && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <Mail className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">{booking.touristEmail}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <Separator />

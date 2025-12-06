@@ -254,10 +254,11 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
     },
     {
       id: "guests",
+      accessorKey: "numberOfGuests",
       header: "Guests",
-      cell: () => {
-        // Group size info might not be in booking, using listing maxGroupSize as fallback
-        return "N/A"
+      cell: ({ row }) => {
+        const numberOfGuests = row.original.numberOfGuests || 0
+        return numberOfGuests > 0 ? `${numberOfGuests} ${numberOfGuests === 1 ? "guest" : "guests"}` : "N/A"
       },
     },
     {
@@ -390,10 +391,11 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
     },
     {
       id: "guests",
+      accessorKey: "numberOfGuests",
       header: "Guests",
-      cell: () => {
-        // Group size info might not be in booking, using listing maxGroupSize as fallback
-        return "N/A"
+      cell: ({ row }) => {
+        const numberOfGuests = row.original.numberOfGuests || 0
+        return numberOfGuests > 0 ? `${numberOfGuests} ${numberOfGuests === 1 ? "guest" : "guests"}` : "N/A"
       },
     },
     {
@@ -485,6 +487,15 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
           month: "short",
           day: "numeric",
         })
+      },
+    },
+    {
+      id: "guests",
+      accessorKey: "numberOfGuests",
+      header: "Guests",
+      cell: ({ row }) => {
+        const numberOfGuests = row.original.numberOfGuests || 0
+        return numberOfGuests > 0 ? `${numberOfGuests} ${numberOfGuests === 1 ? "guest" : "guests"}` : "N/A"
       },
     },
     {
@@ -767,11 +778,7 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                   <TabsTrigger value="upcoming">Upcoming Bookings</TabsTrigger>
                   <TabsTrigger value="pending">
                     Pending Requests
-                    {initialData.pendingRequests.length > 0 && (
-                      <Badge className="ml-2" variant="secondary">
-                        {initialData.pendingRequests.length}
-                      </Badge>
-                    )}
+                    
                   </TabsTrigger>
                   <TabsTrigger value="completed">Completed Bookings</TabsTrigger>
                   <TabsTrigger value="listings">My Tours</TabsTrigger>
@@ -1207,10 +1214,17 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                   minute: "2-digit",
                 }),
                 guests: selectedBooking.listing?.maxGroupSize || 1,
+                numberOfGuests: selectedBooking.numberOfGuests || 0,
                 price: selectedBooking.listing?.tourFee || 0,
                 status: selectedBooking.status.toLowerCase(),
                 location: selectedBooking.listing?.city || "N/A",
                 meetingPoint: selectedBooking.listing?.meetingPoint || "N/A",
+                category: selectedBooking.listing?.category,
+                durationDays: selectedBooking.listing?.durationDays,
+                touristName: selectedBooking.tourist?.user?.name,
+                touristEmail: selectedBooking.tourist?.user?.email,
+                createdAt: selectedBooking.createdAt,
+                updatedAt: selectedBooking.updatedAt,
                 guidePhone: undefined,
                 confirmationNumber: selectedBooking.id.slice(0, 8),
               }
