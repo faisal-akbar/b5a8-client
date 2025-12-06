@@ -152,9 +152,9 @@ export function BookingDetailsModal({ isOpen, onClose, booking, onSuccess }: Boo
                 <div>
                   <div className="font-medium text-foreground">Meeting Point</div>
                   <div className="text-sm text-muted-foreground">{booking.meetingPoint}</div>
-                  <Button variant="link" className="h-auto p-0 text-sm">
+                  {/* <Button variant="link" className="h-auto p-0 text-sm">
                     View on map
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
 

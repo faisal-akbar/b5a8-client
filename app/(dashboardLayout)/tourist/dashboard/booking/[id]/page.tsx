@@ -34,13 +34,16 @@ export default function BookingCheckoutPage() {
     date: "2024-01-20",
     time: "7:00 PM",
     guests: 2,
-    pricePerPerson: 85,
+    tourFee: 85, // Tour fee per person
+    guideDailyRate: 150, // Guide daily rate
+    durationDays: 1, // Duration in days
     meetingPoint: "Jackson Square, in front of St. Louis Cathedral",
   }
 
-  const subtotal = booking.pricePerPerson * booking.guests
-  const serviceFee = Math.round(subtotal * 0.1)
-  const total = subtotal + serviceFee
+  // Calculate total using: (Tour Fee × Number of Guests) + (Guide Daily Rate × Duration Days)
+  const tourFeeTotal = booking.tourFee * booking.guests
+  const guideFeeTotal = booking.guideDailyRate * booking.durationDays
+  const total = tourFeeTotal + guideFeeTotal
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -216,16 +219,18 @@ export default function BookingCheckoutPage() {
 
                     <Separator className="my-6" />
 
-                    <div className="space-y-3">
+                    <div className="space-y-3"></div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">
-                          ${booking.pricePerPerson} × {booking.guests} guests
+                          ${booking.tourFee} × {booking.guests} guests
                         </span>
-                        <span className="text-foreground">${subtotal}</span>
+                        <span className="text-foreground">${tourFeeTotal}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Service fee</span>
-                        <span className="text-foreground">${serviceFee}</span>
+                        <span className="text-muted-foreground">
+                          ${booking.guideDailyRate} × {booking.durationDays} {booking.durationDays === 1 ? "day" : "days"}
+                        </span>
+                        <span className="text-foreground">${guideFeeTotal}</span>
                       </div>
                       <Separator />
                       <div className="flex justify-between">
@@ -239,7 +244,7 @@ export default function BookingCheckoutPage() {
                 <Card className="border-primary/20 bg-primary/5">
                   <CardContent className="p-4">
                     <div className="flex gap-3">
-                      <CheckCircle className="h-5 w-5 flex-shrink-0 text-primary" />
+                      <CheckCircle className="h-5 w-5 shrink-0 text-primary" />
                       <div>
                         <p className="text-sm font-semibold text-foreground">Free cancellation</p>
                         <p className="mt-1 text-xs text-muted-foreground">

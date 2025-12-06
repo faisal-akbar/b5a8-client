@@ -417,9 +417,9 @@ export function TourDetailsClient({
                   <div className="flex-1">
                     <h3 className="font-semibold text-foreground">Meeting Point</h3>
                     <p className="mt-2 text-muted-foreground">{listing.meetingPoint}</p>
-                    <Button variant="link" className="mt-2 h-auto p-0 text-primary">
+                    {/* <Button variant="link" className="mt-2 h-auto p-0 text-primary">
                       View on map →
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
               </CardContent>
