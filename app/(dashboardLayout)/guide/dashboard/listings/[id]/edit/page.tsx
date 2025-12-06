@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { ArrowLeft, Upload, X, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
@@ -79,6 +80,7 @@ export default function EditListingPage() {
     maxGroupSize: "",
     city: "",
     category: "" as Category | "",
+    isActive: true,
   })
   const [existingImages, setExistingImages] = useState<string[]>([])
   const [imageFiles, setImageFiles] = useState<File[]>([])
@@ -103,6 +105,7 @@ export default function EditListingPage() {
             maxGroupSize: listing.maxGroupSize?.toString() || "",
             city: listing.city || "",
             category: listing.category || ("" as Category | ""),
+            isActive: listing.isActive ?? true,
           })
           setExistingImages(listing.images || [])
         } else {
@@ -184,6 +187,7 @@ export default function EditListingPage() {
       city: formData.city || undefined,
       category: formData.category || undefined,
       images: allImages,
+      isActive: formData.isActive,
     }
 
     // Zod validation
@@ -309,6 +313,27 @@ export default function EditListingPage() {
                       rows={6}
                     />
                     <InputFieldError field="description" state={validationErrors} />
+                  </div>
+                </div>
+
+                {/* Tour Status */}
+                <div className="space-y-4 border-t border-border pt-6">
+                  <h2 className="text-lg font-semibold text-foreground">Tour Status</h2>
+                  
+                  <div className="flex items-center justify-between rounded-lg border border-border p-4">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="isActive" className="text-base">Tour Status</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {formData.isActive 
+                          ? "Your tour is currently active and visible to tourists" 
+                          : "Your tour is currently inactive and hidden from tourists"}
+                      </p>
+                    </div>
+                    <Switch
+                      id="isActive"
+                      checked={formData.isActive}
+                      onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isActive: checked }))}
+                    />
                   </div>
                 </div>
 

@@ -37,6 +37,7 @@ export interface UpdateListingParams {
   city?: string;
   category?: string;
   images?: string[];
+  isActive?: boolean;
 }
 
 /**

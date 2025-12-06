@@ -137,5 +137,8 @@ export const updateListingZodSchema = z.object({
     .min(1, { message: "At least one image is required." })
     .max(10, { message: "Cannot exceed 10 images." })
     .optional(),
+  isActive: z
+    .boolean({ message: "Active status must be a boolean" })
+    .optional(),
 })
 

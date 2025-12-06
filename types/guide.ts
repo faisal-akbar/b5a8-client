@@ -16,18 +16,24 @@ export interface GuideListing {
   category: Category
   images: string[]
   isActive: boolean
+  guideId: string
   createdAt: string
   updatedAt: string
-  guide: {
+  _count: {
+    bookings: number
+    reviews: number
+  }
+  averageRating: number | null
+  // Optional fields for backward compatibility with transformed data
+  bookingsCount?: number
+  reviewsCount?: number
+  guide?: {
     id: string
     user: {
       id: string
       name: string
     }
   }
-  bookingsCount?: number
-  averageRating?: number
-  reviewsCount?: number
 }
 
 // Guide Booking (from API response)

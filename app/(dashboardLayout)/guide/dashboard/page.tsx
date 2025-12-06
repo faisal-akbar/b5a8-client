@@ -34,14 +34,15 @@ export default async function GuideDashboardPage({ searchParams }: PageProps) {
   // Different default limits for different tabs
   const reviewsLimit = activeTab === "reviews" ? parseInt(params.limit || "5", 10) : limit
   const listingsLimit = activeTab === "listings" ? limit : 100
-  const bookingsLimit = (activeTab === "upcoming" || activeTab === "pending") ? limit : 100
+  const bookingsLimit = (activeTab === "upcoming" || activeTab === "pending" || activeTab === "completed") ? limit : 100
 
   try {
     // Fetch all data in parallel with pagination based on active tab
-    const [listingsResult, upcomingBookingsResult, pendingBookingsResult, paymentsResult, profileResult, reviewsResult] = await Promise.all([
+    const [listingsResult, upcomingBookingsResult, pendingBookingsResult, completedBookingsResult, paymentsResult, profileResult, reviewsResult] = await Promise.all([
       getMyListings({ page: activeTab === "listings" ? page : 1, limit: listingsLimit }),
       getMyBookings({ status: "CONFIRMED", type: "upcoming", page: activeTab === "upcoming" ? page : 1, limit: bookingsLimit }),
       getMyBookings({ status: "PENDING", page: activeTab === "pending" ? page : 1, limit: bookingsLimit }),
+      getMyBookings({ status: "COMPLETED", page: activeTab === "completed" ? page : 1, limit: bookingsLimit }),
       getPayments({ page: 1, limit: 100 }),
       getMyProfile(),
       getMyReviews({ page: activeTab === "reviews" ? page : 1, limit: reviewsLimit }),
@@ -145,6 +146,20 @@ export default async function GuideDashboardPage({ searchParams }: PageProps) {
     
     const pendingBookingsTotal = pendingBookingsMeta.total ?? pendingRequests.length
     const pendingBookingsTotalPages = pendingBookingsMeta.totalPages ?? (pendingRequests.length > 0 ? Math.max(1, Math.ceil(pendingBookingsTotal / bookingsLimit)) : 0)
+
+    // Process completed bookings with pagination
+    const completedBookings: GuideBooking[] = completedBookingsResult.success && completedBookingsResult.data
+      ? (Array.isArray(completedBookingsResult.data) 
+          ? completedBookingsResult.data 
+          : (completedBookingsResult.data.data || []))
+      : []
+    
+    const completedBookingsMeta = completedBookingsResult.success && completedBookingsResult.data && !Array.isArray(completedBookingsResult.data)
+      ? completedBookingsResult.data.meta || {}
+      : {}
+    
+    const completedBookingsTotal = completedBookingsMeta.total ?? completedBookings.length
+    const completedBookingsTotalPages = completedBookingsMeta.totalPages ?? (completedBookings.length > 0 ? Math.max(1, Math.ceil(completedBookingsTotal / bookingsLimit)) : 0)
 
     // Process payments for earnings
     // Payment service returns: { success: true, data: { data: [...payments], meta: {...} } }
@@ -251,6 +266,9 @@ export default async function GuideDashboardPage({ searchParams }: PageProps) {
       pendingRequests,
       pendingBookingsTotal,
       pendingBookingsTotalPages,
+      completedBookings,
+      completedBookingsTotal,
+      completedBookingsTotalPages,
       payments,
       stats,
       badges,
@@ -270,7 +288,6 @@ export default async function GuideDashboardPage({ searchParams }: PageProps) {
               <DashboardSkeleton />
             </div>
           </main>
-          <Footer />
         </div>
       }>
         <GuideDashboardClient initialData={initialData} />
@@ -285,7 +302,6 @@ export default async function GuideDashboardPage({ searchParams }: PageProps) {
             <DashboardSkeleton />
           </div>
         </main>
-        <Footer />
       </div>
     )
   }

@@ -1,4 +1,3 @@
-import { Footer } from "@/components/layout/footer"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"

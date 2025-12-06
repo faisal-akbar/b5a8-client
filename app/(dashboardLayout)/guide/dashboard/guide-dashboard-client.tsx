@@ -46,6 +46,9 @@ interface GuideDashboardClientProps {
     pendingRequests: GuideBooking[]
     pendingBookingsTotal: number
     pendingBookingsTotalPages: number
+    completedBookings: GuideBooking[]
+    completedBookingsTotal: number
+    completedBookingsTotalPages: number
     payments: GuidePayment[]
     stats: GuideStats
     badges: GuideBadge[]
@@ -321,6 +324,116 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
     },
   ]
 
+  const completedBookingsColumns: ColumnDef<GuideBooking>[] = [
+    {
+      accessorKey: "id",
+      header: "Booking ID",
+      cell: ({ row }) => {
+        const id = row.getValue("id") as string
+        return <span className="font-mono text-sm">{id.slice(0, 8)}</span>
+      },
+    },
+    {
+      accessorKey: "listing.title",
+      header: "Tour",
+      cell: ({ row }) => {
+        return row.original.listing?.title || "N/A"
+      },
+    },
+    {
+      id: "tourist.user.name",
+      accessorKey: "tourist.user.name",
+      accessorFn: (row) => {
+        return row.tourist?.user?.name || ""
+      },
+      header: "Tourist",
+      cell: ({ row }) => {
+        return row.original.tourist?.user?.name || "N/A"
+      },
+      filterFn: (row, id, value) => {
+        const touristName = row.original.tourist?.user?.name || ""
+        return touristName.toLowerCase().includes(value.toLowerCase())
+      },
+    },
+    {
+      accessorKey: "date",
+      header: "Date",
+      cell: ({ row }) => {
+        return new Date(row.getValue("date")).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })
+      },
+    },
+    {
+      id: "time",
+      header: "Time",
+      cell: ({ row }) => {
+        const date = new Date(row.original.date)
+        return date.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        })
+      },
+    },
+    {
+      id: "guests",
+      header: "Guests",
+      cell: () => {
+        // Group size info might not be in booking, using listing maxGroupSize as fallback
+        return "N/A"
+      },
+    },
+    {
+      id: "price",
+      header: "Price",
+      cell: ({ row }) => {
+        const tourFee = row.original.listing?.tourFee || 0
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(tourFee)
+        return <div className="font-medium">{formatted}</div>
+      },
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string
+        return (
+          <Badge variant="outline">
+            {status}
+          </Badge>
+        )
+      },
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const booking = row.original
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => handleViewBookingDetails(booking)}>
+                <Eye className="mr-2 h-4 w-4" />
+                View details
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      },
+    },
+  ]
+
   const pendingColumns: ColumnDef<GuideBooking>[] = [
     {
       accessorKey: "id",
@@ -416,6 +529,54 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
       header: "Tour Title",
     },
     {
+      accessorKey: "category",
+      header: "Category",
+      cell: ({ row }) => {
+        const category = row.getValue("category") as string
+        return <Badge variant="outline">{category}</Badge>
+      },
+    },
+    {
+      accessorKey: "city",
+      header: "City",
+    },
+    {
+      accessorKey: "durationDays",
+      header: "Duration",
+      cell: ({ row }) => {
+        const days = row.getValue("durationDays") as number
+        return `${days} ${days === 1 ? "day" : "days"}`
+      },
+    },
+    {
+      accessorKey: "tourFee",
+      header: "Tour Fee",
+      cell: ({ row }) => {
+        const fee = row.getValue("tourFee") as number
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(fee)
+        return <div className="font-medium">{formatted}</div>
+      },
+    },
+    {
+      accessorKey: "meetingPoint",
+      header: "Meeting Point",
+      cell: ({ row }) => {
+        const meetingPoint = row.getValue("meetingPoint") as string
+        return <span className="text-sm text-muted-foreground">{meetingPoint}</span>
+      },
+    },
+    {
+      accessorKey: "maxGroupSize",
+      header: "Max Group",
+      cell: ({ row }) => {
+        const maxGroupSize = row.getValue("maxGroupSize") as number
+        return `${maxGroupSize} ${maxGroupSize === 1 ? "person" : "people"}`
+      },
+    },
+    {
       accessorKey: "isActive",
       header: "Status",
       cell: ({ row }) => {
@@ -428,10 +589,12 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
       },
     },
     {
-      accessorKey: "bookingsCount",
+      id: "bookings",
       header: "Bookings",
       cell: ({ row }) => {
-        return row.original.bookingsCount || 0
+        // Support both _count.bookings (from API) and bookingsCount (transformed)
+        const bookings = row.original._count?.bookings ?? row.original.bookingsCount ?? 0
+        return bookings
       },
     },
     {
@@ -439,7 +602,8 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
       header: "Revenue",
       cell: ({ row }) => {
         // Calculate revenue from bookings count and tour fee
-        const bookingsCount = row.original.bookingsCount || 0
+        // Support both _count.bookings (from API) and bookingsCount (transformed)
+        const bookingsCount = row.original._count?.bookings ?? row.original.bookingsCount ?? 0
         const tourFee = row.original.tourFee || 0
         const revenue = bookingsCount * tourFee
         const formatted = new Intl.NumberFormat("en-US", {
@@ -453,12 +617,14 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
       accessorKey: "averageRating",
       header: "Rating",
       cell: ({ row }) => {
-        const rating = row.original.averageRating || 0
-        const reviews = row.original.reviewsCount || 0
+        // averageRating can be null from API
+        const rating = row.original.averageRating ?? null
+        // Support both _count.reviews (from API) and reviewsCount (transformed)
+        const reviews = row.original._count?.reviews ?? row.original.reviewsCount ?? 0
         return (
           <div className="flex items-center gap-1">
             <Star className="h-3 w-3 fill-primary text-primary" />
-            {rating > 0 ? rating.toFixed(1) : "N/A"} ({reviews})
+            {rating !== null && rating > 0 ? rating.toFixed(1) : "N/A"} ({reviews})
           </div>
         )
       },
@@ -588,6 +754,7 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                       </Badge>
                     )}
                   </TabsTrigger>
+                  <TabsTrigger value="completed">Completed Bookings</TabsTrigger>
                   <TabsTrigger value="listings">My Tours</TabsTrigger>
                   <TabsTrigger value="reviews">
                     Reviews
@@ -718,6 +885,59 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                 )}
               </TabsContent>
 
+              <TabsContent value="completed">
+                <DataTable
+                  columns={completedBookingsColumns}
+                  data={initialData.completedBookings}
+                  searchKey="tourist.user.name"
+                  searchPlaceholder="Search by tourist name..."
+                />
+                {/* Pagination for completed bookings */}
+                {activeTab === "completed" && initialData.completedBookings.length > 0 && initialData.completedBookingsTotalPages > 1 && (
+                  <div className="mt-6 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        Page {currentPage} of {initialData.completedBookingsTotalPages} ({initialData.completedBookingsTotal} total)
+                      </p>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updatePagination(1, currentLimit)}
+                          disabled={currentPage === 1}
+                        >
+                          First
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updatePagination(Math.max(1, currentPage - 1), currentLimit)}
+                          disabled={currentPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updatePagination(Math.min(initialData.completedBookingsTotalPages, currentPage + 1), currentLimit)}
+                          disabled={currentPage === initialData.completedBookingsTotalPages}
+                        >
+                          Next
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updatePagination(initialData.completedBookingsTotalPages, currentLimit)}
+                          disabled={currentPage === initialData.completedBookingsTotalPages}
+                        >
+                          Last
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+
               <TabsContent value="listings">
                 <DataTable
                   columns={toursColumns}
@@ -725,6 +945,10 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                   searchKey="title"
                   searchPlaceholder="Search tours..."
                   disablePagination={true}
+                  initialColumnVisibility={{
+                    city: false,
+                    meetingPoint: false,
+                  }}
                 />
                 {/* Pagination for listings */}
                 {activeTab === "listings" && initialData.listings.length > 0 && (
