@@ -1,0 +1,560 @@
+"use client"
+
+import { useState } from "react"
+import { Footer } from "@/components/layout/footer"
+import { StatCard } from "@/components/dashboard/stat-card"
+import { DataTable } from "@/components/dashboard/data-table"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { CalendarDays, MapPin, Heart, Star, MessageCircle, MoreHorizontal, Eye, Loader2, Trash2, Users } from "lucide-react"
+import type { ColumnDef } from "@tanstack/react-table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { motion } from "framer-motion"
+import Link from "next/link"
+import { removeFromWishlist } from "@/services/wishlist/wishlist.service"
+
+// Types
+type Booking = {
+  id: string
+  tourTitle: string
+  tourImage: string
+  guide: string
+  guideImage: string | null
+  location: string
+  city: string
+  date: string
+  guests: number
+  price: number
+  status: "confirmed" | "pending" | "completed" | "cancelled"
+  createdAt: string
+  paymentStatus: string
+  rating?: number
+  reviewed?: boolean
+}
+
+type WishlistTableItem = {
+  id: string
+  tourTitle: string
+  guide: string
+  location: string
+  category: string
+  price: number
+  duration: number
+  listingId: string
+}
+
+type Stats = {
+  upcomingTrips: number
+  completedTrips: number
+  wishlist: number
+  totalSpent: number
+}
+
+interface TouristDashboardClientProps {
+  upcomingBookings: Booking[]
+  pendingBookings: Booking[]
+  pastBookings: Booking[]
+  wishlistItems: WishlistTableItem[]
+  stats: Stats
+}
+
+export function TouristDashboardClient({
+  upcomingBookings: initialUpcoming,
+  pendingBookings: initialPending,
+  pastBookings: initialPast,
+  wishlistItems: initialWishlist,
+  stats,
+}: TouristDashboardClientProps) {
+  const [wishlistItems, setWishlistItems] = useState<WishlistTableItem[]>(initialWishlist)
+  const [removingWishlistId, setRemovingWishlistId] = useState<string | null>(null)
+
+  // Handle removing item from wishlist
+  const handleRemoveFromWishlist = async (listingId: string) => {
+    setRemovingWishlistId(listingId)
+    const result = await removeFromWishlist(listingId)
+    if (result.success) {
+      setWishlistItems(prev => prev.filter(item => item.listingId !== listingId))
+    }
+    setRemovingWishlistId(null)
+  }
+
+  const upcomingColumns: ColumnDef<Booking>[] = [
+    {
+      accessorKey: "id",
+      header: "Booking ID",
+      enableHiding: true,
+    },
+    {
+      accessorKey: "tourTitle",
+      header: "Tour",
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-center gap-3">
+            <div className="relative h-12 w-16 overflow-hidden rounded">
+              <img
+                src={row.original.tourImage || "/placeholder.svg"}
+                alt={row.getValue("tourTitle")}
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div>
+              <div className="font-medium">{row.getValue("tourTitle")}</div>
+              <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                <MapPin className="h-3 w-3" />
+                {row.original.city}
+              </div>
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "guide",
+      header: "Guide",
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-center gap-2">
+            {row.original.guideImage ? (
+              <img
+                src={row.original.guideImage}
+                alt={row.getValue("guide")}
+                className="h-8 w-8 rounded-full object-cover"
+              />
+            ) : (
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="text-xs font-medium text-primary">
+                  {(row.getValue("guide") as string).charAt(0)}
+                </span>
+              </div>
+            )}
+            <span>{row.getValue("guide")}</span>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "date",
+      header: "Date",
+      cell: ({ row }) => {
+        return new Date(row.getValue("date")).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })
+      },
+    },
+    {
+      accessorKey: "guests",
+      header: "Guests",
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-center gap-1">
+            <Users className="h-3 w-3 text-muted-foreground" />
+            {row.getValue("guests")}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "price",
+      header: "Price",
+      cell: ({ row }) => {
+        const amount = Number.parseFloat(row.getValue("price"))
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(amount)
+        return <div className="font-medium">{formatted}</div>
+      },
+    },
+    {
+      accessorKey: "paymentStatus",
+      header: "Payment",
+      cell: ({ row }) => {
+        const status = row.getValue("paymentStatus") as string
+        return (
+          <Badge variant={status === "Paid" ? "default" : "secondary"}>
+            {status}
+          </Badge>
+        )
+      },
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string
+        return <Badge variant={status === "confirmed" ? "default" : "secondary"}>{status}</Badge>
+      },
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem>
+                <Eye className="mr-2 h-4 w-4" />
+                View details
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Contact guide
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive">Cancel booking</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      },
+    },
+  ]
+
+  const pastColumns: ColumnDef<Booking>[] = [
+    {
+      accessorKey: "id",
+      header: "Booking ID",
+      enableHiding: true,
+    },
+    {
+      accessorKey: "tourTitle",
+      header: "Tour",
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-center gap-3">
+            <div className="relative h-12 w-16 overflow-hidden rounded">
+              <img
+                src={row.original.tourImage || "/placeholder.svg"}
+                alt={row.getValue("tourTitle")}
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div>
+              <div className="font-medium">{row.getValue("tourTitle")}</div>
+              <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                <MapPin className="h-3 w-3" />
+                {row.original.city}
+              </div>
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "guide",
+      header: "Guide",
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-center gap-2">
+            {row.original.guideImage ? (
+              <img
+                src={row.original.guideImage}
+                alt={row.getValue("guide")}
+                className="h-8 w-8 rounded-full object-cover"
+              />
+            ) : (
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="text-xs font-medium text-primary">
+                  {(row.getValue("guide") as string).charAt(0)}
+                </span>
+              </div>
+            )}
+            <span>{row.getValue("guide")}</span>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "date",
+      header: "Date",
+      cell: ({ row }) => {
+        return new Date(row.getValue("date")).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })
+      },
+    },
+    {
+      accessorKey: "guests",
+      header: "Guests",
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-center gap-1">
+            <Users className="h-3 w-3 text-muted-foreground" />
+            {row.getValue("guests")}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "price",
+      header: "Price",
+      cell: ({ row }) => {
+        const amount = Number.parseFloat(row.getValue("price"))
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(amount)
+        return <div className="font-medium">{formatted}</div>
+      },
+    },
+    {
+      accessorKey: "rating",
+      header: "Rating",
+      cell: ({ row }) => {
+        const rating = row.original.rating
+        
+        return rating ? (
+          <div className="flex items-center gap-1">
+            <Star className="h-3 w-3 fill-primary text-primary" />
+            <span className="font-medium">{rating.toFixed(1)}</span>
+          </div>
+        ) : (
+          <span className="text-muted-foreground text-sm">Not rated</span>
+        )
+      },
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const booking = row.original
+        return (
+          <div className="flex gap-2">
+            {!booking.reviewed ? (
+              <Button size="sm" className="h-8">
+                <Star className="mr-1 h-3 w-3" />
+                Write Review
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" className="h-8 bg-transparent">
+                View Review
+              </Button>
+            )}
+          </div>
+        )
+      },
+    },
+  ]
+
+  const wishlistColumns: ColumnDef<WishlistTableItem>[] = [
+    {
+      accessorKey: "id",
+      header: "ID",
+      enableHiding: true,
+    },
+    {
+      accessorKey: "tourTitle",
+      header: "Tour",
+      cell: ({ row }) => {
+        return (
+          <div>
+            <div className="font-medium">{row.getValue("tourTitle")}</div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+              <MapPin className="h-3 w-3" />
+              {row.original.location}
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "guide",
+      header: "Guide",
+    },
+    {
+      accessorKey: "category",
+      header: "Category",
+      cell: ({ row }) => {
+        return <Badge variant="outline">{row.getValue("category")}</Badge>
+      },
+    },
+    {
+      accessorKey: "duration",
+      header: "Duration",
+      cell: ({ row }) => {
+        return `${row.getValue("duration")} hours`
+      },
+    },
+    {
+      accessorKey: "price",
+      header: "Price",
+      cell: ({ row }) => {
+        const amount = Number.parseFloat(row.getValue("price"))
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(amount)
+        return <div className="font-medium">{formatted}</div>
+      },
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const item = row.original
+        return (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={() => handleRemoveFromWishlist(item.listingId)}
+              disabled={removingWishlistId === item.listingId}
+            >
+              {removingWishlistId === item.listingId ? (
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+              ) : (
+                <Trash2 className="mr-1 h-3 w-3" />
+              )}
+              Remove
+            </Button>
+            <Link href={`/tours/${item.listingId}`}>
+              <Button size="sm" className="h-8">
+                Book Now
+              </Button>
+            </Link>
+          </div>
+        )
+      },
+    },
+  ]
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      <main className="flex-1 bg-muted/30 py-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mb-8"
+          >
+            <h1 className="text-3xl font-bold text-foreground">My Trips</h1>
+            <p className="mt-2 text-muted-foreground">View and manage your bookings</p>
+          </motion.div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+            <StatCard
+              title="Upcoming Trips"
+              value={stats.upcomingTrips}
+              description="Next 3 months"
+              icon={CalendarDays}
+              index={0}
+            />
+            <StatCard
+              title="Completed Trips"
+              value={stats.completedTrips}
+              description="All time adventures"
+              icon={MapPin}
+              index={1}
+            />
+            <StatCard title="Wishlist" value={stats.wishlist} description="Saved experiences" icon={Heart} index={2} />
+            <StatCard
+              title="Total Spent"
+              value={`$${stats.totalSpent.toLocaleString()}`}
+              description="On experiences"
+              icon={Star}
+              index={3}
+            />
+          </div>
+
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.4 }}>
+            <Tabs defaultValue="upcoming" className="space-y-6">
+              <div className="flex items-center justify-between">
+                <TabsList>
+                  <TabsTrigger value="upcoming">
+                    Upcoming
+                    {initialUpcoming.length > 0 && (
+                      <Badge className="ml-2" variant="secondary">
+                        {initialUpcoming.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="pending">
+                    Pending
+                    {initialPending.length > 0 && (
+                      <Badge className="ml-2" variant="secondary">
+                        {initialPending.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="past">Past Trips</TabsTrigger>
+                  <TabsTrigger value="wishlist">
+                    <Heart className="mr-1 h-4 w-4" />
+                    Wishlist
+                    {wishlistItems.length > 0 && (
+                      <Badge className="ml-2" variant="secondary">
+                        {wishlistItems.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                </TabsList>
+                <Link href="/explore">
+                  <Button>Discover More Tours</Button>
+                </Link>
+              </div>
+
+              <TabsContent value="upcoming">
+                <DataTable
+                  columns={upcomingColumns}
+                  data={initialUpcoming}
+                  searchKey="tourTitle"
+                  searchPlaceholder="Search tours..."
+                  initialColumnVisibility={{ id: false }}
+                />
+              </TabsContent>
+
+              <TabsContent value="pending">
+                <DataTable
+                  columns={upcomingColumns}
+                  data={initialPending}
+                  searchKey="tourTitle"
+                  searchPlaceholder="Search tours..."
+                  initialColumnVisibility={{ id: false }}
+                />
+              </TabsContent>
+
+              <TabsContent value="past">
+                <DataTable
+                  columns={pastColumns}
+                  data={initialPast}
+                  searchKey="tourTitle"
+                  searchPlaceholder="Search tours..."
+                  initialColumnVisibility={{ id: false }}
+                />
+              </TabsContent>
+
+              <TabsContent value="wishlist">
+                <DataTable
+                  columns={wishlistColumns}
+                  data={wishlistItems}
+                  searchKey="tourTitle"
+                  searchPlaceholder="Search wishlist..."
+                  initialColumnVisibility={{ id: false }}
+                />
+              </TabsContent>
+            </Tabs>
+          </motion.div>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
+  )
+}
+

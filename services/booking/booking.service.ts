@@ -77,9 +77,14 @@ export async function getMyBookings(params: GetMyBookingsParams = {}) {
       throw new Error(data.message || "Failed to get bookings");
     }
     
+    // API returns: { success, message, data: [...], meta: {...} }
+    // Return the full response structure
     return {
       success: true,
-      data: data.data,
+      data: {
+        bookings: data.data || [],
+        meta: data.meta || { total: 0, page: 1, limit: 10, totalPages: 0 },
+      },
     };
   } catch (error: any) {
     return {

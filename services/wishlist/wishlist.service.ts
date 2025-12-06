@@ -58,9 +58,14 @@ export async function getMyWishlist(params: GetMyWishlistParams = {}) {
       throw new Error(data.message || "Failed to get wishlist");
     }
     
+    // API returns: { success, message, data: [...], meta: {...} }
+    // Return the full response structure
     return {
       success: true,
-      data: data.data,
+      data: {
+        wishlist: data.data || [],
+        meta: data.meta || { total: 0, page: 1, limit: 10, totalPages: 0 },
+      },
     };
   } catch (error: any) {
     return {
