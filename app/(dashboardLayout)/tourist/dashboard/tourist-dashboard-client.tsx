@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Footer } from "@/components/layout/footer"
 import { StatCard } from "@/components/dashboard/stat-card"
 import { DataTable } from "@/components/dashboard/data-table"
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CalendarDays, MapPin, Heart, Star, MessageCircle, MoreHorizontal, Eye, Loader2, Trash2, Users } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
@@ -89,32 +91,106 @@ type Stats = {
 
 interface TouristDashboardClientProps {
   upcomingBookings: Booking[]
+  upcomingBookingsTotal: number
+  upcomingBookingsTotalPages: number
   pendingBookings: Booking[]
+  pendingBookingsTotal: number
+  pendingBookingsTotalPages: number
   pastBookings: Booking[]
+  pastBookingsTotal: number
+  pastBookingsTotalPages: number
   wishlistItems: WishlistTableItem[]
+  wishlistTotal: number
+  wishlistTotalPages: number
   reviews: TouristReview[]
+  reviewsTotal: number
+  reviewsTotalPages: number
   stats: Stats
+  activeTab: string
+  currentPage: number
+  currentLimit: number
 }
 
 export function TouristDashboardClient({
   upcomingBookings: initialUpcoming,
+  upcomingBookingsTotal,
+  upcomingBookingsTotalPages,
   pendingBookings: initialPending,
+  pendingBookingsTotal,
+  pendingBookingsTotalPages,
   pastBookings: initialPast,
+  pastBookingsTotal,
+  pastBookingsTotalPages,
   wishlistItems: initialWishlist,
+  wishlistTotal,
+  wishlistTotalPages,
   reviews,
+  reviewsTotal,
+  reviewsTotalPages,
   stats,
+  activeTab: initialActiveTab,
+  currentPage: initialCurrentPage,
+  currentLimit: initialCurrentLimit,
 }: TouristDashboardClientProps) {
-  const [wishlistItems, setWishlistItems] = useState<WishlistTableItem[]>(initialWishlist)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // Get active tab from URL or initialData
+  const activeTab = searchParams.get("tab") || initialActiveTab || "upcoming"
+  
+  // Get pagination from URL or initialData
+  const currentPage = parseInt(searchParams.get("page") || initialCurrentPage.toString(), 10)
+  const currentLimit = parseInt(searchParams.get("limit") || initialCurrentLimit.toString(), 10)
+  
   const [removingWishlistId, setRemovingWishlistId] = useState<string | null>(null)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+
+  // Update URL with tab and pagination params
+  const updateTabAndPagination = useCallback((tab: string, page: number, limit: number) => {
+    const params = new URLSearchParams()
+    params.set("tab", tab)
+    params.set("page", page.toString())
+    params.set("limit", limit.toString())
+    const url = `/tourist/dashboard?${params.toString()}`
+    // Update URL and refresh server component
+    router.push(url)
+    // Force server component to re-fetch with new params
+    router.refresh()
+  }, [router])
+
+  // Update pagination for current tab
+  const updatePagination = useCallback((page: number, limit: number) => {
+    updateTabAndPagination(activeTab, page, limit)
+  }, [activeTab, updateTabAndPagination])
+
+  // Update tab (resets to page 1)
+  const updateTab = useCallback((tab: string) => {
+    const defaultLimit = tab === "reviews" ? 5 : 10
+    updateTabAndPagination(tab, 1, defaultLimit)
+  }, [updateTabAndPagination])
+
+  // Refresh data when refresh query param is present
+  useEffect(() => {
+    const refresh = searchParams.get("refresh")
+    if (refresh) {
+      // Clean up the URL and trigger server re-fetch
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete("refresh")
+      router.replace(`/tourist/dashboard?${params.toString()}`, { scroll: false })
+    }
+  }, [searchParams, router])
 
   // Handle removing item from wishlist
   const handleRemoveFromWishlist = async (listingId: string) => {
     setRemovingWishlistId(listingId)
     const result = await removeFromWishlist(listingId)
     if (result.success) {
-      setWishlistItems(prev => prev.filter(item => item.listingId !== listingId))
+      toast.success("Removed from wishlist")
+      // Refresh the page to get updated data from server
+      router.refresh()
+    } else {
+      toast.error("Failed to remove from wishlist")
     }
     setRemovingWishlistId(null)
   }
@@ -626,14 +702,14 @@ export function TouristDashboardClient({
           </div>
 
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.4 }}>
-            <Tabs defaultValue="upcoming" className="space-y-6">
+            <Tabs value={activeTab} onValueChange={updateTab} className="space-y-6">
               <div className="flex items-center justify-between">
                 <TabsList>
                   <TabsTrigger value="upcoming">
                     Upcoming
                     {initialUpcoming.length > 0 && (
                       <Badge className="ml-2" variant="secondary">
-                        {initialUpcoming.length}
+                        {upcomingBookingsTotal}
                       </Badge>
                     )}
                   </TabsTrigger>
@@ -641,7 +717,7 @@ export function TouristDashboardClient({
                     Pending
                     {initialPending.length > 0 && (
                       <Badge className="ml-2" variant="secondary">
-                        {initialPending.length}
+                        {pendingBookingsTotal}
                       </Badge>
                     )}
                   </TabsTrigger>
@@ -649,9 +725,9 @@ export function TouristDashboardClient({
                   <TabsTrigger value="wishlist">
                     <Heart className="mr-1 h-4 w-4" />
                     Wishlist
-                    {wishlistItems.length > 0 && (
+                    {initialWishlist.length > 0 && (
                       <Badge className="ml-2" variant="secondary">
-                        {wishlistItems.length}
+                        {wishlistTotal}
                       </Badge>
                     )}
                   </TabsTrigger>
@@ -673,6 +749,59 @@ export function TouristDashboardClient({
                   searchPlaceholder="Search tours..."
                   initialColumnVisibility={{ id: false, paymentProvider: false}}
                 />
+                {/* Pagination for upcoming bookings */}
+                {activeTab === "upcoming" && initialUpcoming.length > 0 && (
+                  <div className="mt-6 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        {upcomingBookingsTotal} total
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-6 lg:space-x-8">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Page</p>
+                        <Select
+                          value={`${currentPage}`}
+                          onValueChange={(value) => {
+                            updatePagination(Number(value), currentLimit)
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={currentPage} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {Array.from({ length: upcomingBookingsTotalPages }, (_, i) => i + 1).map((pageNum) => (
+                              <SelectItem key={pageNum} value={`${pageNum}`}>
+                                {pageNum}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-sm text-muted-foreground">of {upcomingBookingsTotalPages}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Rows per page</p>
+                        <Select
+                          value={`${currentLimit}`}
+                          onValueChange={(value) => {
+                            updatePagination(1, Number(value))
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={currentLimit} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {[10, 20, 30, 40, 50].map((pageSize) => (
+                              <SelectItem key={pageSize} value={`${pageSize}`}>
+                                {pageSize}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="pending">
@@ -683,6 +812,59 @@ export function TouristDashboardClient({
                   searchPlaceholder="Search tours..."
                   initialColumnVisibility={{ id: false, paymentProvider: false}}
                 />
+                {/* Pagination for pending bookings */}
+                {activeTab === "pending" && initialPending.length > 0 && (
+                  <div className="mt-6 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        {pendingBookingsTotal} total
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-6 lg:space-x-8">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Page</p>
+                        <Select
+                          value={`${currentPage}`}
+                          onValueChange={(value) => {
+                            updatePagination(Number(value), currentLimit)
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={currentPage} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {Array.from({ length: pendingBookingsTotalPages }, (_, i) => i + 1).map((pageNum) => (
+                              <SelectItem key={pageNum} value={`${pageNum}`}>
+                                {pageNum}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-sm text-muted-foreground">of {pendingBookingsTotalPages}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Rows per page</p>
+                        <Select
+                          value={`${currentLimit}`}
+                          onValueChange={(value) => {
+                            updatePagination(1, Number(value))
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={currentLimit} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {[10, 20, 30, 40, 50].map((pageSize) => (
+                              <SelectItem key={pageSize} value={`${pageSize}`}>
+                                {pageSize}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="past">
@@ -693,16 +875,122 @@ export function TouristDashboardClient({
                   searchPlaceholder="Search tours..."
                   initialColumnVisibility={{ id: false, paymentProvider: false}}
                 />
+                {/* Pagination for past bookings */}
+                {activeTab === "past" && initialPast.length > 0 && (
+                  <div className="mt-6 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        {pastBookingsTotal} total
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-6 lg:space-x-8">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Page</p>
+                        <Select
+                          value={`${currentPage}`}
+                          onValueChange={(value) => {
+                            updatePagination(Number(value), currentLimit)
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={currentPage} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {Array.from({ length: pastBookingsTotalPages }, (_, i) => i + 1).map((pageNum) => (
+                              <SelectItem key={pageNum} value={`${pageNum}`}>
+                                {pageNum}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-sm text-muted-foreground">of {pastBookingsTotalPages}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Rows per page</p>
+                        <Select
+                          value={`${currentLimit}`}
+                          onValueChange={(value) => {
+                            updatePagination(1, Number(value))
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={currentLimit} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {[10, 20, 30, 40, 50].map((pageSize) => (
+                              <SelectItem key={pageSize} value={`${pageSize}`}>
+                                {pageSize}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="wishlist">
                 <DataTable
                   columns={wishlistColumns}
-                  data={wishlistItems}
+                  data={initialWishlist}
                   searchKey="tourTitle"
                   searchPlaceholder="Search wishlist..."
                   initialColumnVisibility={{ id: false }}
                 />
+                {/* Pagination for wishlist */}
+                {activeTab === "wishlist" && initialWishlist.length > 0 && (
+                  <div className="mt-6 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        {wishlistTotal} total
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-6 lg:space-x-8">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Page</p>
+                        <Select
+                          value={`${currentPage}`}
+                          onValueChange={(value) => {
+                            updatePagination(Number(value), currentLimit)
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={currentPage} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {Array.from({ length: wishlistTotalPages }, (_, i) => i + 1).map((pageNum) => (
+                              <SelectItem key={pageNum} value={`${pageNum}`}>
+                                {pageNum}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-sm text-muted-foreground">of {wishlistTotalPages}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Rows per page</p>
+                        <Select
+                          value={`${currentLimit}`}
+                          onValueChange={(value) => {
+                            updatePagination(1, Number(value))
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={currentLimit} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {[10, 20, 30, 40, 50].map((pageSize) => (
+                              <SelectItem key={pageSize} value={`${pageSize}`}>
+                                {pageSize}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="reviews">
@@ -713,52 +1001,121 @@ export function TouristDashboardClient({
                     <p className="text-muted-foreground">Complete a trip and leave a review to see it here</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {reviews.map((review) => (
-                      <Card key={review.id}>
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <div className="flex items-center gap-1">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className={`h-4 w-4 ${i < review.rating
-                                        ? "fill-primary text-primary"
-                                        : "text-muted-foreground"
-                                        }`}
-                                    />
-                                  ))}
+                  <>
+                    <div className="space-y-4">
+                      {reviews.map((review) => (
+                        <Card key={review.id}>
+                          <CardContent className="p-6">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <div className="flex items-center gap-1">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star
+                                        key={i}
+                                        className={`h-4 w-4 ${i < review.rating
+                                          ? "fill-primary text-primary"
+                                          : "text-muted-foreground"
+                                          }`}
+                                      />
+                                    ))}
+                                  </div>
+                                  <span className="text-sm font-medium">{review.rating}/5</span>
                                 </div>
-                                <span className="text-sm font-medium">{review.rating}/5</span>
-                              </div>
-                              <p className="text-sm text-muted-foreground mb-2">
-                                {review.listing?.title || "N/A"}
-                              </p>
-                              {review.guide?.user?.name && (
                                 <p className="text-sm text-muted-foreground mb-2">
-                                  Guide: {review.guide.user.name}
+                                  {review.listing?.title || "N/A"}
                                 </p>
-                              )}
-                              {review.comment && (
-                                <p className="text-foreground">{review.comment}</p>
-                              )}
-                              <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
-                                <span>
-                                  {new Date(review.createdAt).toLocaleDateString("en-US", {
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                  })}
-                                </span>
+                                {review.guide?.user?.name && (
+                                  <p className="text-sm text-muted-foreground mb-2">
+                                    Guide: {review.guide.user.name}
+                                  </p>
+                                )}
+                                {review.comment && (
+                                  <p className="text-foreground">{review.comment}</p>
+                                )}
+                                <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
+                                  <span>
+                                    {new Date(review.createdAt).toLocaleDateString("en-US", {
+                                      year: "numeric",
+                                      month: "short",
+                                      day: "numeric",
+                                    })}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                    
+                    {/* Pagination Controls for Reviews */}
+                    {activeTab === "reviews" && reviews.length > 0 && (
+                      <div className="mt-6 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-muted-foreground">Rows per page</p>
+                          <Select
+                            value={currentLimit.toString()}
+                            onValueChange={(value) => {
+                              updatePagination(1, Number(value))
+                            }}
+                          >
+                            <SelectTrigger className="h-8 w-[70px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[5, 10, 20, 50].map((size) => (
+                                <SelectItem key={size} value={size.toString()}>
+                                  {size}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-muted-foreground">
+                            Page {currentPage} of {reviewsTotalPages || 1} ({reviewsTotal || reviews.length} total)
+                          </p>
+                          {reviewsTotalPages > 1 && (
+                            <div className="flex gap-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updatePagination(1, currentLimit)}
+                                disabled={currentPage === 1}
+                              >
+                                First
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updatePagination(Math.max(1, currentPage - 1), currentLimit)}
+                                disabled={currentPage === 1}
+                              >
+                                Previous
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updatePagination(Math.min(reviewsTotalPages, currentPage + 1), currentLimit)}
+                                disabled={currentPage === reviewsTotalPages}
+                              >
+                                Next
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updatePagination(reviewsTotalPages, currentLimit)}
+                                disabled={currentPage === reviewsTotalPages}
+                              >
+                                Last
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </TabsContent>
             </Tabs>

@@ -217,48 +217,105 @@ function transformWishlistItem(item: WishlistItem): WishlistTableItem {
   }
 }
 
-export default async function TouristDashboardPage() {
+export default async function TouristDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
   try {
-    // Fetch all data in parallel
-    const [upcomingResult, pendingResult, pastResult, wishlistResult, reviewsResult] = await Promise.all([
-      getMyBookings({ type: "upcoming", status: "CONFIRMED" }),
-      getMyBookings({ status: "PENDING" }),
-      getMyBookings({ type: "past", status: "COMPLETED" }),
-      getMyWishlist({}),
-      getMyReviews({ limit: 50 }),
-    ])
+    // Get pagination and tab parameters from URL
+    const params = await searchParams
+    const activeTab = (params.tab as string) || "upcoming"
+    const page = parseInt((params.page as string) || "1", 10)
+    const limit = parseInt((params.limit as string) || (activeTab === "reviews" ? "5" : "10"), 10)
 
-    // Process upcoming bookings
-    const upcomingBookings: Booking[] = upcomingResult.success && upcomingResult.data
+    // Determine which data to fetch based on active tab
+    let upcomingResult, pendingResult, pastResult, wishlistResult, reviewsResult
+
+    if (activeTab === "upcoming") {
+      upcomingResult = await getMyBookings({ type: "upcoming", status: "CONFIRMED", page, limit })
+      // Fetch others with default pagination for stats
+      pendingResult = await getMyBookings({ status: "PENDING", page: 1, limit: 1 })
+      pastResult = await getMyBookings({ type: "past", status: "COMPLETED", page: 1, limit: 1 })
+      wishlistResult = await getMyWishlist({ page: 1, limit: 1 })
+      reviewsResult = await getMyReviews({ page: 1, limit: 1 })
+    } else if (activeTab === "pending") {
+      pendingResult = await getMyBookings({ status: "PENDING", page, limit })
+      upcomingResult = await getMyBookings({ type: "upcoming", status: "CONFIRMED", page: 1, limit: 1 })
+      pastResult = await getMyBookings({ type: "past", status: "COMPLETED", page: 1, limit: 1 })
+      wishlistResult = await getMyWishlist({ page: 1, limit: 1 })
+      reviewsResult = await getMyReviews({ page: 1, limit: 1 })
+    } else if (activeTab === "past") {
+      pastResult = await getMyBookings({ type: "past", status: "COMPLETED", page, limit })
+      upcomingResult = await getMyBookings({ type: "upcoming", status: "CONFIRMED", page: 1, limit: 1 })
+      pendingResult = await getMyBookings({ status: "PENDING", page: 1, limit: 1 })
+      wishlistResult = await getMyWishlist({ page: 1, limit: 1 })
+      reviewsResult = await getMyReviews({ page: 1, limit: 1 })
+    } else if (activeTab === "wishlist") {
+      wishlistResult = await getMyWishlist({ page, limit })
+      upcomingResult = await getMyBookings({ type: "upcoming", status: "CONFIRMED", page: 1, limit: 1 })
+      pendingResult = await getMyBookings({ status: "PENDING", page: 1, limit: 1 })
+      pastResult = await getMyBookings({ type: "past", status: "COMPLETED", page: 1, limit: 1 })
+      reviewsResult = await getMyReviews({ page: 1, limit: 1 })
+    } else if (activeTab === "reviews") {
+      reviewsResult = await getMyReviews({ page, limit })
+      upcomingResult = await getMyBookings({ type: "upcoming", status: "CONFIRMED", page: 1, limit: 1 })
+      pendingResult = await getMyBookings({ status: "PENDING", page: 1, limit: 1 })
+      pastResult = await getMyBookings({ type: "past", status: "COMPLETED", page: 1, limit: 1 })
+      wishlistResult = await getMyWishlist({ page: 1, limit: 1 })
+    } else {
+      // Default: fetch all with default pagination
+      const [up, pend, past, wish, rev] = await Promise.all([
+        getMyBookings({ type: "upcoming", status: "CONFIRMED", page: 1, limit: 10 }),
+        getMyBookings({ status: "PENDING", page: 1, limit: 10 }),
+        getMyBookings({ type: "past", status: "COMPLETED", page: 1, limit: 10 }),
+        getMyWishlist({ page: 1, limit: 10 }),
+        getMyReviews({ page: 1, limit: 5 }),
+      ])
+      upcomingResult = up
+      pendingResult = pend
+      pastResult = past
+      wishlistResult = wish
+      reviewsResult = rev
+    }
+
+    // Process bookings
+    const upcomingBookings: Booking[] = upcomingResult?.success && upcomingResult.data
       ? (upcomingResult.data.bookings || []).map(transformBooking)
       : []
+    const upcomingBookingsTotal = upcomingResult?.success ? upcomingResult.data?.meta?.total || 0 : 0
+    const upcomingBookingsTotalPages = upcomingResult?.success ? upcomingResult.data?.meta?.totalPages || 0 : 0
 
-    // Process pending bookings
-    const pendingBookings: Booking[] = pendingResult.success && pendingResult.data
+    const pendingBookings: Booking[] = pendingResult?.success && pendingResult.data
       ? (pendingResult.data.bookings || []).map(transformBooking)
       : []
+    const pendingBookingsTotal = pendingResult?.success ? pendingResult.data?.meta?.total || 0 : 0
+    const pendingBookingsTotalPages = pendingResult?.success ? pendingResult.data?.meta?.totalPages || 0 : 0
 
-    // Process past bookings
-    const pastBookings: Booking[] = pastResult.success && pastResult.data
+    const pastBookings: Booking[] = pastResult?.success && pastResult.data
       ? (pastResult.data.bookings || []).map(transformBooking)
       : []
+    const pastBookingsTotal = pastResult?.success ? pastResult.data?.meta?.total || 0 : 0
+    const pastBookingsTotalPages = pastResult?.success ? pastResult.data?.meta?.totalPages || 0 : 0
 
-    // Process wishlist
-    const wishlistItems: WishlistTableItem[] = wishlistResult.success && wishlistResult.data
+    const wishlistItems: WishlistTableItem[] = wishlistResult?.success && wishlistResult.data
       ? (wishlistResult.data.wishlist || []).map(transformWishlistItem)
       : []
+    const wishlistTotal = wishlistResult?.success ? wishlistResult.data?.meta?.total || 0 : 0
+    const wishlistTotalPages = wishlistResult?.success ? wishlistResult.data?.meta?.totalPages || 0 : 0
 
-    // Process reviews
-    const reviews: TouristReview[] = reviewsResult.success && reviewsResult.data
+    const reviews: TouristReview[] = reviewsResult?.success && reviewsResult.data
       ? (reviewsResult.data.data || [])
       : []
+    const reviewsTotal = reviewsResult?.success ? reviewsResult.data?.meta?.total || 0 : 0
+    const reviewsTotalPages = reviewsResult?.success ? reviewsResult.data?.meta?.totalPages || 0 : 0
 
-    // Calculate stats from real data
+    // Calculate stats from total counts
     const stats = {
-      upcomingTrips: upcomingBookings.length,
-      completedTrips: pastBookings.filter(b => b.status === "completed").length,
-      wishlist: wishlistItems.length,
-      totalSpent: pastBookings.reduce((sum, b) => sum + b.price, 0),
+      upcomingTrips: upcomingBookingsTotal,
+      completedTrips: pastBookingsTotal,
+      wishlist: wishlistTotal,
+      totalSpent: pastBookings.reduce((sum, b) => sum + (b.paymentAmount || b.price), 0),
     }
 
     return (
@@ -273,11 +330,24 @@ export default async function TouristDashboardPage() {
       }>
         <TouristDashboardClient
           upcomingBookings={upcomingBookings}
+          upcomingBookingsTotal={upcomingBookingsTotal}
+          upcomingBookingsTotalPages={upcomingBookingsTotalPages}
           pendingBookings={pendingBookings}
+          pendingBookingsTotal={pendingBookingsTotal}
+          pendingBookingsTotalPages={pendingBookingsTotalPages}
           pastBookings={pastBookings}
+          pastBookingsTotal={pastBookingsTotal}
+          pastBookingsTotalPages={pastBookingsTotalPages}
           wishlistItems={wishlistItems}
+          wishlistTotal={wishlistTotal}
+          wishlistTotalPages={wishlistTotalPages}
           reviews={reviews}
+          reviewsTotal={reviewsTotal}
+          reviewsTotalPages={reviewsTotalPages}
           stats={stats}
+          activeTab={activeTab}
+          currentPage={page}
+          currentLimit={limit}
         />
       </Suspense>
     )
