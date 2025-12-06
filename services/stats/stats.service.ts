@@ -195,3 +195,26 @@ export async function getProfitStats() {
 }
 
 
+/**
+ * Get stats (Guide only)
+ */
+export async function getGuideInfoStats() {
+  try {
+    const response = await serverFetch.get("/stats/guide-info");
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to get guide stats");
+    }
+    
+    return {
+      success: true,
+      data: data.data,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error?.message || "Failed to get guide stats",
+    };
+  }
+}

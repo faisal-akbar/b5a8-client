@@ -139,6 +139,7 @@ export interface GuideStats {
   averageRating: number
   totalTours: number
   activeTours: number
+  totalCompletedBookings: number
 }
 
 // Paginated response wrapper

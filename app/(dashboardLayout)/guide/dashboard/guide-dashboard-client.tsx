@@ -32,7 +32,7 @@ import { BookingDetailsModal } from "@/components/modals/booking-details-modal"
 import { toast } from "sonner"
 import { updateBookingStatus, getBookingById } from "@/services/booking/booking.service"
 import { deleteListing } from "@/services/listing/listing.service"
-import type { GuideListing, GuideBooking, GuideStats, GuideReview, GuideBadge, GuidePayment } from "@/types/guide"
+import type { GuideListing, GuideBooking, GuideStats, GuideReview, GuideBadge } from "@/types/guide"
 import { useRouter, useSearchParams } from "next/navigation"
 
 interface GuideDashboardClientProps {
@@ -49,7 +49,6 @@ interface GuideDashboardClientProps {
     completedBookings: GuideBooking[]
     completedBookingsTotal: number
     completedBookingsTotalPages: number
-    payments: GuidePayment[]
     stats: GuideStats
     badges: GuideBadge[]
     reviews: GuideReview[]
@@ -711,21 +710,21 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
             <StatCard
               title="Total Earnings"
               value={`$${initialData.stats.totalEarnings.toLocaleString()}`}
-              description={initialData.stats.thisMonthEarnings > 0 ? `+$${initialData.stats.thisMonthEarnings.toLocaleString()} this month` : "No earnings this month"}
+              description="Total earnings from all completed bookings"
               icon={DollarSign}
               index={0}
             />
             <StatCard
-              title="Upcoming Tours"
-              value={initialData.stats.upcomingTours.toString()}
-              description="Next 30 days"
+              title="Completed Bookings"
+              value={initialData.stats.totalCompletedBookings.toString()}
+              description="Total completed bookings"
               icon={CalendarDays}
               index={1}
             />
             <StatCard
               title="Average Rating"
               value={initialData.stats.averageRating > 0 ? initialData.stats.averageRating.toFixed(1) : "0.0"}
-              description={initialData.stats.totalReviews > 0 ? `From ${initialData.stats.totalReviews} review${initialData.stats.totalReviews !== 1 ? "s" : ""}` : "No reviews yet"}
+              description="Average rating from all reviews"
               icon={Star}
               index={2}
             />

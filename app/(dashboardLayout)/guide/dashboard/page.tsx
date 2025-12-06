@@ -4,11 +4,11 @@ import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton"
 import { Footer } from "@/components/layout/footer"
 import { getMyListings } from "@/services/listing/listing.service"
 import { getMyBookings } from "@/services/booking/booking.service"
-import { getPayments } from "@/services/payment/payment.service"
 import { getMyProfile } from "@/services/user/user.service"
 import { getMyReviews } from "@/services/review/review.service"
 import { getGuideBadges } from "@/services/badge/badge.service"
 import { getReviews } from "@/services/review/review.service"
+import { getGuideInfoStats } from "@/services/stats/stats.service"
 import type { GuideListing, GuideBooking, GuideStats, GuideReview, GuideBadge, GuidePayment } from "@/types/guide"
 
 export const dynamic = "force-dynamic"
@@ -38,14 +38,14 @@ export default async function GuideDashboardPage({ searchParams }: PageProps) {
 
   try {
     // Fetch all data in parallel with pagination based on active tab
-    const [listingsResult, upcomingBookingsResult, pendingBookingsResult, completedBookingsResult, paymentsResult, profileResult, reviewsResult] = await Promise.all([
+    const [listingsResult, upcomingBookingsResult, pendingBookingsResult, completedBookingsResult, profileResult, reviewsResult, guideStatsResult] = await Promise.all([
       getMyListings({ page: activeTab === "listings" ? page : 1, limit: listingsLimit }),
       getMyBookings({ status: "CONFIRMED", type: "upcoming", page: activeTab === "upcoming" ? page : 1, limit: bookingsLimit }),
       getMyBookings({ status: "PENDING", page: activeTab === "pending" ? page : 1, limit: bookingsLimit }),
       getMyBookings({ status: "COMPLETED", page: activeTab === "completed" ? page : 1, limit: bookingsLimit }),
-      getPayments({ page: 1, limit: 100 }),
       getMyProfile(),
       getMyReviews({ page: activeTab === "reviews" ? page : 1, limit: reviewsLimit }),
+      getGuideInfoStats(),
     ])
 
     // Process listings - fetch reviews for each to calculate average rating
@@ -161,78 +161,24 @@ export default async function GuideDashboardPage({ searchParams }: PageProps) {
     const completedBookingsTotal = completedBookingsMeta.total ?? completedBookings.length
     const completedBookingsTotalPages = completedBookingsMeta.totalPages ?? (completedBookings.length > 0 ? Math.max(1, Math.ceil(completedBookingsTotal / bookingsLimit)) : 0)
 
-    // Process payments for earnings
-    // Payment service returns: { success: true, data: { data: [...payments], meta: {...} } }
-    const payments: GuidePayment[] = paymentsResult.success && paymentsResult.data
-      ? (Array.isArray(paymentsResult.data)
-          ? paymentsResult.data
-          : (Array.isArray(paymentsResult.data.data)
-              ? paymentsResult.data.data
-              : []))
-      : []
+    // Get guide stats from API
+    const guideStatsData = guideStatsResult.success && guideStatsResult.data
+      ? guideStatsResult.data
+      : {
+          totalEarnings: 0,
+          totalCompletedBookings: 0,
+          averageRating: 0,
+          totalActiveTours: 0,
+        }
 
-    // Debug logging for payments
-    // console.log("[SERVER] Dashboard payments:", {
-    //   paymentsResultSuccess: paymentsResult.success,
-    //   paymentsDataStructure: paymentsResult.data ? (Array.isArray(paymentsResult.data) ? "array" : "object") : "null",
-    //   paymentsCount: payments.length,
-    //   firstPayment: payments[0]?.id,
-    //   samplePayment: payments[0],
-    // })
-
-    const totalEarnings = payments
-      .filter((p: GuidePayment) => p.status === "COMPLETED" || p.status === "RELEASED")
-      .reduce((sum: number, p: GuidePayment) => sum + p.amount, 0)
-
-    const now = new Date()
-    const thisMonth = now.getMonth()
-    const thisYear = now.getFullYear()
-    const thisMonthEarnings = payments
-      .filter((p: GuidePayment) => {
-        const paymentDate = new Date(p.createdAt)
-        return (
-          (p.status === "COMPLETED" || p.status === "RELEASED") &&
-          paymentDate.getMonth() === thisMonth &&
-          paymentDate.getFullYear() === thisYear
-        )
-      })
-      .reduce((sum: number, p: GuidePayment) => sum + p.amount, 0)
-
-    // Count upcoming tours (next 30 days)
-    const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
-    const upcomingCount = upcomingBookings.filter((b: GuideBooking) => {
-      const bookingDate = new Date(b.date)
-      return bookingDate >= now && bookingDate <= thirtyDaysFromNow
-    }).length
-
-    // Process profile for ratings and badges
-    let stats: GuideStats = {
-      totalEarnings,
-      thisMonthEarnings,
-      upcomingTours: upcomingCount,
-      totalReviews: 0,
-      averageRating: 0,
-      totalTours: processedListings.length,
-      activeTours: processedListings.filter((l) => l.isActive).length,
-    }
-
+    // Process profile for badges
     let badges: GuideBadge[] = []
     let guideId: string | null = null
 
     if (profileResult.success && profileResult.data) {
       const profile = profileResult.data
       if (profile.role === "GUIDE") {
-        const profileStats = (profile as any).stats || {}
         guideId = (profile as any).guide?.id || null
-
-        const averageRating = profileStats.averageRating ?? 0
-        const reviewsCount = profileStats.reviewsCount ?? 0
-
-        stats = {
-          ...stats,
-          totalReviews: reviewsCount,
-          averageRating: averageRating,
-        }
 
         // Fetch badges if we have guide ID
         if (guideId) {
@@ -242,6 +188,18 @@ export default async function GuideDashboardPage({ searchParams }: PageProps) {
           }
         }
       }
+    }
+
+    // Build stats from API response
+    const stats: GuideStats = {
+      totalEarnings: guideStatsData.totalEarnings || 0,
+      thisMonthEarnings: 0, // Not provided by API, keeping for compatibility
+      upcomingTours: 0, // Not used anymore, keeping for compatibility
+      totalReviews: 0, // Not provided by API, keeping for compatibility
+      averageRating: guideStatsData.averageRating || 0,
+      totalTours: processedListings.length,
+      activeTours: guideStatsData.totalActiveTours || 0,
+      totalCompletedBookings: guideStatsData.totalCompletedBookings || 0,
     }
 
     // Process reviews
@@ -269,7 +227,6 @@ export default async function GuideDashboardPage({ searchParams }: PageProps) {
       completedBookings,
       completedBookingsTotal,
       completedBookingsTotalPages,
-      payments,
       stats,
       badges,
       reviews,
