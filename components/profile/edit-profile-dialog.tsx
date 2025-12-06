@@ -19,7 +19,13 @@ import { Camera, X, Loader2 } from "lucide-react"
 import { updateUser } from "@/services/user/user.service"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { updateUserZodSchema } from "@/zod/user.validation"
+import { z } from "zod"
+import { 
+  updateUserZodSchema, 
+  updateAdminProfileZodSchema,
+  updateGuideProfileZodSchema,
+  updateTouristProfileZodSchema 
+} from "@/zod/user.validation"
 import { zodValidator } from "@/lib/zodValidator"
 import InputFieldError from "@/components/shared/InputFieldError"
 import type { IInputErrorState } from "@/lib/getInputFieldError"
@@ -155,24 +161,43 @@ export function EditProfileDialog({
         setValidationErrors(null)
         
         try {
+            // Validate empty name before converting to undefined
+            if (formData.name !== undefined && formData.name.trim().length === 0) {
+                const errorState: IInputErrorState = {
+                    success: false,
+                    errors: [{ field: "name", message: "Name must be at least 2 characters long." }],
+                }
+                setValidationErrors(errorState)
+                toast.error("Name must be at least 2 characters long.")
+                setIsLoading(false)
+                return
+            }
+
             const updatePayload: any = {
-                name: formData.name || undefined,
-                bio: formData.bio || undefined,
+                name: formData.name && formData.name.trim().length > 0 ? formData.name.trim() : undefined,
+                bio: formData.bio && formData.bio.trim().length > 0 ? formData.bio.trim() : undefined,
                 languages: formData.languages.length > 0 ? formData.languages : undefined,
             }
 
-            // Add role-specific fields
+            // Select appropriate validation schema based on role
+            let validationSchema: z.ZodTypeAny = updateUserZodSchema
+
+            // Add role-specific fields and select role-specific schema
             if (profile.role === "GUIDE") {
+                validationSchema = updateGuideProfileZodSchema
                 updatePayload.expertise = formData.expertise.length > 0 ? formData.expertise : undefined
                 if (formData.dailyRate) {
                     updatePayload.dailyRate = parseFloat(formData.dailyRate)
                 }
             } else if (profile.role === "TOURIST") {
+                validationSchema = updateTouristProfileZodSchema
                 updatePayload.travelPreferences = formData.travelPreferences.length > 0 ? formData.travelPreferences : undefined
+            } else if (profile.role === "ADMIN" || profile.role === "SUPER_ADMIN") {
+                validationSchema = updateAdminProfileZodSchema
             }
 
-            // Validate with Zod
-            const validation = zodValidator(updatePayload, updateUserZodSchema)
+            // Validate with Zod using role-specific schema
+            const validation = zodValidator(updatePayload, validationSchema)
             if (!validation.success) {
                 setValidationErrors(validation)
                 const errorCount = validation.errors?.length || 0

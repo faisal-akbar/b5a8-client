@@ -1,5 +1,46 @@
 import { z } from "zod"
 
+// Base schema for common profile fields
+const updateProfileBaseZodSchema = z.object({
+  name: z
+    .string({ message: "Name must be string" })
+    .min(2, { message: "Name must be at least 2 characters long." })
+    .max(50, { message: "Name cannot exceed 50 characters." })
+    .optional(),
+  bio: z
+    .string({ message: "Bio must be string" })
+    .max(500, { message: "Bio cannot exceed 500 characters." })
+    .optional(),
+  languages: z
+    .array(z.string(), { message: "Languages must be an array of strings" })
+    .optional(),
+})
+
+// Admin Profile Edit Schema
+export const updateAdminProfileZodSchema = updateProfileBaseZodSchema
+
+// Guide Profile Edit Schema
+export const updateGuideProfileZodSchema = updateProfileBaseZodSchema.extend({
+  expertise: z
+    .array(z.string(), { message: "Expertise must be an array of strings" })
+    .optional(),
+  dailyRate: z
+    .number({ message: "Daily rate must be a number" })
+    .int({ message: "Daily rate must be an integer." })
+    .positive({ message: "Daily rate must be a positive number." })
+    .optional(),
+})
+
+// Tourist Profile Edit Schema
+export const updateTouristProfileZodSchema = updateProfileBaseZodSchema.extend({
+  travelPreferences: z
+    .array(z.string(), {
+      message: "Travel preferences must be an array of strings",
+    })
+    .optional(),
+})
+
+// Generic update schema (for backward compatibility)
 export const updateUserZodSchema = z.object({
   name: z
     .string({ message: "Name must be string" })

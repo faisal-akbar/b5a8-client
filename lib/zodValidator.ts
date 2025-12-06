@@ -1,6 +1,7 @@
 import { z } from "zod"
+import type { IInputErrorState } from "./getInputFieldError"
 
-export const zodValidator = <T>(payload: T, schema: z.ZodTypeAny) => {
+export const zodValidator = <T>(payload: T, schema: z.ZodTypeAny): IInputErrorState | { success: true; data: any } => {
     const validatedPayload = schema.safeParse(payload)
 
     if (!validatedPayload.success) {
@@ -8,7 +9,7 @@ export const zodValidator = <T>(payload: T, schema: z.ZodTypeAny) => {
             success: false,
             errors: validatedPayload.error.issues.map(issue => {
                 return {
-                    field: issue.path[0],
+                    field: String(issue.path[0] ?? ""),
                     message: issue.message,
                 }
             })
