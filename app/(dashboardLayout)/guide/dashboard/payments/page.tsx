@@ -80,8 +80,18 @@ export default function PaymentsPage() {
     return payment.status === filter
   })
 
+  // Total pending = payments that are completed but not yet released
   const totalPending = payments
-    .filter((p) => p.status === "PENDING" || p.status === "COMPLETED")
+    .filter((p) => p.status === "COMPLETED" && p.status !== "RELEASED")
+    .reduce((sum, p) => sum + p.amount, 0)
+
+  // Total ready to release = payments where both payment and booking are completed
+  const totalReadyToRelease = payments
+    .filter((p) => 
+      p.status === "COMPLETED" && 
+      p.booking?.status === "COMPLETED" &&
+      p.status !== "RELEASED"
+    )
     .reduce((sum, p) => sum + p.amount, 0)
 
   const totalReleased = payments
@@ -124,7 +134,7 @@ export default function PaymentsPage() {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: "Payment Status",
       cell: ({ row }) => {
         const status = row.getValue("status") as string
         return (
@@ -145,6 +155,28 @@ export default function PaymentsPage() {
       },
     },
     {
+      id: "bookingStatus",
+      header: "Tour Status",
+      cell: ({ row }) => {
+        const bookingStatus = row.original.booking?.status || "PENDING"
+        return (
+          <Badge
+            variant={
+              bookingStatus === "COMPLETED"
+                ? "default"
+                : bookingStatus === "CONFIRMED"
+                  ? "outline"
+                  : bookingStatus === "PENDING"
+                    ? "secondary"
+                    : "destructive"
+            }
+          >
+            {bookingStatus}
+          </Badge>
+        )
+      },
+    },
+    {
       accessorKey: "createdAt",
       header: "Date",
       cell: ({ row }) => {
@@ -160,11 +192,19 @@ export default function PaymentsPage() {
       id: "actions",
       cell: ({ row }) => {
         const payment = row.original
-        const canRelease = payment.status === "COMPLETED" || payment.status === "PENDING"
+        // Guide can only release payment if:
+        // 1. Payment status is COMPLETED (tourist has paid)
+        // 2. Booking status is COMPLETED (tour has been completed)
+        const bookingStatus = payment.booking?.status || "PENDING"
+        const paymentStatus = payment.status
+        const canRelease = 
+          paymentStatus === "COMPLETED" && 
+          bookingStatus === "COMPLETED" &&
+          payment.status !== "RELEASED"
         
         return (
           <div className="flex gap-2">
-            {canRelease && (
+            {canRelease ? (
               <Button
                 size="sm"
                 onClick={() => {
@@ -172,9 +212,15 @@ export default function PaymentsPage() {
                   setIsReleaseDialogOpen(true)
                 }}
               >
-                Release
+                Release Payment
               </Button>
-            )}
+            ) : bookingStatus !== "COMPLETED" ? (
+              <span className="text-sm text-muted-foreground">Complete tour first</span>
+            ) : paymentStatus !== "COMPLETED" ? (
+              <span className="text-sm text-muted-foreground">Payment pending</span>
+            ) : payment.status === "RELEASED" ? (
+              <Badge variant="default">Released</Badge>
+            ) : null}
           </div>
         )
       },
@@ -213,7 +259,7 @@ export default function PaymentsPage() {
           <div className="grid gap-6 mb-6 sm:grid-cols-2 lg:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Pending</CardTitle>
+                <CardTitle className="text-sm font-medium">Ready to Release</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -221,9 +267,9 @@ export default function PaymentsPage() {
                   {new Intl.NumberFormat("en-US", {
                     style: "currency",
                     currency: "USD",
-                  }).format(totalPending)}
+                  }).format(totalReadyToRelease)}
                 </div>
-                <p className="text-xs text-muted-foreground">Available to release</p>
+                <p className="text-xs text-muted-foreground">Tours completed, ready to release</p>
               </CardContent>
             </Card>
 
@@ -316,7 +362,8 @@ export default function PaymentsPage() {
           <DialogHeader>
             <DialogTitle>Release Payment</DialogTitle>
             <DialogDescription>
-              Are you sure you want to release this payment? This action will transfer the funds to your account.
+              Are you sure you want to release this payment? This action will transfer the funds to your account. 
+              This can only be done after the tour has been completed.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

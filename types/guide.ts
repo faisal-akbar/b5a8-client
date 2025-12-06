@@ -82,6 +82,7 @@ export interface GuidePayment {
   booking: {
     id: string
     date: string
+    status?: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED"
     listing: {
       id: string
       title: string

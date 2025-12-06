@@ -102,9 +102,14 @@ export async function getMyAvailabilities({ page = 1, limit = 10 }: { page?: num
       throw new Error(data.message || "Failed to get my availabilities");
     }
     
+    // Backend returns: { success: true, data: [...availabilities], meta: {...} }
+    // Wrap it in the expected structure for consistency with other paginated responses
     return {
       success: true,
-      data: data.data,
+      data: {
+        data: Array.isArray(data.data) ? data.data : (data.data || []),
+        meta: data.meta || {},
+      },
     };
   } catch (error: any) {
     return {

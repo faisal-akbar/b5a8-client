@@ -30,26 +30,31 @@ import {
 import { useState, useEffect, useCallback } from "react"
 import { BookingDetailsModal } from "@/components/modals/booking-details-modal"
 import { toast } from "sonner"
-import { getMyListings } from "@/services/listing/listing.service"
-import { getMyBookings, updateBookingStatus, getBookingById } from "@/services/booking/booking.service"
-import { getPayments } from "@/services/payment/payment.service"
-import { getMyProfile } from "@/services/user/user.service"
+import { updateBookingStatus, getBookingById } from "@/services/booking/booking.service"
 import { deleteListing } from "@/services/listing/listing.service"
-import { getGuideBadges } from "@/services/badge/badge.service"
 import type { GuideListing, GuideBooking, GuideStats, GuideReview, GuideBadge, GuidePayment } from "@/types/guide"
 import { useRouter, useSearchParams } from "next/navigation"
 
 interface GuideDashboardClientProps {
   initialData: {
     listings: GuideListing[]
+    listingsTotal: number
+    listingsTotalPages: number
     upcomingBookings: GuideBooking[]
+    upcomingBookingsTotal: number
+    upcomingBookingsTotalPages: number
     pendingRequests: GuideBooking[]
+    pendingBookingsTotal: number
+    pendingBookingsTotalPages: number
     payments: GuidePayment[]
     stats: GuideStats
     badges: GuideBadge[]
     reviews: GuideReview[]
     reviewsTotal: number
     reviewsTotalPages: number
+    activeTab: string
+    currentPage: number
+    currentLimit: number
   }
 }
 
@@ -57,9 +62,12 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
   const router = useRouter()
   const searchParams = useSearchParams()
   
-  // Get pagination from URL
-  const reviewsPage = parseInt(searchParams.get("page") || "1", 10)
-  const reviewsLimit = parseInt(searchParams.get("limit") || "5", 10)
+  // Get active tab from URL or initialData
+  const activeTab = searchParams.get("tab") || initialData.activeTab || "upcoming"
+  
+  // Get pagination from URL or initialData
+  const currentPage = parseInt(searchParams.get("page") || initialData.currentPage.toString(), 10)
+  const currentLimit = parseInt(searchParams.get("limit") || initialData.currentLimit.toString(), 10)
   
   const [selectedBooking, setSelectedBooking] = useState<GuideBooking | null>(null)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
@@ -67,202 +75,39 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
   const [listingToDelete, setListingToDelete] = useState<string | null>(null)
   const [isAcceptDialogOpen, setIsAcceptDialogOpen] = useState(false)
   const [isDeclineDialogOpen, setIsDeclineDialogOpen] = useState(false)
+  const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false)
   const [bookingToUpdate, setBookingToUpdate] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [stats, setStats] = useState<GuideStats>(initialData.stats)
-  const [upcomingBookings, setUpcomingBookings] = useState<GuideBooking[]>(initialData.upcomingBookings)
-  const [pendingRequests, setPendingRequests] = useState<GuideBooking[]>(initialData.pendingRequests)
-  const [myListings, setMyListings] = useState<GuideListing[]>(initialData.listings)
-  const [reviews, setReviews] = useState<GuideReview[]>(initialData.reviews)
-  const [reviewsTotal, setReviewsTotal] = useState(initialData.reviewsTotal)
-  const [reviewsTotalPages, setReviewsTotalPages] = useState(initialData.reviewsTotalPages)
-  const [isLoadingReviews, setIsLoadingReviews] = useState(false)
 
-  const [badges, setBadges] = useState<GuideBadge[]>(initialData.badges)
-  const [guideId, setGuideId] = useState<string | null>(null)
-
-  // Sync state when initialData changes (e.g., when URL params change and server re-fetches)
-  useEffect(() => {
-    setStats(initialData.stats)
-    setUpcomingBookings(initialData.upcomingBookings)
-    setPendingRequests(initialData.pendingRequests)
-    setMyListings(initialData.listings)
-    setReviews(initialData.reviews)
-    setReviewsTotal(initialData.reviewsTotal)
-    setReviewsTotalPages(initialData.reviewsTotalPages)
-    setBadges(initialData.badges)
-  }, [initialData])
-
-  // Update URL with pagination params
-  const updatePagination = useCallback((page: number, limit: number) => {
-    const params = new URLSearchParams(searchParams.toString())
+  // Update URL with tab and pagination params
+  const updateTabAndPagination = useCallback((tab: string, page: number, limit: number) => {
+    const params = new URLSearchParams()
+    params.set("tab", tab)
     params.set("page", page.toString())
     params.set("limit", limit.toString())
     router.push(`/guide/dashboard?${params.toString()}`, { scroll: false })
-  }, [router, searchParams])
+  }, [router])
 
-  const fetchDashboardData = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      
-      // Fetch all data in parallel (reviews will be fetched separately with pagination)
-      const [listingsResult, upcomingBookingsResult, pendingBookingsResult, paymentsResult, profileResult] = await Promise.all([
-        getMyListings({ page: 1, limit: 100 }),
-        getMyBookings({ status: "CONFIRMED", type: "upcoming" }),
-        getMyBookings({ status: "PENDING" }),
-        getPayments({ page: 1, limit: 100 }),
-        getMyProfile(),
-      ])
+  // Update pagination for current tab
+  const updatePagination = useCallback((page: number, limit: number) => {
+    updateTabAndPagination(activeTab, page, limit)
+  }, [activeTab, updateTabAndPagination])
 
-      // Process listings
-      let processedListings: GuideListing[] = []
-      if (listingsResult.success && listingsResult.data) {
-        // Service returns: { success: true, data: { data: [...listings], meta: {...} } }
-        // API response includes averageRating, _count.reviews, and _count.bookings
-        processedListings = (listingsResult.data.data || []).map((listing: any) => {
-          return {
-            ...listing,
-            reviewsCount: listing._count?.reviews || 0,
-            bookingsCount: listing._count?.bookings || 0,
-            averageRating: listing.averageRating || 0,
-          }
-        })
-        
-        setMyListings(processedListings)
-        
-        const activeListings = processedListings.filter((l) => l.isActive)
-        setStats((prev: GuideStats) => ({
-          ...prev,
-          totalTours: processedListings.length,
-          activeTours: activeListings.length,
-        }))
-      } else {
-        // Set empty array if fetch failed
-        setMyListings([])
-        console.error("Failed to fetch listings:", listingsResult.message || "Unknown error")
-      }
+  // Update tab (resets to page 1)
+  const updateTab = useCallback((tab: string) => {
+    const defaultLimit = tab === "reviews" ? 5 : 10
+    updateTabAndPagination(tab, 1, defaultLimit)
+  }, [updateTabAndPagination])
 
-      // Process upcoming bookings
-      if (upcomingBookingsResult.success && upcomingBookingsResult.data) {
-        const bookings = upcomingBookingsResult.data.data || []
-        setUpcomingBookings(bookings)
-        
-        // Count upcoming tours (next 30 days)
-        const now = new Date()
-        const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
-        const upcomingCount = bookings.filter((b: GuideBooking) => {
-          const bookingDate = new Date(b.date)
-          return bookingDate >= now && bookingDate <= thirtyDaysFromNow
-        }).length
-        
-        setStats((prev: GuideStats) => ({
-          ...prev,
-          upcomingTours: upcomingCount,
-        }))
-      }
-
-      // Process pending bookings
-      if (pendingBookingsResult.success && pendingBookingsResult.data) {
-        const bookings = pendingBookingsResult.data.data || []
-        setPendingRequests(bookings)
-      }
-
-      // Process payments for earnings
-      if (paymentsResult.success && paymentsResult.data) {
-        const payments = paymentsResult.data.data || []
-        const totalEarnings = payments
-          .filter((p: GuidePayment) => p.status === "COMPLETED" || p.status === "RELEASED")
-          .reduce((sum: number, p: GuidePayment) => sum + p.amount, 0)
-        
-        const now = new Date()
-        const thisMonth = now.getMonth()
-        const thisYear = now.getFullYear()
-        const thisMonthEarnings = payments
-          .filter((p: GuidePayment) => {
-            const paymentDate = new Date(p.createdAt)
-            return (
-              (p.status === "COMPLETED" || p.status === "RELEASED") &&
-              paymentDate.getMonth() === thisMonth &&
-              paymentDate.getFullYear() === thisYear
-            )
-          })
-          .reduce((sum: number, p: GuidePayment) => sum + p.amount, 0)
-        
-        setStats((prev: GuideStats) => ({
-          ...prev,
-          totalEarnings,
-          thisMonthEarnings,
-        }))
-      }
-
-      // Process profile for ratings and badges
-      if (profileResult.success && profileResult.data) {
-        const profile = profileResult.data
-        if (profile.role === "GUIDE") {
-          // Get guide ID - it might be in profile.guide.id or we need to fetch it
-          // For now, we'll use stats if available, or calculate from reviews
-          const stats = (profile as any).stats || {}
-          const guideId = (profile as any).guide?.id || null
-          
-          if (guideId) {
-            setGuideId(guideId)
-          }
-
-          // Get average rating and reviews count from stats (calculated by backend)
-          const averageRating = stats.averageRating ?? 0
-          const reviewsCount = stats.reviewsCount ?? 0
-          
-          setStats((prev: GuideStats) => ({
-            ...prev,
-            totalReviews: reviewsCount,
-            averageRating: averageRating,
-          }))
-
-          // Fetch badges if we have guide ID
-          if (guideId) {
-            const badgesResult = await getGuideBadges(guideId)
-            if (badgesResult.success && badgesResult.data) {
-              setBadges(badgesResult.data.data || [])
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error)
-      toast.error("Failed to load dashboard data")
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  // Sync state when initialData changes (e.g., when URL params change and server re-fetches)
-  useEffect(() => {
-    setStats(initialData.stats)
-    setUpcomingBookings(initialData.upcomingBookings)
-    setPendingRequests(initialData.pendingRequests)
-    setMyListings(initialData.listings)
-    setReviews(initialData.reviews)
-    setReviewsTotal(initialData.reviewsTotal)
-    setReviewsTotalPages(initialData.reviewsTotalPages)
-    setBadges(initialData.badges)
-  }, [initialData])
-
-  // Refetch data when refresh query param is present (e.g., after creating a listing)
+  // Refresh data when refresh query param is present (e.g., after creating a listing)
   useEffect(() => {
     const refresh = searchParams.get("refresh")
     if (refresh) {
-      // Small delay to ensure the listing is saved on the backend
-      const timeoutId = setTimeout(() => {
-        fetchDashboardData()
-        // Clean up the URL after refresh
-        const params = new URLSearchParams(searchParams.toString())
-        params.delete("refresh")
-        router.replace(`/guide/dashboard?${params.toString()}`, { scroll: false })
-      }, 1000)
-      
-      return () => clearTimeout(timeoutId)
+      // Clean up the URL and trigger server re-fetch
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete("refresh")
+      router.replace(`/guide/dashboard?${params.toString()}`, { scroll: false })
     }
-  }, [searchParams, router, fetchDashboardData])
+  }, [searchParams, router])
 
   const handleViewBookingDetails = async (booking: GuideBooking) => {
     try {
@@ -285,7 +130,8 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
         toast.success("Booking accepted successfully")
         setIsAcceptDialogOpen(false)
         setBookingToUpdate(null)
-        fetchDashboardData()
+        // Refresh the page to get updated data from server
+        router.refresh()
       } else {
         toast.error(result.message || "Failed to accept booking")
       }
@@ -301,12 +147,30 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
         toast.success("Booking declined successfully")
         setIsDeclineDialogOpen(false)
         setBookingToUpdate(null)
-        fetchDashboardData()
+        // Refresh the page to get updated data from server
+        router.refresh()
       } else {
         toast.error(result.message || "Failed to decline booking")
       }
     } catch (error) {
       toast.error("Failed to decline booking")
+    }
+  }
+
+  const handleCompleteBooking = async (bookingId: string) => {
+    try {
+      const result = await updateBookingStatus({ id: bookingId, status: "COMPLETED" })
+      if (result.success) {
+        toast.success("Booking marked as completed. You can now release the payment.")
+        setIsCompleteDialogOpen(false)
+        setBookingToUpdate(null)
+        // Refresh the page to get updated data from server
+        router.refresh()
+      } else {
+        toast.error(result.message || "Failed to mark booking as completed")
+      }
+    } catch (error) {
+      toast.error("Failed to mark booking as completed")
     }
   }
 
@@ -319,7 +183,8 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
         toast.success("Listing deleted successfully")
         setIsDeleteDialogOpen(false)
         setListingToDelete(null)
-        fetchDashboardData()
+        // Refresh the page to get updated data from server
+        router.refresh()
       } else {
         toast.error(result.message || "Failed to delete listing")
       }
@@ -419,6 +284,11 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
       id: "actions",
       cell: ({ row }) => {
         const booking = row.original
+        const bookingDate = new Date(booking.date)
+        const now = new Date()
+        const isPastDate = bookingDate < now
+        const canComplete = booking.status === "CONFIRMED" && isPastDate
+        
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -433,6 +303,17 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                 <Eye className="mr-2 h-4 w-4" />
                 View details
               </DropdownMenuItem>
+              {canComplete && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setBookingToUpdate(booking.id)
+                    setIsCompleteDialogOpen(true)
+                  }}
+                >
+                  <Check className="mr-2 h-4 w-4" />
+                  Mark as Completed
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )
@@ -641,17 +522,15 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    setIsLoading(true)
-                    fetchDashboardData()
+                    router.refresh()
                   }}
-                  disabled={isLoading}
                 >
-                  <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+                  <RefreshCw className="mr-2 h-4 w-4" />
                   Refresh
                 </Button>
-                {badges.length > 0 && (
+                {initialData.badges.length > 0 && (
                   <div className="flex gap-2">
-                    {badges.map((badge) => (
+                    {initialData.badges.map((badge) => (
                       <Badge key={badge.id} variant="outline" className="text-sm">
                         {badge.badge.replace(/_/g, " ")}
                       </Badge>
@@ -665,29 +544,29 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
             <StatCard
               title="Total Earnings"
-              value={`$${stats.totalEarnings.toLocaleString()}`}
-              description={stats.thisMonthEarnings > 0 ? `+$${stats.thisMonthEarnings.toLocaleString()} this month` : "No earnings this month"}
+              value={`$${initialData.stats.totalEarnings.toLocaleString()}`}
+              description={initialData.stats.thisMonthEarnings > 0 ? `+$${initialData.stats.thisMonthEarnings.toLocaleString()} this month` : "No earnings this month"}
               icon={DollarSign}
               index={0}
             />
             <StatCard
               title="Upcoming Tours"
-              value={stats.upcomingTours.toString()}
+              value={initialData.stats.upcomingTours.toString()}
               description="Next 30 days"
               icon={CalendarDays}
               index={1}
             />
             <StatCard
               title="Average Rating"
-              value={stats.averageRating > 0 ? stats.averageRating.toFixed(1) : "0.0"}
-              description={stats.totalReviews > 0 ? `From ${stats.totalReviews} review${stats.totalReviews !== 1 ? "s" : ""}` : "No reviews yet"}
+              value={initialData.stats.averageRating > 0 ? initialData.stats.averageRating.toFixed(1) : "0.0"}
+              description={initialData.stats.totalReviews > 0 ? `From ${initialData.stats.totalReviews} review${initialData.stats.totalReviews !== 1 ? "s" : ""}` : "No reviews yet"}
               icon={Star}
               index={2}
             />
             <StatCard
               title="Active Tours"
-              value={stats.activeTours.toString()}
-              description={`${stats.totalTours} total listings`}
+              value={initialData.stats.activeTours.toString()}
+              description={`${initialData.stats.totalTours} total listings`}
               icon={TrendingUp}
               index={3}
             />
@@ -697,15 +576,15 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
             className="animate-in fade-in"
             style={{ animationDuration: "300ms", animationDelay: "400ms", animationFillMode: "backwards" }}
           >
-            <Tabs defaultValue="upcoming" className="space-y-6">
+            <Tabs value={activeTab} onValueChange={updateTab} className="space-y-6">
               <div className="flex items-center justify-between">
                 <TabsList>
                   <TabsTrigger value="upcoming">Upcoming Bookings</TabsTrigger>
                   <TabsTrigger value="pending">
                     Pending Requests
-                    {pendingRequests.length > 0 && (
+                    {initialData.pendingRequests.length > 0 && (
                       <Badge className="ml-2" variant="secondary">
-                        {pendingRequests.length}
+                        {initialData.pendingRequests.length}
                       </Badge>
                     )}
                   </TabsTrigger>
@@ -736,37 +615,164 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
               <TabsContent value="upcoming">
                 <DataTable
                   columns={bookingsColumns}
-                  data={upcomingBookings}
+                  data={initialData.upcomingBookings}
                   searchKey="tourist.user.name"
                   searchPlaceholder="Search by tourist name..."
                 />
+                {/* Pagination for upcoming bookings */}
+                {activeTab === "upcoming" && initialData.upcomingBookings.length > 0 && initialData.upcomingBookingsTotalPages > 1 && (
+                  <div className="mt-6 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        Page {currentPage} of {initialData.upcomingBookingsTotalPages} ({initialData.upcomingBookingsTotal} total)
+                      </p>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updatePagination(1, currentLimit)}
+                          disabled={currentPage === 1}
+                        >
+                          First
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updatePagination(Math.max(1, currentPage - 1), currentLimit)}
+                          disabled={currentPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updatePagination(Math.min(initialData.upcomingBookingsTotalPages, currentPage + 1), currentLimit)}
+                          disabled={currentPage === initialData.upcomingBookingsTotalPages}
+                        >
+                          Next
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updatePagination(initialData.upcomingBookingsTotalPages, currentLimit)}
+                          disabled={currentPage === initialData.upcomingBookingsTotalPages}
+                        >
+                          Last
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="pending">
                 <DataTable
                   columns={pendingColumns}
-                  data={pendingRequests}
+                  data={initialData.pendingRequests}
                   searchKey="tourist.user.name"
                   searchPlaceholder="Search by tourist name..."
                 />
+                {/* Pagination for pending bookings */}
+                {activeTab === "pending" && initialData.pendingRequests.length > 0 && initialData.pendingBookingsTotalPages > 1 && (
+                  <div className="mt-6 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        Page {currentPage} of {initialData.pendingBookingsTotalPages} ({initialData.pendingBookingsTotal} total)
+                      </p>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updatePagination(1, currentLimit)}
+                          disabled={currentPage === 1}
+                        >
+                          First
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updatePagination(Math.max(1, currentPage - 1), currentLimit)}
+                          disabled={currentPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updatePagination(Math.min(initialData.pendingBookingsTotalPages, currentPage + 1), currentLimit)}
+                          disabled={currentPage === initialData.pendingBookingsTotalPages}
+                        >
+                          Next
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updatePagination(initialData.pendingBookingsTotalPages, currentLimit)}
+                          disabled={currentPage === initialData.pendingBookingsTotalPages}
+                        >
+                          Last
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="listings">
                 <DataTable
                   columns={toursColumns}
-                  data={myListings}
+                  data={initialData.listings}
                   searchKey="title"
                   searchPlaceholder="Search tours..."
                 />
+                {/* Pagination for listings */}
+                {activeTab === "listings" && initialData.listings.length > 0 && initialData.listingsTotalPages > 1 && (
+                  <div className="mt-6 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        Page {currentPage} of {initialData.listingsTotalPages} ({initialData.listingsTotal} total)
+                      </p>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updatePagination(1, currentLimit)}
+                          disabled={currentPage === 1}
+                        >
+                          First
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updatePagination(Math.max(1, currentPage - 1), currentLimit)}
+                          disabled={currentPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updatePagination(Math.min(initialData.listingsTotalPages, currentPage + 1), currentLimit)}
+                          disabled={currentPage === initialData.listingsTotalPages}
+                        >
+                          Next
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updatePagination(initialData.listingsTotalPages, currentLimit)}
+                          disabled={currentPage === initialData.listingsTotalPages}
+                        >
+                          Last
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="reviews">
-                {isLoadingReviews ? (
-                  <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                    <p className="mt-4 text-muted-foreground">Loading reviews...</p>
-                  </div>
-                ) : reviews.length === 0 ? (
+                {initialData.reviews.length === 0 ? (
                   <div className="text-center py-12">
                     <Star className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold mb-2">No reviews yet</h3>
@@ -775,7 +781,7 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                 ) : (
                   <>
                     <div className="space-y-4">
-                      {reviews.map((review) => (
+                      {initialData.reviews.map((review) => (
                         <Card key={review.id}>
                           <CardContent className="p-6">
                             <div className="flex items-start justify-between">
@@ -818,13 +824,13 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                       ))}
                     </div>
                     
-                    {/* Pagination Controls */}
-                    {reviews.length > 0 && (
+                    {/* Pagination Controls for Reviews */}
+                    {activeTab === "reviews" && initialData.reviews.length > 0 && (
                       <div className="mt-6 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <p className="text-sm text-muted-foreground">Rows per page</p>
                           <Select
-                            value={reviewsLimit.toString()}
+                            value={currentLimit.toString()}
                             onValueChange={(value) => {
                               updatePagination(1, Number(value))
                             }}
@@ -843,39 +849,39 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                         </div>
                         <div className="flex items-center gap-2">
                           <p className="text-sm text-muted-foreground">
-                            Page {reviewsPage} of {reviewsTotalPages || 1} ({reviewsTotal || reviews.length} total)
+                            Page {currentPage} of {initialData.reviewsTotalPages || 1} ({initialData.reviewsTotal || initialData.reviews.length} total)
                           </p>
-                          {reviewsTotalPages > 1 && (
+                          {initialData.reviewsTotalPages > 1 && (
                             <div className="flex gap-1">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => updatePagination(1, reviewsLimit)}
-                                disabled={reviewsPage === 1 || isLoadingReviews}
+                                onClick={() => updatePagination(1, currentLimit)}
+                                disabled={currentPage === 1}
                               >
                                 First
                               </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => updatePagination(Math.max(1, reviewsPage - 1), reviewsLimit)}
-                                disabled={reviewsPage === 1 || isLoadingReviews}
+                                onClick={() => updatePagination(Math.max(1, currentPage - 1), currentLimit)}
+                                disabled={currentPage === 1}
                               >
                                 Previous
                               </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => updatePagination(Math.min(reviewsTotalPages, reviewsPage + 1), reviewsLimit)}
-                                disabled={reviewsPage === reviewsTotalPages || isLoadingReviews}
+                                onClick={() => updatePagination(Math.min(initialData.reviewsTotalPages, currentPage + 1), currentLimit)}
+                                disabled={currentPage === initialData.reviewsTotalPages}
                               >
                                 Next
                               </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => updatePagination(reviewsTotalPages, reviewsLimit)}
-                                disabled={reviewsPage === reviewsTotalPages || isLoadingReviews}
+                                onClick={() => updatePagination(initialData.reviewsTotalPages, currentLimit)}
+                                disabled={currentPage === initialData.reviewsTotalPages}
                               >
                                 Last
                               </Button>
@@ -972,6 +978,26 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
             </Button>
             <Button variant="destructive" onClick={() => bookingToUpdate && handleDeclineBooking(bookingToUpdate)}>
               Decline
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Complete Booking Dialog */}
+      <Dialog open={isCompleteDialogOpen} onOpenChange={setIsCompleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mark Booking as Completed</DialogTitle>
+            <DialogDescription>
+              Mark this booking as completed? Once completed, you will be able to release the payment for this tour.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCompleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => bookingToUpdate && handleCompleteBooking(bookingToUpdate)}>
+              Mark as Completed
             </Button>
           </DialogFooter>
         </DialogContent>
