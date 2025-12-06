@@ -216,10 +216,18 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
       },
     },
     {
+      id: "tourist.user.name",
       accessorKey: "tourist.user.name",
+      accessorFn: (row) => {
+        return row.tourist?.user?.name || ""
+      },
       header: "Tourist",
       cell: ({ row }) => {
         return row.original.tourist?.user?.name || "N/A"
+      },
+      filterFn: (row, id, value) => {
+        const touristName = row.original.tourist?.user?.name || ""
+        return touristName.toLowerCase().includes(value.toLowerCase())
       },
     },
     {
@@ -454,10 +462,18 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
       },
     },
     {
+      id: "tourist.user.name",
       accessorKey: "tourist.user.name",
+      accessorFn: (row) => {
+        return row.tourist?.user?.name || ""
+      },
       header: "Tourist",
       cell: ({ row }) => {
         return row.original.tourist?.user?.name || "N/A"
+      },
+      filterFn: (row, id, value) => {
+        const touristName = row.original.tourist?.user?.name || ""
+        return touristName.toLowerCase().includes(value.toLowerCase())
       },
     },
     {
@@ -788,6 +804,9 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                   data={initialData.upcomingBookings}
                   searchKey="tourist.user.name"
                   searchPlaceholder="Search by tourist name..."
+                  initialColumnVisibility={{
+                    id: false,
+                  }}
                 />
                 {/* Pagination for upcoming bookings */}
                 {activeTab === "upcoming" && initialData.upcomingBookings.length > 0 && (
@@ -850,6 +869,9 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                   data={initialData.pendingRequests}
                   searchKey="tourist.user.name"
                   searchPlaceholder="Search by tourist name..."
+                  initialColumnVisibility={{
+                    id: false,
+                  }}
                 />
                 {/* Pagination for pending bookings */}
                 {activeTab === "pending" && initialData.pendingRequests.length > 0 && (
@@ -912,6 +934,9 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                   data={initialData.completedBookings}
                   searchKey="tourist.user.name"
                   searchPlaceholder="Search by tourist name..."
+                  initialColumnVisibility={{
+                    id: false,
+                  }}
                 />
                 {/* Pagination for completed bookings */}
                 {activeTab === "completed" && initialData.completedBookings.length > 0 && (
@@ -976,7 +1001,7 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                   searchPlaceholder="Search tours..."
                   disablePagination={true}
                   initialColumnVisibility={{
-                    city: false,
+                    id: false,
                     meetingPoint: false,
                   }}
                 />
