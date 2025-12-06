@@ -81,7 +81,18 @@ interface ApiBooking {
       profilePic: string | null
     }
   }
-  payment: any | null
+  payment: {
+    id: string
+    amount: number
+    status: "PAID" | "UNPAID" | "REFUNDED" | "PARTIALLY_REFUNDED"
+    provider: string
+    trxId: string | null
+    stripePaymentIntentId: string | null
+    stripeChargeId: string | null
+    stripeTransferId: string | null
+    createdAt: string
+    updatedAt: string
+  } | null
   review?: {
     id: string
     rating: number
@@ -111,6 +122,8 @@ type Booking = {
   status: "confirmed" | "pending" | "completed" | "cancelled"
   createdAt: string
   paymentStatus: string
+  paymentAmount?: number
+  paymentProvider?: string
   rating?: number
   reviewed?: boolean
   meetingPoint?: string
@@ -162,17 +175,19 @@ function transformBooking(apiBooking: ApiBooking): Booking {
       city: apiBooking.listing?.city || "Unknown City",
       date: apiBooking.date,
       guests: apiBooking.numberOfGuests || 1,
-      price: apiBooking.totalPrice || apiBooking.listing?.tourFee || 0,
+      price: apiBooking.listing?.tourFee || 0,
       status: (apiBooking.status || "PENDING").toLowerCase() as "confirmed" | "pending" | "completed" | "cancelled",
       createdAt: apiBooking.createdAt,
-      paymentStatus: apiBooking.payment ? "Paid" : "Pending",
+      paymentStatus: apiBooking.payment?.status || "UNPAID",
+      paymentAmount: apiBooking.payment?.amount ? apiBooking.payment.amount : undefined,
+      paymentProvider: apiBooking.payment?.provider || undefined,
       rating: apiBooking.review?.rating,
       reviewed: !!apiBooking.review,
       meetingPoint: apiBooking.listing?.meetingPoint,
       category: apiBooking.listing?.category,
       durationDays: apiBooking.listing?.durationDays,
       guideEmail: apiBooking.guide?.user?.email,
-      totalPrice: apiBooking.totalPrice || apiBooking.listing?.tourFee || 0,
+      totalPrice: apiBooking.payment?.amount ? apiBooking.payment.amount: apiBooking.listing?.tourFee || 0,
     }
   } catch (error) {
     console.error("Error transforming booking:", error, apiBooking)

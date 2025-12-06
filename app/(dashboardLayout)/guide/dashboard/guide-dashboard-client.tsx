@@ -821,6 +821,7 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                   searchPlaceholder="Search by tourist name..."
                   initialColumnVisibility={{
                     id: false,
+                    paymentProvider: false,
                   }}
                 />
                 {/* Pagination for upcoming bookings */}
@@ -886,6 +887,7 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                   searchPlaceholder="Search by tourist name..."
                   initialColumnVisibility={{
                     id: false,
+                    paymentProvider: false,
                   }}
                 />
                 {/* Pagination for pending bookings */}
@@ -951,6 +953,7 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
                   searchPlaceholder="Search by tourist name..."
                   initialColumnVisibility={{
                     id: false,
+                    paymentProvider: false,
                   }}
                 />
                 {/* Pagination for completed bookings */}

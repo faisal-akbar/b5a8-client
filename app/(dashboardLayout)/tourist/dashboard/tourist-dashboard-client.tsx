@@ -40,6 +40,8 @@ type Booking = {
   status: "confirmed" | "pending" | "completed" | "cancelled"
   createdAt: string
   paymentStatus: string
+  paymentAmount?: number
+  paymentProvider?: string
   rating?: number
   reviewed?: boolean
   meetingPoint?: string
@@ -136,14 +138,16 @@ export function TouristDashboardClient({
           price: result.data.listing?.tourFee || 0,
           status: result.data.status.toLowerCase() as "confirmed" | "pending" | "completed" | "cancelled",
           createdAt: result.data.createdAt,
-          paymentStatus: result.data.payment?.status || "Pending",
+          paymentStatus: result.data.payment?.status || "UNPAID",
+          paymentAmount: result.data.payment?.amount ? result.data.payment.amount : undefined,
+          paymentProvider: result.data.payment?.provider || undefined,
           rating: booking.rating,
           reviewed: booking.reviewed,
           meetingPoint: result.data.listing?.meetingPoint || "N/A",
           category: result.data.listing?.category || undefined,
           durationDays: result.data.listing?.durationDays || undefined,
           guideEmail: result.data.guide?.user?.email || undefined,
-          totalPrice: result.data.totalPrice || result.data.listing?.tourFee || 0,
+          totalPrice: result.data.payment?.amount ? result.data.payment.amount : result.data.listing?.tourFee || 0,
         }
         setSelectedBooking(transformedBooking)
         setIsDetailsModalOpen(true)
@@ -234,7 +238,7 @@ export function TouristDashboardClient({
     },
     {
       accessorKey: "price",
-      header: "Price",
+      header: "Tour Fee",
       cell: ({ row }) => {
         const amount = Number.parseFloat(row.getValue("price"))
         const formatted = new Intl.NumberFormat("en-US", {
@@ -245,12 +249,40 @@ export function TouristDashboardClient({
       },
     },
     {
+      accessorKey: "paymentAmount",
+      header: "Total Amount",
+      cell: ({ row }) => {
+        const amount = row.original.paymentAmount || row.original.price
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(amount)
+        return <div className="font-medium">{formatted}</div>
+      },
+    },
+    {
+      accessorKey: "paymentProvider",
+      header: "Payment Method",
+      cell: ({ row }) => {
+        const provider = row.original.paymentProvider
+        if (!provider) return <span className="text-muted-foreground text-sm">N/A</span>
+        
+        const displayName = {
+          stripe: "Stripe",
+          bank_transfer: "Bank Transfer",
+          paypal: "PayPal",
+        }[provider] || provider
+
+        return <span className="text-sm">{displayName}</span>
+      },
+    },
+    {
       accessorKey: "paymentStatus",
-      header: "Payment",
+      header: "Payment Status",
       cell: ({ row }) => {
         const status = row.getValue("paymentStatus") as string
         return (
-          <Badge variant={status === "Paid" ? "default" : "secondary"}>
+          <Badge variant={status === "PAID" ? "default" : status === "UNPAID" ? "secondary" : "outline"}>
             {status}
           </Badge>
         )
@@ -258,7 +290,7 @@ export function TouristDashboardClient({
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: "Booking Status",
       cell: ({ row }) => {
         const status = row.getValue("status") as string
         return <Badge variant={status === "confirmed" ? "default" : "secondary"}>{status}</Badge>
@@ -282,10 +314,7 @@ export function TouristDashboardClient({
                 <Eye className="mr-2 h-4 w-4" />
                 View details
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <MessageCircle className="mr-2 h-4 w-4" />
-                Contact guide
-              </DropdownMenuItem>
+              
             </DropdownMenuContent>
           </DropdownMenu>
         )
@@ -372,14 +401,30 @@ export function TouristDashboardClient({
     },
     {
       accessorKey: "price",
-      header: "Price",
+      header: "Total Amount",
       cell: ({ row }) => {
-        const amount = Number.parseFloat(row.getValue("price"))
+        const amount = row.original.paymentAmount || row.original.price
         const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
         }).format(amount)
         return <div className="font-medium">{formatted}</div>
+      },
+    },
+    {
+      accessorKey: "paymentProvider",
+      header: "Payment Method",
+      cell: ({ row }) => {
+        const provider = row.original.paymentProvider
+        if (!provider) return <span className="text-muted-foreground text-sm">N/A</span>
+        
+        const displayName = {
+          stripe: "Stripe",
+          bank_transfer: "Bank Transfer",
+          paypal: "PayPal",
+        }[provider] || provider
+
+        return <span className="text-sm">{displayName}</span>
       },
     },
     {
@@ -626,7 +671,7 @@ export function TouristDashboardClient({
                   data={initialUpcoming}
                   searchKey="tourTitle"
                   searchPlaceholder="Search tours..."
-                  initialColumnVisibility={{ id: false }}
+                  initialColumnVisibility={{ id: false, paymentProvider: false}}
                 />
               </TabsContent>
 
@@ -636,7 +681,7 @@ export function TouristDashboardClient({
                   data={initialPending}
                   searchKey="tourTitle"
                   searchPlaceholder="Search tours..."
-                  initialColumnVisibility={{ id: false }}
+                  initialColumnVisibility={{ id: false, paymentProvider: false}}
                 />
               </TabsContent>
 
@@ -646,7 +691,7 @@ export function TouristDashboardClient({
                   data={initialPast}
                   searchKey="tourTitle"
                   searchPlaceholder="Search tours..."
-                  initialColumnVisibility={{ id: false }}
+                  initialColumnVisibility={{ id: false, paymentProvider: false}}
                 />
               </TabsContent>
 
