@@ -2,9 +2,7 @@
 
 import { serverFetch } from "@/lib/server-fetch";
 
-export interface GetUserByIdParams {
-  id: string;
-}
+
 
 export interface UpdateUserParams {
   id: string;
@@ -61,7 +59,7 @@ export async function getMyProfile() {
 /**
  * Get user by ID (public profile)
  */
-export async function getUserById({ id }: GetUserByIdParams) {
+export async function getUserById(id: string) {
   try {
     const response = await serverFetch.get(`/user/${id}`);
     const data = await response.json();

@@ -220,3 +220,35 @@ export async function getMyReviews({ page = 1, limit = 10 }: { page?: number; li
   }
 }
 
+export async function getReviewsByGuideId(
+  guideId: string,
+  params: { page?: number; limit?: number } = {}
+) {
+  try {
+    const queryParams = new URLSearchParams();
+    
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.limit) queryParams.append("limit", params.limit.toString());
+    
+    const queryString = queryParams.toString();
+    const url = `/reviews/guide/${guideId}${queryString ? `?${queryString}` : ""}`;
+    
+    const response = await serverFetch.get(url);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to get reviews");
+    }
+    
+    return {
+      success: true,
+      data: data.data,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error?.message || "Failed to get reviews",
+    };
+  }
+}
+
