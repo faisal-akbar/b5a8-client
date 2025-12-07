@@ -9,8 +9,7 @@ export interface GetReviewsParams {
 }
 
 export interface CreateReviewParams {
-  guideId: string;
-  listingId: string;
+  bookingId: string;
   rating: number; // 1-5
   comment: string;
 }
@@ -78,15 +77,14 @@ export async function getReviewById(id: string) {
 /**
  * Create review (Tourist only)
  */
-export async function createReview({ guideId, listingId, rating, comment }: CreateReviewParams) {
+export async function createReview({ bookingId, rating, comment }: CreateReviewParams) {
   try {
     const response = await serverFetch.post("/reviews", {
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        guideId,
-        listingId,
+        bookingId,
         rating,
         comment,
       }),

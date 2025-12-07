@@ -12,24 +12,65 @@ import {
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Star } from "lucide-react"
+import { Star, Loader2 } from "lucide-react"
+import { toast } from "sonner"
+import { createReview } from "@/services/review/review.service"
 
 interface ReviewModalProps {
   isOpen: boolean
   onClose: () => void
   tourTitle: string
   guideName: string
+  bookingId: string
+  onSuccess?: () => void
 }
 
-export function ReviewModal({ isOpen, onClose, tourTitle, guideName }: ReviewModalProps) {
+export function ReviewModal({
+  isOpen,
+  onClose,
+  tourTitle,
+  guideName,
+  bookingId,
+  onSuccess
+}: ReviewModalProps) {
   const [rating, setRating] = useState(0)
   const [hoveredRating, setHoveredRating] = useState(0)
   const [review, setReview] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = () => {
-    // Handle review submission
-    console.log({ rating, review })
-    onClose()
+  const handleSubmit = async () => {
+    if (rating === 0 || review.trim().length === 0) {
+      toast.error("Please provide a rating and review")
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      const result = await createReview({
+        bookingId,
+        rating,
+        comment: review.trim(),
+      })
+
+      if (result.success) {
+        toast.success("Review submitted successfully!")
+        // Reset form
+        setRating(0)
+        setReview("")
+        onClose()
+        // Call onSuccess callback to refresh data
+        if (onSuccess) {
+          onSuccess()
+        }
+      } else {
+        toast.error(result.message || "Failed to submit review")
+      }
+    } catch (error) {
+      console.error("Error submitting review:", error)
+      toast.error("An error occurred while submitting your review")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -52,11 +93,11 @@ export function ReviewModal({ isOpen, onClose, tourTitle, guideName }: ReviewMod
                   onMouseEnter={() => setHoveredRating(star)}
                   onMouseLeave={() => setHoveredRating(0)}
                   className="transition-transform hover:scale-110"
+                  disabled={isSubmitting}
                 >
                   <Star
-                    className={`h-10 w-10 ${
-                      star <= (hoveredRating || rating) ? "fill-primary text-primary" : "text-muted-foreground"
-                    }`}
+                    className={`h-10 w-10 ${star <= (hoveredRating || rating) ? "fill-primary text-primary" : "text-muted-foreground"
+                      }`}
                   />
                 </button>
               ))}
@@ -84,16 +125,27 @@ export function ReviewModal({ isOpen, onClose, tourTitle, guideName }: ReviewMod
               rows={5}
               value={review}
               onChange={(e) => setReview(e.target.value)}
+              disabled={isSubmitting}
             />
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={rating === 0 || review.trim().length === 0}>
-            Submit Review
+          <Button
+            onClick={handleSubmit}
+            disabled={rating === 0 || review.trim().length === 0 || isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              "Submit Review"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

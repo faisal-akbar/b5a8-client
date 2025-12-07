@@ -24,6 +24,7 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import { removeFromWishlist } from "@/services/wishlist/wishlist.service"
 import { BookingDetailsModal } from "@/components/modals/booking-details-modal"
+import { ReviewModal } from "@/components/modals/review-modal"
 import { getBookingById } from "@/services/booking/booking.service"
 import { toast } from "sonner"
 
@@ -34,6 +35,8 @@ type Booking = {
   tourImage: string
   guide: string
   guideImage: string | null
+  guideId?: string
+  listingId?: string
   location: string
   city: string
   date: string
@@ -134,17 +137,19 @@ export function TouristDashboardClient({
 }: TouristDashboardClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  
+
   // Get active tab from URL or initialData
   const activeTab = searchParams.get("tab") || initialActiveTab || "upcoming"
-  
+
   // Get pagination from URL or initialData
   const currentPage = parseInt(searchParams.get("page") || initialCurrentPage.toString(), 10)
   const currentLimit = parseInt(searchParams.get("limit") || initialCurrentLimit.toString(), 10)
-  
+
   const [removingWishlistId, setRemovingWishlistId] = useState<string | null>(null)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+  const [bookingToReview, setBookingToReview] = useState<Booking | null>(null)
 
   // Update URL with tab and pagination params
   const updateTabAndPagination = useCallback((tab: string, page: number, limit: number) => {
@@ -207,6 +212,8 @@ export function TouristDashboardClient({
           tourImage: result.data.listing?.images?.[0] || "",
           guide: result.data.guide?.user?.name || "N/A",
           guideImage: result.data.guide?.user?.profilePic || null,
+          guideId: result.data.guide?.id || result.data.guideId,
+          listingId: result.data.listing?.id || result.data.listingId,
           location: result.data.listing?.city || "N/A",
           city: result.data.listing?.city || "N/A",
           date: result.data.date,
@@ -233,6 +240,12 @@ export function TouristDashboardClient({
     } catch (error) {
       toast.error("Failed to load booking details")
     }
+  }
+
+  // Handle opening write review modal
+  const handleWriteReview = (booking: Booking) => {
+    setBookingToReview(booking)
+    setIsReviewModalOpen(true)
   }
 
   const upcomingColumns: ColumnDef<Booking>[] = [
@@ -342,7 +355,7 @@ export function TouristDashboardClient({
       cell: ({ row }) => {
         const provider = row.original.paymentProvider
         if (!provider) return <span className="text-muted-foreground text-sm">N/A</span>
-        
+
         const displayName = {
           stripe: "Stripe",
           bank_transfer: "Bank Transfer",
@@ -390,7 +403,7 @@ export function TouristDashboardClient({
                 <Eye className="mr-2 h-4 w-4" />
                 View details
               </DropdownMenuItem>
-              
+
             </DropdownMenuContent>
           </DropdownMenu>
         )
@@ -406,7 +419,7 @@ export function TouristDashboardClient({
     },
     {
       accessorKey: "tourTitle",
-      header: "Tour",
+      header: "Tour Details",
       cell: ({ row }) => {
         return (
           <div className="flex items-center gap-3">
@@ -430,7 +443,7 @@ export function TouristDashboardClient({
     },
     {
       accessorKey: "guide",
-      header: "Guide",
+      header: "Guide Name",
       cell: ({ row }) => {
         return (
           <div className="flex items-center gap-2">
@@ -454,7 +467,7 @@ export function TouristDashboardClient({
     },
     {
       accessorKey: "date",
-      header: "Date",
+      header: "Completed Date",
       cell: ({ row }) => {
         return new Date(row.getValue("date")).toLocaleDateString("en-US", {
           year: "numeric",
@@ -477,7 +490,7 @@ export function TouristDashboardClient({
     },
     {
       accessorKey: "price",
-      header: "Total Amount",
+      header: "Amount Paid",
       cell: ({ row }) => {
         const amount = row.original.paymentAmount || row.original.price
         const formatted = new Intl.NumberFormat("en-US", {
@@ -493,7 +506,7 @@ export function TouristDashboardClient({
       cell: ({ row }) => {
         const provider = row.original.paymentProvider
         if (!provider) return <span className="text-muted-foreground text-sm">N/A</span>
-        
+
         const displayName = {
           stripe: "Stripe",
           bank_transfer: "Bank Transfer",
@@ -505,22 +518,36 @@ export function TouristDashboardClient({
     },
     {
       accessorKey: "rating",
-      header: "Rating",
+      header: "Review Status",
       cell: ({ row }) => {
         const rating = row.original.rating
+        const reviewed = row.original.reviewed
 
-        return rating ? (
-          <div className="flex items-center gap-1">
-            <Star className="h-3 w-3 fill-primary text-primary" />
-            <span className="font-medium">{rating.toFixed(1)}</span>
-          </div>
-        ) : (
-          <span className="text-muted-foreground text-sm">Not rated</span>
+        if (rating || reviewed) {
+          return (
+            <div className="flex items-center gap-2">
+              <Badge variant="default" className="gap-1">
+                <Star className="h-3 w-3 fill-white" />
+                Rated
+              </Badge>
+              {rating && (
+                <span className="font-semibold text-primary">{rating.toFixed(1)}</span>
+              )}
+            </div>
+          )
+        }
+
+        return (
+          <Badge variant="outline" className="gap-1">
+            <MessageCircle className="h-3 w-3" />
+            Not Reviewed
+          </Badge>
         )
       },
     },
     {
       id: "actions",
+      header: "Actions",
       cell: ({ row }) => {
         const booking = row.original
         return (
@@ -532,15 +559,16 @@ export function TouristDashboardClient({
               onClick={() => handleViewBookingDetails(booking)}
             >
               <Eye className="mr-1 h-3 w-3" />
-              View Details
+              View
             </Button>
             {!booking.reviewed ? (
-              <Button size="sm" className="h-8">
+              <Button size="sm" className="h-8" onClick={() => handleWriteReview(booking)}>
                 <Star className="mr-1 h-3 w-3" />
                 Write Review
               </Button>
             ) : (
               <Button size="sm" variant="outline" className="h-8 bg-transparent">
+                <MessageCircle className="mr-1 h-3 w-3" />
                 View Review
               </Button>
             )}
@@ -747,7 +775,7 @@ export function TouristDashboardClient({
                   data={initialUpcoming}
                   searchKey="tourTitle"
                   searchPlaceholder="Search tours..."
-                  initialColumnVisibility={{ id: false, paymentProvider: false}}
+                  initialColumnVisibility={{ id: false, paymentProvider: false }}
                 />
                 {/* Pagination for upcoming bookings */}
                 {activeTab === "upcoming" && initialUpcoming.length > 0 && (
@@ -810,7 +838,7 @@ export function TouristDashboardClient({
                   data={initialPending}
                   searchKey="tourTitle"
                   searchPlaceholder="Search tours..."
-                  initialColumnVisibility={{ id: false, paymentProvider: false}}
+                  initialColumnVisibility={{ id: false, paymentProvider: false }}
                 />
                 {/* Pagination for pending bookings */}
                 {activeTab === "pending" && initialPending.length > 0 && (
@@ -873,7 +901,7 @@ export function TouristDashboardClient({
                   data={initialPast}
                   searchKey="tourTitle"
                   searchPlaceholder="Search tours..."
-                  initialColumnVisibility={{ id: false, paymentProvider: false}}
+                  initialColumnVisibility={{ id: false, paymentProvider: false }}
                 />
                 {/* Pagination for past bookings */}
                 {activeTab === "past" && initialPast.length > 0 && (
@@ -1048,7 +1076,7 @@ export function TouristDashboardClient({
                         </Card>
                       ))}
                     </div>
-                    
+
                     {/* Pagination Controls for Reviews */}
                     {activeTab === "reviews" && reviews.length > 0 && (
                       <div className="mt-6 flex items-center justify-between">
@@ -1153,6 +1181,21 @@ export function TouristDashboardClient({
             }
             : undefined
         }
+      />
+
+      <ReviewModal
+        isOpen={isReviewModalOpen}
+        onClose={() => {
+          setIsReviewModalOpen(false)
+          setBookingToReview(null)
+        }}
+        tourTitle={bookingToReview?.tourTitle || ""}
+        guideName={bookingToReview?.guide || ""}
+        bookingId={bookingToReview?.id || ""}
+        onSuccess={() => {
+          // Refresh the page to get updated data from server
+          router.refresh()
+        }}
       />
     </div>
   )
