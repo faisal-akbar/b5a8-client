@@ -150,6 +150,7 @@ export function TouristDashboardClient({
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
   const [bookingToReview, setBookingToReview] = useState<Booking | null>(null)
+  const [reviewMode, setReviewMode] = useState<"create" | "edit">("create")
 
   // Update URL with tab and pagination params
   const updateTabAndPagination = useCallback((tab: string, page: number, limit: number) => {
@@ -245,6 +246,14 @@ export function TouristDashboardClient({
   // Handle opening write review modal
   const handleWriteReview = (booking: Booking) => {
     setBookingToReview(booking)
+    setReviewMode("create")
+    setIsReviewModalOpen(true)
+  }
+
+  // Handle opening view/edit review modal
+  const handleViewReview = (booking: Booking) => {
+    setBookingToReview(booking)
+    setReviewMode("edit")
     setIsReviewModalOpen(true)
   }
 
@@ -551,28 +560,33 @@ export function TouristDashboardClient({
       cell: ({ row }) => {
         const booking = row.original
         return (
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 bg-transparent"
-              onClick={() => handleViewBookingDetails(booking)}
-            >
-              <Eye className="mr-1 h-3 w-3" />
-              View
-            </Button>
-            {!booking.reviewed ? (
-              <Button size="sm" className="h-8" onClick={() => handleWriteReview(booking)}>
-                <Star className="mr-1 h-3 w-3" />
-                Write Review
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
               </Button>
-            ) : (
-              <Button size="sm" variant="outline" className="h-8 bg-transparent">
-                <MessageCircle className="mr-1 h-3 w-3" />
-                View Review
-              </Button>
-            )}
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => handleViewBookingDetails(booking)}>
+                <Eye className="mr-2 h-4 w-4" />
+                View details
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {!booking.reviewed ? (
+                <DropdownMenuItem onClick={() => handleWriteReview(booking)}>
+                  <Star className="mr-2 h-4 w-4" />
+                  Write review
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={() => handleViewReview(booking)}>
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  View review
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         )
       },
     },
@@ -1192,6 +1206,7 @@ export function TouristDashboardClient({
         tourTitle={bookingToReview?.tourTitle || ""}
         guideName={bookingToReview?.guide || ""}
         bookingId={bookingToReview?.id || ""}
+        mode={reviewMode}
         onSuccess={() => {
           // Refresh the page to get updated data from server
           router.refresh()

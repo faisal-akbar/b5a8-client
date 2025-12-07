@@ -75,6 +75,30 @@ export async function getReviewById(id: string) {
 }
 
 /**
+ * Get review by booking ID
+ */
+export async function getReviewByBookingId(bookingId: string) {
+  try {
+    const response = await serverFetch.get(`/reviews/booking/${bookingId}`);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to get review");
+    }
+    
+    return {
+      success: true,
+      data: data.data,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error?.message || "Failed to get review",
+    };
+  }
+}
+
+/**
  * Create review (Tourist only)
  */
 export async function createReview({ bookingId, rating, comment }: CreateReviewParams) {
