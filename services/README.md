@@ -238,3 +238,5 @@ const result = await createBooking(bookingParams);
 - Pagination parameters (page, limit) are optional with sensible defaults
 
 
+
+

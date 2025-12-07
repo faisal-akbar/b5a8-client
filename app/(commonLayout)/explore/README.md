@@ -182,3 +182,5 @@ Uses the `getAllListings` service function with parameters:
 - [ ] Individual filter removal works
 - [ ] Price slider updates correctly
 
+
+

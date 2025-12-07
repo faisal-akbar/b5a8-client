@@ -216,3 +216,5 @@ All endpoints from the Postman collection (`b5a8-server/postman/Local_Guide_API.
 5. Add proper TypeScript types for response data (if not already defined)
 
 
+
+

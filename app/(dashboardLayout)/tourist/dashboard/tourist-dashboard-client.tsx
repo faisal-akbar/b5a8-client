@@ -707,29 +707,29 @@ export function TouristDashboardClient({
                 <TabsList>
                   <TabsTrigger value="upcoming">
                     Upcoming
-                    {initialUpcoming.length > 0 && (
+                    {/* {initialUpcoming.length > 0 && (
                       <Badge className="ml-2" variant="secondary">
                         {upcomingBookingsTotal}
                       </Badge>
-                    )}
+                    )} */}
                   </TabsTrigger>
                   <TabsTrigger value="pending">
                     Pending
-                    {initialPending.length > 0 && (
+                    {/* {initialPending.length > 0 && (
                       <Badge className="ml-2" variant="secondary">
                         {pendingBookingsTotal}
                       </Badge>
-                    )}
+                    )} */}
                   </TabsTrigger>
                   <TabsTrigger value="past">Past Trips</TabsTrigger>
                   <TabsTrigger value="wishlist">
                     <Heart className="mr-1 h-4 w-4" />
                     Wishlist
-                    {initialWishlist.length > 0 && (
+                    {/* {initialWishlist.length > 0 && (
                       <Badge className="ml-2" variant="secondary">
                         {wishlistTotal}
                       </Badge>
-                    )}
+                    )} */}
                   </TabsTrigger>
                   <TabsTrigger value="reviews">
                     <Star className="mr-1 h-4 w-4" />
@@ -1122,8 +1122,6 @@ export function TouristDashboardClient({
           </motion.div>
         </div>
       </main>
-
-      <Footer />
 
       <BookingDetailsModal
         isOpen={isDetailsModalOpen}
