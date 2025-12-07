@@ -426,40 +426,67 @@ export function ExploreClient({
                     {debouncedSearchTerm && (
                       <Badge variant="secondary" className="gap-2">
                         Search: {debouncedSearchTerm}
-                        <X
-                          className="h-3 w-3 cursor-pointer"
-                          onClick={() => setSearchInput("")}
-                        />
+
+                        <button
+                          type="button"
+                          aria-label="Clear search filter"
+                          className="flex items-center justify-center focus:outline-none"
+                          tabIndex={0}
+                          onClick={() => {
+                            setSearchInput("");
+                            updateFilters({ searchTerm: undefined });
+                          }}
+                        > <X className="h-3 w-3 cursor-pointer" /></button>
                       </Badge>
                     )}
                     {selectedCategory && (
                       <Badge variant="secondary" className="gap-2">
                         {CATEGORY_MAP[selectedCategory]}
-                        <X
-                          className="h-3 w-3 cursor-pointer"
-                          onClick={() => handleCategoryChange(selectedCategory)}
-                        />
+
+                        <button
+                          type="button"
+                          aria-label="Clear category filter"
+                          className="flex items-center justify-center focus:outline-none"
+                          tabIndex={0}
+                          onClick={() => {
+                            setSelectedCategory(undefined);
+                            updateFilters({ category: undefined });
+                          }}
+                        > <X className="h-3 w-3 cursor-pointer" /></button>
                       </Badge>
                     )}
                     {selectedLanguage && (
                       <Badge variant="secondary" className="gap-2">
                         {selectedLanguage}
-                        <X
-                          className="h-3 w-3 cursor-pointer"
-                          onClick={() => handleLanguageChange("")}
-                        />
+                        <button
+                          type="button"
+                          aria-label="Clear language filter"
+                          className="flex items-center justify-center focus:outline-none"
+                          tabIndex={0}
+                          onClick={() => {
+                            setSelectedLanguage(undefined);
+                            updateFilters({ language: undefined });
+                          }}
+                        >
+                          <X className="h-3 w-3 cursor-pointer" />
+                        </button>
                       </Badge>
                     )}
                     {(priceRange[0] > 0 || priceRange[1] < 1000) && (
                       <Badge variant="secondary" className="gap-2">
                         ${priceRange[0]} - ${priceRange[1]}
-                        <X
-                          className="h-3 w-3 cursor-pointer"
+                        <button
+                          type="button"
+                          aria-label="Clear price filter"
+                          className="flex items-center justify-center focus:outline-none"
+                          tabIndex={0}
                           onClick={() => {
-                            setPriceRange([0, 1000])
-                            updateFilters({ minPrice: undefined, maxPrice: undefined })
+                            setPriceRange([0, 1000]);
+                            updateFilters({ minPrice: undefined, maxPrice: undefined });
                           }}
-                        />
+                        >
+                          <X className="h-3 w-3 cursor-pointer" />
+                        </button>
                       </Badge>
                     )}
                   </div>
