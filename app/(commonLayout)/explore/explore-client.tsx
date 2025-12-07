@@ -17,7 +17,7 @@ import type { GuideListing } from "@/types/guide"
 import type { Category } from "@/types/profile"
 
 // Category mapping from enum to display name
-const CATEGORY_MAP: Record<string, string> = {
+export const CATEGORY_MAP: Record<string, string> = {
   CULTURE: "Culture",
   HISTORY: "History", 
   FOOD: "Food",

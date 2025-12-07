@@ -24,7 +24,7 @@ export function SearchSection() {
                     </div>
                     <div className="mt-4 flex flex-wrap items-center gap-2">
                         <span className="text-sm font-medium text-muted-foreground">Popular:</span>
-                        {["Paris", "Tokyo", "New York", "Barcelona"].map((city) => (
+                        {["New York", "Miami", "Los Angeles", "California"].map((city) => (
                             <Badge
                                 key={city}
                                 variant="secondary"
