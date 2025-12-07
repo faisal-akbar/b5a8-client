@@ -240,11 +240,14 @@ export function ExploreClient({
   }
 
   /**
-   * Handle pagination
+   * Handle pagination with limit
    */
-  const handlePageChange = (page: number) => {
+  const handlePageChange = (page: number, limit?: number) => {
     const params = new URLSearchParams(searchParams.toString())
     params.set("page", String(page))
+    if (limit !== undefined) {
+      params.set("limit", String(limit))
+    }
     
     startTransition(() => {
       router.push(`/explore?${params.toString()}`)
@@ -612,52 +615,58 @@ export function ExploreClient({
                 )}
 
                 {/* Pagination */}
-                {initialMeta.totalPages > 1 && (
-                  <div className="mt-12 flex items-center justify-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={initialMeta.page === 1 || isPending}
-                      onClick={() => handlePageChange(initialMeta.page - 1)}
-                    >
-                      Previous
-                    </Button>
-                    {Array.from({ length: initialMeta.totalPages }, (_, i) => i + 1)
-                      .filter((page) => {
-                        // Show first, last, current, and adjacent pages
-                        return (
-                          page === 1 ||
-                          page === initialMeta.totalPages ||
-                          Math.abs(page - initialMeta.page) <= 1
-                        )
-                      })
-                      .map((page, index, array) => {
-                        // Show ellipsis for gaps
-                        const prevPage = array[index - 1]
-                        const showEllipsis = prevPage && page - prevPage > 1
-
-                        return (
-                          <div key={page} className="flex items-center gap-2">
-                            {showEllipsis && <span className="text-muted-foreground">...</span>}
-                            <Button
-                              variant={page === initialMeta.page ? "default" : "outline"}
-                              size="sm"
-                              disabled={isPending}
-                              onClick={() => handlePageChange(page)}
-                            >
-                              {page}
-                            </Button>
-                          </div>
-                        )
-                      })}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={initialMeta.page === initialMeta.totalPages || isPending}
-                      onClick={() => handlePageChange(initialMeta.page + 1)}
-                    >
-                      Next
-                    </Button>
+                {initialMeta.totalPages > 0 && (
+                  <div className="mt-12 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        {initialMeta.total} total
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-6 lg:space-x-8">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Page</p>
+                        <Select
+                          value={`${initialMeta.page}`}
+                          onValueChange={(value) => {
+                            handlePageChange(Number(value), initialMeta.limit)
+                          }}
+                          disabled={isPending}
+                        >
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={initialMeta.page} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {Array.from({ length: initialMeta.totalPages }, (_, i) => i + 1).map((pageNum) => (
+                              <SelectItem key={pageNum} value={`${pageNum}`}>
+                                {pageNum}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-sm text-muted-foreground">of {initialMeta.totalPages}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Rows per page</p>
+                        <Select
+                          value={`${initialMeta.limit}`}
+                          onValueChange={(value) => {
+                            handlePageChange(1, Number(value)) // Reset to page 1 when limit changes
+                          }}
+                          disabled={isPending}
+                        >
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={initialMeta.limit} />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {[10, 20, 30, 40, 50].map((pageSize) => (
+                              <SelectItem key={pageSize} value={`${pageSize}`}>
+                                {pageSize}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
