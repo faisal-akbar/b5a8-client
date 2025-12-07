@@ -25,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useDebounce } from "@/hooks/useDebounce"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -47,6 +48,20 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(initialColumnVisibility)
   const [rowSelection, setRowSelection] = React.useState({})
+  
+  // Local state for search input (immediate UI feedback)
+  const [searchInput, setSearchInput] = React.useState("")
+  
+  // Debounce search input to avoid excessive filtering
+  const debouncedSearchValue = useDebounce(searchInput, 500)
+  
+  // Update table filter when debounced value changes
+  React.useEffect(() => {
+    if (searchKey) {
+      table.getColumn(searchKey)?.setFilterValue(debouncedSearchValue)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchValue, searchKey])
 
   const tableConfig: any = {
     data,
@@ -78,8 +93,8 @@ export function DataTable<TData, TValue>({
         {searchKey && (
           <Input
             placeholder={searchPlaceholder}
-            value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
-            onChange={(event) => table.getColumn(searchKey)?.setFilterValue(event.target.value)}
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
             className="max-w-sm"
           />
         )}

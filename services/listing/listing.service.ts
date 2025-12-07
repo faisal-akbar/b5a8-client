@@ -56,15 +56,20 @@ export async function getAllListings(params: GetAllListingsParams = {}) {
     if (params.language) queryParams.append("language", params.language);
     
     const response = await serverFetch.get(`/listings?${queryParams}`);
-    const data = await response.json();
+    const result = await response.json();
     
     if (!response.ok) {
-      throw new Error(data.message || "Failed to get listings");
+      throw new Error(result.message || "Failed to get listings");
     }
     
+    // Backend returns: { success: true, data: [...listings], meta: {...} }
+    // Wrap it in the expected structure
     return {
       success: true,
-      data: data.data,
+      data: {
+        data: Array.isArray(result.data) ? result.data : [],
+        meta: result.meta || { page: 1, limit: 12, total: 0, totalPages: 0 },
+      },
     };
   } catch (error: any) {
     return {
