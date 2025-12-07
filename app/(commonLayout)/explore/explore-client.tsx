@@ -58,18 +58,45 @@ const CATEGORY_MAP: Record<string, string> = {
   STREET_FOOD: "Street Food",
 }
 
-// Most common categories to show
-const POPULAR_CATEGORIES: Category[] = [
-  "FOOD",
-  "HISTORY",
+const All_CATEGORIES: Category[] = [
   "CULTURE",
+  "HISTORY",
+  "FOOD",
   "ADVENTURE",
-  "PHOTOGRAPHY",
+  "NATURE",
+  "ART",
+  "ARCHITECTURE",
+  "BEACH",
+  "WILDLIFE",
   "SHOPPING",
   "NIGHTLIFE",
-  "ART",
+  "PHOTOGRAPHY",
+  "MUSIC",
+  "RELIGION",
+  "SPORTS",
+  "WELLNESS",
+  "FAMILY",
+  "HERITAGE",
+  "WATER_SPORTS",
+  "HIKING",
+  "CYCLING",
+  "MARKETS",
+  "FESTIVALS",
   "LOCAL_LIFE",
   "HIDDEN_GEMS",
+  "MUSEUM",
+  "ENTERTAINMENT",
+  "CULINARY",
+  "SPIRITUAL",
+  "ECO_TOURISM",
+  "URBAN_EXPLORATION",
+  "COUNTRYSIDE",
+  "MOUNTAIN",
+  "CAMPING",
+  "DIVING",
+  "SURFING",
+  "FOOD_TOUR",
+  "STREET_FOOD",
 ]
 
 const LANGUAGES = [
@@ -81,8 +108,6 @@ const LANGUAGES = [
   "Japanese",
   "Chinese",
   "Arabic",
-  "Portuguese",
-  "Russian",
 ]
 
 type ExploreFilters = {
@@ -240,7 +265,7 @@ export function ExploreClient({
       <main className="flex-1">
         {/* Search Header */}
         <section className="relative border-b border-border bg-linear-to-r from-primary/10 via-primary/5 to-background py-12 lg:py-16">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -286,7 +311,7 @@ export function ExploreClient({
 
         {/* Main Content */}
         <section className="py-12">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col gap-8 lg:flex-row">
               {/* Filters Sidebar */}
               <aside
@@ -343,7 +368,7 @@ export function ExploreClient({
                       <div className="mt-6 space-y-3">
                         <Label>Category</Label>
                         <div className="flex flex-wrap gap-2">
-                          {POPULAR_CATEGORIES.map((category) => (
+                          {All_CATEGORIES.map((category) => (
                             <Badge
                               key={category}
                               variant={selectedCategory === category ? "default" : "outline"}
@@ -364,11 +389,12 @@ export function ExploreClient({
                           onValueChange={(value) => 
                             handleLanguageChange(value === "all" ? "" : value)
                           }
+                          
                         >
-                          <SelectTrigger className="border-input bg-background">
+                          <SelectTrigger className="border-input bg-background w-full">
                             <SelectValue placeholder="All languages" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent >
                             <SelectItem value="all">All languages</SelectItem>
                             {LANGUAGES.map((language) => (
                               <SelectItem key={language} value={language}>

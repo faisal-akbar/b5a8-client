@@ -6,7 +6,7 @@ import { CheckCircle2 } from "lucide-react"
 export function CtaSection() {
     return (
         <section className="py-16 lg:py-24">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
                 <Card className="overflow-hidden border-0 bg-gradient-to-br from-primary to-primary/80 shadow-2xl">
                     <CardContent className="p-12 text-center relative overflow-hidden">
                         {/* Decorative circles */}

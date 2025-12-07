@@ -100,7 +100,7 @@ I love meeting people from all over the world and helping them discover the hidd
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           </div>
 
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
             <div className="relative -mt-20 flex flex-col items-start gap-6 pb-6 sm:flex-row sm:items-end">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -167,7 +167,7 @@ I love meeting people from all over the world and helping them discover the hidd
           </div>
         </div>
 
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-3">
             {/* Left Column - Stats & Info */}
             <motion.div

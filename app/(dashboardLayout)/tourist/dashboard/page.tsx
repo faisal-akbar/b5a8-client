@@ -322,7 +322,7 @@ export default async function TouristDashboardPage({
       <Suspense fallback={
         <div className="flex min-h-screen flex-col">
           <main className="flex-1 bg-muted/30 py-8">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
               <DashboardSkeleton />
             </div>
           </main>
@@ -356,7 +356,7 @@ export default async function TouristDashboardPage({
     return (
       <div className="flex min-h-screen flex-col">
         <main className="flex-1 bg-muted/30 py-8">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
             <DashboardSkeleton />
           </div>
         </main>

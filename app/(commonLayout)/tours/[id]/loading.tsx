@@ -21,7 +21,7 @@ export default function Loading() {
         </section>
 
         {/* Main Content Skeleton */}
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <section className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-8 lg:flex-row">
             {/* Left Column */}
             <div className="flex-1 space-y-8">

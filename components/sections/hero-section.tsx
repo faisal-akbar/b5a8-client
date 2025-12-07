@@ -6,7 +6,7 @@ export function HeroSection() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background py-24 lg:py-32">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(66,99,235,0.08),transparent_50%)]" />
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-background/50 px-4 py-1.5 text-sm font-medium backdrop-blur-sm animate-fade-in-up">
             <Sparkles className="h-4 w-4 text-primary" />

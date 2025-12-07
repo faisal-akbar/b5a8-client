@@ -71,7 +71,7 @@ function ExploreLoadingState() {
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
         <section className="relative border-b border-border bg-linear-to-r from-primary/10 via-primary/5 to-background py-12 lg:py-16">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl">
               <div className="h-12 w-64 animate-pulse rounded bg-muted" />
               <div className="mt-4 h-6 w-96 animate-pulse rounded bg-muted" />
@@ -83,7 +83,7 @@ function ExploreLoadingState() {
           </div>
         </section>
         <section className="py-12">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col gap-8 lg:flex-row">
               <aside className="w-full space-y-6 lg:w-80 lg:shrink-0">
                 <div className="h-96 animate-pulse rounded bg-muted" />

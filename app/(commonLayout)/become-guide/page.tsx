@@ -17,7 +17,7 @@ export default function BecomeGuidePage() {
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-accent/5 to-background py-20 lg:py-32">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent opacity-50" />
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="text-center">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -54,7 +54,7 @@ export default function BecomeGuidePage() {
 
         {/* Benefits */}
         <section className="py-16 lg:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Why Become a Guide?</h2>
               <p className="mt-4 text-lg text-muted-foreground">The benefits of sharing your passion</p>
@@ -110,7 +110,7 @@ export default function BecomeGuidePage() {
         {/* How it Works */}
         <section className="bg-muted/30 py-16 lg:py-24 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="text-center">
               <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Getting Started is Easy</h2>
               <p className="mt-4 text-lg text-muted-foreground">From signup to your first tour in 3 simple steps</p>

@@ -120,7 +120,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
     return (
       <div className="flex min-h-screen flex-col">
         <main className="flex-1 bg-muted/30 py-8">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
             <Link href="/guide/dashboard">
               <Button variant="ghost" className="mb-6">
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -155,7 +155,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
     return (
       <div className="flex min-h-screen flex-col">
         <main className="flex-1 bg-muted/30 py-8">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
             <DashboardSkeleton />
           </div>
         </main>

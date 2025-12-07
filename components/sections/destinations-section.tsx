@@ -13,7 +13,7 @@ export function DestinationsSection() {
 
     return (
         <section className="bg-muted/30 py-16 lg:py-24">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
                 <div className="text-center">
                     <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Popular Destinations</h2>
                     <p className="mt-4 text-lg text-muted-foreground">Explore the world's most exciting cities</p>
