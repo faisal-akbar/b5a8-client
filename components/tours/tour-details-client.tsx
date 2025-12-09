@@ -136,8 +136,22 @@ export function TourDetailsClient({
         );
         bookingDateTime = dateWithTime.toISOString();
       } else {
-        // For available dates mode, use the date as-is
-        bookingDateTime = selectedDate.toISOString();
+        // For available dates mode, find the matching availability and use its exact startDateTime
+        const selectedDateStr = selectedDate.toISOString().split("T")[0];
+        const matchingAvailability = availabilities.find((avail) => {
+          const availDateStr = new Date(avail.startDateTime)
+            .toISOString()
+            .split("T")[0];
+          return availDateStr === selectedDateStr;
+        });
+
+        if (matchingAvailability) {
+          bookingDateTime = matchingAvailability.startDateTime;
+        } else {
+          toast.error("Selected date is not available");
+          setIsBooking(false);
+          return;
+        }
       }
 
       const result = await createBooking({
