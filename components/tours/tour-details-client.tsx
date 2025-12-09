@@ -678,7 +678,58 @@ export function TourDetailsClient({
                               day_today: "bg-slate-100 text-slate-900",
                             }}
                           />
-                          <p className="text-xs text-muted-foreground"></p>
+
+                          {/* Show selected date time details */}
+                          {selectedDate &&
+                            (() => {
+                              const selectedDateStr = selectedDate
+                                .toISOString()
+                                .split("T")[0];
+                              const matchingAvailability = availabilities.find(
+                                (avail) => {
+                                  const availDateStr = new Date(
+                                    avail.startDateTime
+                                  )
+                                    .toISOString()
+                                    .split("T")[0];
+                                  return availDateStr === selectedDateStr;
+                                }
+                              );
+
+                              if (matchingAvailability) {
+                                const startTime = format(
+                                  new Date(matchingAvailability.startDateTime),
+                                  "h:mm a"
+                                );
+                                const endTime = format(
+                                  new Date(matchingAvailability.endDateTime),
+                                  "h:mm a"
+                                );
+
+                                return (
+                                  <Card className="mt-3 border-blue-200 bg-blue-50/50 p-1 rounded-md">
+                                    <CardContent className="p-2">
+                                      <div className="flex gap-3">
+                                        <Clock className="h-5 w-5 flex-shrink-0 text-blue-800" />
+                                        <div>
+                                          <p className="text-xs font-semibold text-blue-900">
+                                            Tour Time for{" "}
+                                            {format(
+                                              selectedDate,
+                                              "MMM d, yyyy"
+                                            )}
+                                          </p>
+                                          <p className="mt-1 text-xs text-blue-800">
+                                            Start: {startTime} • End: {endTime}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+                                );
+                              }
+                              return null;
+                            })()}
 
                           <Card className="mt-2 border-emerald-200 bg-emerald-50/50 p-1 rounded-md">
                             <CardContent className="p-2">
