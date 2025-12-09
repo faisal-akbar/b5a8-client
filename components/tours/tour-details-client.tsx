@@ -1,61 +1,67 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Calendar } from "@/components/ui/calendar"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import {
-  MapPin,
-  Star,
-  Clock,
-  Users,
-  Shield,
-  MessageCircle,
-  Heart,
-  Share2,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { createBooking } from "@/services/booking/booking.service";
+import type { GuideListing, GuideReview } from "@/types/guide";
+import { format } from "date-fns";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  CalendarIcon,
   CheckCircle,
-  Globe,
-  Award,
-  X,
   ChevronLeft,
   ChevronRight,
-} from "lucide-react"
-import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
-import type { GuideListing, GuideReview } from "@/types/guide"
-import { createBooking } from "@/services/booking/booking.service"
-import { toast } from "sonner"
-import { useRouter } from "next/navigation"
+  Clock,
+  Globe,
+  Heart,
+  MapPin,
+  Share2,
+  Shield,
+  Star,
+  Users,
+  X,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface Availability {
-  id: string
-  startDateTime: string
-  endDateTime: string
+  id: string;
+  startDateTime: string;
+  endDateTime: string;
   _count?: {
-    bookings: number
-  }
+    bookings: number;
+  };
 }
 
 interface TourDetailsClientProps {
-  listing: GuideListing
-  reviews: GuideReview[]
+  listing: GuideListing;
+  reviews: GuideReview[];
   guideProfile?: {
-    name: string
-    profilePic?: string | null
-    bio?: string | null
-    rating?: number
-    reviewsCount?: number
-    languages?: string[]
-    expertise?: string[]
-    dailyRate?: number | null
-    verified?: boolean
-  }
-  availabilities?: Availability[]
+    name: string;
+    profilePic?: string | null;
+    bio?: string | null;
+    rating?: number;
+    reviewsCount?: number;
+    languages?: string[];
+    expertise?: string[];
+    dailyRate?: number | null;
+    verified?: boolean;
+  };
+  availabilities?: Availability[];
 }
 
 export function TourDetailsClient({
@@ -64,94 +70,101 @@ export function TourDetailsClient({
   guideProfile,
   availabilities = [],
 }: TourDetailsClientProps) {
-  const router = useRouter()
+  const router = useRouter();
 
-  const images = listing.images && listing.images.length > 0 ? listing.images : ["/placeholder.svg"]
-  const averageRating = listing.averageRating || 0
-  const reviewsCount = listing.reviewsCount || reviews.length || 0
-  const bookingsCount = listing.bookingsCount || 0
+  const images =
+    listing.images && listing.images.length > 0
+      ? listing.images
+      : ["/placeholder.svg"];
+  const averageRating = listing.averageRating || 0;
+  const reviewsCount = listing.reviewsCount || reviews.length || 0;
+  const bookingsCount = listing.bookingsCount || 0;
 
   // Get available dates from availabilities
   const availableDates = availabilities
     .map((avail) => new Date(avail.startDateTime))
-    .filter((date) => !isNaN(date.getTime()))
+    .filter((date) => !isNaN(date.getTime()));
 
   // Booking mode: "available" for pre-set dates, "custom" for traveler's custom date/time
   const [bookingMode, setBookingMode] = useState<"available" | "custom">(
     availableDates.length > 0 ? "available" : "custom"
-  )
-  
+  );
+
   // Initialize selected date with first available date if exists
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     availableDates.length > 0 ? availableDates[0] : undefined
-  )
-  
+  );
+
   // Time selection for custom booking mode
-  const [selectedHour, setSelectedHour] = useState<string>("09")
-  const [selectedMinute, setSelectedMinute] = useState<string>("00")
-  
-  const [guests, setGuests] = useState("1")
-  const [galleryOpen, setGalleryOpen] = useState(false)
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [isBooking, setIsBooking] = useState(false)
+  const [selectedHour, setSelectedHour] = useState<string>("09");
+  const [selectedMinute, setSelectedMinute] = useState<string>("00");
+
+  const [guests, setGuests] = useState("1");
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isBooking, setIsBooking] = useState(false);
 
   // Itinerary is a plain string, display as-is
-  const itineraryText = listing.itinerary || ""
+  const itineraryText = listing.itinerary || "";
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % images.length)
-  }
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
 
   const previousImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length)
-  }
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
 
   const handleBooking = async () => {
     if (!selectedDate) {
-      toast.error("Please select a date")
-      return
+      toast.error("Please select a date");
+      return;
     }
 
     try {
-      setIsBooking(true)
-      
+      setIsBooking(true);
+
       // For custom mode, combine date with selected time
-      let bookingDateTime: string
+      let bookingDateTime: string;
       if (bookingMode === "custom") {
-        const dateWithTime = new Date(selectedDate)
-        dateWithTime.setHours(parseInt(selectedHour), parseInt(selectedMinute), 0, 0)
-        bookingDateTime = dateWithTime.toISOString()
+        const dateWithTime = new Date(selectedDate);
+        dateWithTime.setHours(
+          parseInt(selectedHour),
+          parseInt(selectedMinute),
+          0,
+          0
+        );
+        bookingDateTime = dateWithTime.toISOString();
       } else {
         // For available dates mode, use the date as-is
-        bookingDateTime = selectedDate.toISOString()
+        bookingDateTime = selectedDate.toISOString();
       }
-      
+
       const result = await createBooking({
         listingId: listing.id,
         date: bookingDateTime,
-      })
+      });
 
       if (result.success) {
-        toast.success("Booking request sent successfully!")
-        router.push("/tourist/dashboard")
+        toast.success("Booking request sent successfully!");
+        router.push("/tourist/dashboard");
       } else {
-        toast.error(result.message || "Failed to create booking")
+        toast.error(result.message || "Failed to create booking");
       }
     } catch (error) {
-      console.error("Error creating booking:", error)
-      toast.error("An error occurred while creating the booking")
+      console.error("Error creating booking:", error);
+      toast.error("An error occurred while creating the booking");
     } finally {
-      setIsBooking(false)
+      setIsBooking(false);
     }
-  }
-
+  };
 
   // Calculate total price
-  const totalPrice = listing.tourFee * Number.parseInt(guests)
-  const serviceFee = Math.round(totalPrice * 0.1)
-  const finalTotal = totalPrice + serviceFee + guideProfile?.dailyRate! || 0
+  const totalPrice = listing.tourFee * Number.parseInt(guests);
+  const serviceFee = Math.round(totalPrice * 0.1);
+  const finalTotal = totalPrice + serviceFee + guideProfile?.dailyRate! || 0;
 
-  console.log("guideProfile", guideProfile)
+  console.log("guideProfile", guideProfile);
 
   return (
     <>
@@ -164,8 +177,8 @@ export function TourDetailsClient({
         >
           <button
             onClick={() => {
-              setCurrentImageIndex(0)
-              setGalleryOpen(true)
+              setCurrentImageIndex(0);
+              setGalleryOpen(true);
             }}
             className="group relative h-[400px] overflow-hidden rounded-lg sm:col-span-2 sm:row-span-2 shadow-md transition-all hover:shadow-xl"
           >
@@ -180,8 +193,8 @@ export function TourDetailsClient({
             <button
               key={index}
               onClick={() => {
-                setCurrentImageIndex(index + 1)
-                setGalleryOpen(true)
+                setCurrentImageIndex(index + 1);
+                setGalleryOpen(true);
               }}
               className="group relative h-[196px] overflow-hidden rounded-lg shadow-sm transition-all hover:shadow-md"
             >
@@ -198,7 +211,9 @@ export function TourDetailsClient({
               onClick={() => setGalleryOpen(true)}
               className="group relative flex h-[196px] items-center justify-center overflow-hidden rounded-lg bg-slate-900/10 backdrop-blur-sm transition-colors hover:bg-slate-900/20"
             >
-              <span className="font-medium text-slate-900">View All {images.length} Photos</span>
+              <span className="font-medium text-slate-900">
+                View All {images.length} Photos
+              </span>
             </button>
           )}
         </motion.div>
@@ -221,8 +236,8 @@ export function TourDetailsClient({
             </button>
             <button
               onClick={(e) => {
-                e.stopPropagation()
-                previousImage()
+                e.stopPropagation();
+                previousImage();
               }}
               className="absolute left-4 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
             >
@@ -230,8 +245,8 @@ export function TourDetailsClient({
             </button>
             <button
               onClick={(e) => {
-                e.stopPropagation()
-                nextImage()
+                e.stopPropagation();
+                nextImage();
               }}
               className="absolute right-4 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
             >
@@ -272,8 +287,12 @@ export function TourDetailsClient({
                 {averageRating > 0 && (
                   <div className="flex items-center gap-1 text-sm">
                     <Star className="h-4 w-4 fill-primary text-primary" />
-                    <span className="font-semibold">{averageRating.toFixed(1)}</span>
-                    <span className="text-muted-foreground">({reviewsCount} reviews)</span>
+                    <span className="font-semibold">
+                      {averageRating.toFixed(1)}
+                    </span>
+                    <span className="text-muted-foreground">
+                      ({reviewsCount} reviews)
+                    </span>
                   </div>
                 )}
               </div>
@@ -293,7 +312,8 @@ export function TourDetailsClient({
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-foreground">
-                    {listing.durationDays} {listing.durationDays === 1 ? "day" : "days"}
+                    {listing.durationDays}{" "}
+                    {listing.durationDays === 1 ? "day" : "days"}
                   </div>
                   <div className="text-xs text-muted-foreground">Duration</div>
                 </div>
@@ -306,7 +326,9 @@ export function TourDetailsClient({
                   <div className="text-sm font-semibold text-foreground">
                     Up to {listing.maxGroupSize}
                   </div>
-                  <div className="text-xs text-muted-foreground">Group size</div>
+                  <div className="text-xs text-muted-foreground">
+                    Group size
+                  </div>
                 </div>
               </div>
               {guideProfile?.languages && guideProfile.languages.length > 0 && (
@@ -318,7 +340,9 @@ export function TourDetailsClient({
                     <div className="text-sm font-semibold text-foreground">
                       {guideProfile.languages.join(", ")}
                     </div>
-                    <div className="text-xs text-muted-foreground">Languages</div>
+                    <div className="text-xs text-muted-foreground">
+                      Languages
+                    </div>
                   </div>
                 </div>
               )}
@@ -329,9 +353,12 @@ export function TourDetailsClient({
                   </div>
                   <div>
                     <div className="text-sm font-semibold text-foreground">
-                      {bookingsCount} {bookingsCount === 1 ? "booking" : "bookings"}
+                      {bookingsCount}{" "}
+                      {bookingsCount === 1 ? "booking" : "bookings"}
                     </div>
-                    <div className="text-xs text-muted-foreground">Total bookings</div>
+                    <div className="text-xs text-muted-foreground">
+                      Total bookings
+                    </div>
                   </div>
                 </div>
               )}
@@ -343,54 +370,73 @@ export function TourDetailsClient({
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <Avatar className="h-16 w-16 border-2 border-slate-100">
-                      <AvatarImage src={guideProfile.profilePic || "/placeholder.svg"} />
+                      <AvatarImage
+                        src={guideProfile.profilePic || "/placeholder.svg"}
+                      />
                       <AvatarFallback>
                         {guideProfile.name[0] || "G"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-foreground">{guideProfile.name}</h3>
+                        <h3 className="font-semibold text-foreground">
+                          {guideProfile.name}
+                        </h3>
                         {guideProfile.verified && (
-                          <Badge variant="secondary" className="gap-1 bg-emerald-50 text-emerald-700">
+                          <Badge
+                            variant="secondary"
+                            className="gap-1 bg-emerald-50 text-emerald-700"
+                          >
                             <Shield className="h-3 w-3" />
                             Verified
                           </Badge>
                         )}
                       </div>
-                      {guideProfile.rating && guideProfile.reviewsCount !== undefined && (
-                        <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Star className="h-4 w-4 fill-primary text-primary" />
-                            {guideProfile.rating.toFixed(1)} ({guideProfile.reviewsCount} reviews)
+                      {guideProfile.rating &&
+                        guideProfile.reviewsCount !== undefined && (
+                          <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Star className="h-4 w-4 fill-primary text-primary" />
+                              {guideProfile.rating.toFixed(1)} (
+                              {guideProfile.reviewsCount} reviews)
+                            </div>
+                            {bookingsCount > 0 && (
+                              <>
+                                <span>•</span>
+                                <span>{bookingsCount} bookings</span>
+                              </>
+                            )}
                           </div>
-                          {bookingsCount > 0 && (
-                            <>
-                              <span>•</span>
-                              <span>{bookingsCount} bookings</span>
-                            </>
-                          )}
-                        </div>
-                      )}
+                        )}
                       {guideProfile.bio && (
-                        <p className="mt-2 text-sm text-muted-foreground">{guideProfile.bio}</p>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {guideProfile.bio}
+                        </p>
                       )}
-                      {guideProfile.expertise && guideProfile.expertise.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {guideProfile.expertise.map((exp, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {exp}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
+                      {guideProfile.expertise &&
+                        guideProfile.expertise.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {guideProfile.expertise.map((exp, index) => (
+                              <Badge
+                                key={index}
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                {exp}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                       <div className="mt-4 flex gap-2">
                         <Link href={`/profile/${listing.guide.id}`}>
-                          <Button variant="outline" size="sm" className="hover:bg-slate-50 bg-transparent">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="hover:bg-slate-50 bg-transparent"
+                          >
                             View Profile
                           </Button>
                         </Link>
-                        
                       </div>
                     </div>
                   </div>
@@ -400,7 +446,9 @@ export function TourDetailsClient({
 
             {/* Description */}
             <div>
-              <h2 className="text-2xl font-semibold text-foreground">About This Tour</h2>
+              <h2 className="text-2xl font-semibold text-foreground">
+                About This Tour
+              </h2>
               <p className="text-pretty mt-4 whitespace-pre-line leading-relaxed text-muted-foreground">
                 {listing.description}
               </p>
@@ -408,7 +456,9 @@ export function TourDetailsClient({
 
             {/* Itinerary */}
             <div>
-              <h2 className="text-2xl font-semibold text-foreground">Itinerary</h2>
+              <h2 className="text-2xl font-semibold text-foreground">
+                Itinerary
+              </h2>
               <div className="mt-4">
                 <Card className="border-slate-200 transition-all hover:shadow-md">
                   <CardContent className="p-6">
@@ -428,8 +478,12 @@ export function TourDetailsClient({
                     <MapPin className="h-5 w-5 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">Meeting Point</h3>
-                    <p className="mt-2 text-muted-foreground">{listing.meetingPoint}</p>
+                    <h3 className="font-semibold text-foreground">
+                      Meeting Point
+                    </h3>
+                    <p className="mt-2 text-muted-foreground">
+                      {listing.meetingPoint}
+                    </p>
                     {/* <Button variant="link" className="mt-2 h-auto p-0 text-primary">
                       View on map →
                     </Button> */}
@@ -440,12 +494,16 @@ export function TourDetailsClient({
 
             {/* Reviews */}
             <div>
-              <h2 className="text-2xl font-semibold text-foreground">Reviews</h2>
+              <h2 className="text-2xl font-semibold text-foreground">
+                Reviews
+              </h2>
               {reviews.length === 0 ? (
                 <div className="mt-6 text-center py-12">
                   <Star className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No reviews yet</h3>
-                  <p className="text-muted-foreground">Be the first to review this tour!</p>
+                  <p className="text-muted-foreground">
+                    Be the first to review this tour!
+                  </p>
                 </div>
               ) : (
                 <div className="mt-6 space-y-4">
@@ -462,7 +520,10 @@ export function TourDetailsClient({
                           <div className="flex items-start gap-4">
                             <Avatar className="border-2 border-slate-100">
                               <AvatarImage
-                                src={review.tourist?.user?.profilePic || "/placeholder.svg"}
+                                src={
+                                  review.tourist?.user?.profilePic ||
+                                  "/placeholder.svg"
+                                }
                               />
                               <AvatarFallback>
                                 {review.tourist?.user?.name?.[0] || "U"}
@@ -474,7 +535,9 @@ export function TourDetailsClient({
                                   {review.tourist?.user?.name || "Anonymous"}
                                 </h4>
                                 <span className="text-sm text-muted-foreground">
-                                  {new Date(review.createdAt).toLocaleDateString("en-US", {
+                                  {new Date(
+                                    review.createdAt
+                                  ).toLocaleDateString("en-US", {
                                     year: "numeric",
                                     month: "short",
                                     day: "numeric",
@@ -530,11 +593,22 @@ export function TourDetailsClient({
                     {/* Booking Mode Toggle - only show if guide has available dates */}
                     {availableDates.length > 0 && (
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium">Booking Option</Label>
-                        <Tabs value={bookingMode} onValueChange={(value) => setBookingMode(value as "available" | "custom")}>
+                        <Label className="text-sm font-medium">
+                          Booking Option
+                        </Label>
+                        <Tabs
+                          value={bookingMode}
+                          onValueChange={(value) =>
+                            setBookingMode(value as "available" | "custom")
+                          }
+                        >
                           <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="available">Available Dates</TabsTrigger>
-                            <TabsTrigger value="custom">Request Custom Date</TabsTrigger>
+                            <TabsTrigger value="available">
+                              Available Dates
+                            </TabsTrigger>
+                            <TabsTrigger value="custom">
+                              Request Custom Date
+                            </TabsTrigger>
                           </TabsList>
                         </Tabs>
                       </div>
@@ -542,11 +616,29 @@ export function TourDetailsClient({
 
                     {/* Date Selection */}
                     <div className="space-y-2">
+                      {availableDates.length === 0 && (
+                        <Card className="my-3 border-amber-200 bg-amber-50/50 p-1 rounded-md">
+                          <CardContent className="p-2">
+                            <div className="flex gap-3">
+                              <CalendarIcon className="h-5 w-5 flex-shrink-0 text-amber-600" />
+                              <div>
+                                <p className="text-xs text-amber-700">
+                                  No available dates from guide, request your
+                                  preferred date and time
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
                       <Label className="text-sm font-medium">
-                        {bookingMode === "custom" ? "Select Your Preferred Date" : "Select Date"}
+                        {bookingMode === "custom"
+                          ? "Select Your Preferred Date"
+                          : "Select Date"}
                       </Label>
-                      
-                      {bookingMode === "available" && availableDates.length > 0 ? (
+
+                      {bookingMode === "available" &&
+                      availableDates.length > 0 ? (
                         <>
                           <Calendar
                             mode="single"
@@ -555,23 +647,54 @@ export function TourDetailsClient({
                             className="rounded-lg border-slate-200"
                             disabled={(date) => {
                               // Only allow dates in the past to be disabled, plus dates not in availableDates
-                              const today = new Date()
-                              today.setHours(0, 0, 0, 0)
-                              if (date < today) return true
-                              
-                              const dateStr = date.toISOString().split("T")[0]
+                              const today = new Date();
+                              today.setHours(0, 0, 0, 0);
+                              if (date < today) return true;
+
+                              const dateStr = date.toISOString().split("T")[0];
                               return !availableDates.some(
-                                (availDate) => availDate.toISOString().split("T")[0] === dateStr
-                              )
+                                (availDate) =>
+                                  availDate.toISOString().split("T")[0] ===
+                                  dateStr
+                              );
                             }}
                             classNames={{
-                              day_selected: "bg-primary text-white hover:bg-primary hover:text-white",
+                              day_selected:
+                                "bg-primary text-white hover:bg-primary hover:text-white",
                               day_today: "bg-slate-100 text-slate-900",
                             }}
                           />
-                          <p className="text-xs text-muted-foreground">
-                            {availableDates.length} available date{availableDates.length !== 1 ? "s" : ""} from guide
-                          </p>
+                          <p className="text-xs text-muted-foreground"></p>
+
+                          <Card className="mt-2 border-emerald-200 bg-emerald-50/50 p-1 rounded-md">
+                            <CardContent className="p-2">
+                              <div className="flex gap-3">
+                                <CalendarIcon className="h-5 w-5 flex-shrink-0 text-emerald-600" />
+                                <div>
+                                  <p className="mt-1 text-xs text-emerald-700">
+                                    {availableDates.length} available date
+                                    {availableDates.length !== 1
+                                      ? "s"
+                                      : ""}{" "}
+                                    from guide
+                                    {availableDates.length > 0 && (
+                                      <>
+                                        {" "}
+                                        in{" "}
+                                        {Array.from(
+                                          new Set(
+                                            availableDates.map((date) =>
+                                              format(date, "MMM yyyy")
+                                            )
+                                          )
+                                        ).join(", ")}
+                                      </>
+                                    )}
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
                         </>
                       ) : (
                         <>
@@ -582,20 +705,16 @@ export function TourDetailsClient({
                             className="rounded-lg border-slate-200"
                             disabled={(date) => {
                               // Only disable past dates for custom requests
-                              const today = new Date()
-                              today.setHours(0, 0, 0, 0)
-                              return date < today
+                              const today = new Date();
+                              today.setHours(0, 0, 0, 0);
+                              return date < today;
                             }}
                             classNames={{
-                              day_selected: "bg-primary text-white hover:bg-primary hover:text-white",
+                              day_selected:
+                                "bg-primary text-white hover:bg-primary hover:text-white",
                               day_today: "bg-slate-100 text-slate-900",
                             }}
                           />
-                          <p className="text-xs text-muted-foreground">
-                            {availableDates.length === 0 
-                              ? "No pre-set dates. Request your preferred date & time." 
-                              : "Request a custom date & time from the guide"}
-                          </p>
                         </>
                       )}
                     </div>
@@ -603,25 +722,35 @@ export function TourDetailsClient({
                     {/* Time Picker - only show in custom mode */}
                     {bookingMode === "custom" && (
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium">Preferred Time</Label>
+                        <Label className="text-sm font-medium">
+                          Preferred Time
+                        </Label>
                         <div className="flex gap-2">
-                          <Select value={selectedHour} onValueChange={setSelectedHour}>
+                          <Select
+                            value={selectedHour}
+                            onValueChange={setSelectedHour}
+                          >
                             <SelectTrigger className="flex-1 border-slate-200">
                               <SelectValue placeholder="Hour" />
                             </SelectTrigger>
                             <SelectContent>
                               {Array.from({ length: 24 }, (_, i) => {
-                                const hour = i.toString().padStart(2, "0")
+                                const hour = i.toString().padStart(2, "0");
                                 return (
                                   <SelectItem key={hour} value={hour}>
                                     {hour}:00
                                   </SelectItem>
-                                )
+                                );
                               })}
                             </SelectContent>
                           </Select>
-                          <span className="flex items-center text-2xl font-bold text-muted-foreground">:</span>
-                          <Select value={selectedMinute} onValueChange={setSelectedMinute}>
+                          <span className="flex items-center text-2xl font-bold text-muted-foreground">
+                            :
+                          </span>
+                          <Select
+                            value={selectedMinute}
+                            onValueChange={setSelectedMinute}
+                          >
                             <SelectTrigger className="flex-1 border-slate-200">
                               <SelectValue placeholder="Minute" />
                             </SelectTrigger>
@@ -639,7 +768,6 @@ export function TourDetailsClient({
                         </p>
                       </div>
                     )}
-
 
                     <div className="space-y-2">
                       <Label htmlFor="guests" className="text-sm font-medium">
@@ -662,23 +790,38 @@ export function TourDetailsClient({
                     <div className="space-y-3 border-t border-slate-200 pt-4">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">
-                          ${listing.tourFee} × {guests} {guests === "1" ? "guest" : "guests"}
+                          ${listing.tourFee} × {guests}{" "}
+                          {guests === "1" ? "guest" : "guests"}
                         </span>
-                        <span className="font-semibold text-foreground">${totalPrice}</span>
+                        <span className="font-semibold text-foreground">
+                          ${totalPrice}
+                        </span>
                       </div>
                       {guideProfile?.dailyRate && (
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Guide Daily rate</span>
-                          <span className="font-semibold text-foreground">${guideProfile.dailyRate}</span>
+                          <span className="text-muted-foreground">
+                            Guide Daily rate
+                          </span>
+                          <span className="font-semibold text-foreground">
+                            ${guideProfile.dailyRate}
+                          </span>
                         </div>
                       )}
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Service fee</span>
-                        <span className="font-semibold text-foreground">${serviceFee}</span>
+                        <span className="text-muted-foreground">
+                          Service fee
+                        </span>
+                        <span className="font-semibold text-foreground">
+                          ${serviceFee}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between border-t border-slate-200 pt-3">
-                        <span className="font-semibold text-foreground">Total</span>
-                        <span className="text-2xl font-bold text-foreground">${finalTotal}</span>
+                        <span className="font-semibold text-foreground">
+                          Total
+                        </span>
+                        <span className="text-2xl font-bold text-foreground">
+                          ${finalTotal}
+                        </span>
                       </div>
                     </div>
 
@@ -688,43 +831,37 @@ export function TourDetailsClient({
                       onClick={handleBooking}
                       disabled={isBooking || !selectedDate}
                     >
-                      {isBooking 
-                        ? "Processing..." 
-                        : bookingMode === "custom" 
-                          ? "Request Custom Date & Time" 
-                          : "Request to Book"}
+                      {isBooking
+                        ? "Processing..."
+                        : bookingMode === "custom"
+                        ? "Request Custom Date & Time"
+                        : "Request to Book"}
                     </Button>
 
                     <p className="text-center text-xs text-muted-foreground">
-                      {bookingMode === "custom" 
-                        ? "Guide will review your custom date/time request" 
+                      {bookingMode === "custom"
+                        ? "Guide will review your custom date/time request"
                         : "You won't be charged yet"}
                     </p>
                   </div>
 
                   <div className="mt-6 flex items-center justify-center gap-4 border-t border-slate-200 pt-6">
-                    <Button variant="ghost" size="sm" className="hover:bg-slate-50">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="hover:bg-slate-50"
+                    >
                       <Heart className="mr-2 h-4 w-4" />
                       Save
                     </Button>
-                    <Button variant="ghost" size="sm" className="hover:bg-slate-50">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="hover:bg-slate-50"
+                    >
                       <Share2 className="mr-2 h-4 w-4" />
                       Share
                     </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="mt-4 border-emerald-200 bg-emerald-50/50">
-                <CardContent className="p-4">
-                  <div className="flex gap-3">
-                    <Award className="h-5 w-5 flex-shrink-0 text-emerald-600" />
-                    <div>
-                      <p className="text-sm font-semibold text-emerald-900">Free cancellation</p>
-                      <p className="mt-1 text-xs text-emerald-700">
-                        Cancel up to 24 hours before the tour for a full refund
-                      </p>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -733,6 +870,5 @@ export function TourDetailsClient({
         </div>
       </section>
     </>
-  )
+  );
 }
-
