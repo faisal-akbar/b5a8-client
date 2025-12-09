@@ -122,20 +122,13 @@ export function TourDetailsClient({
     }
   }
 
-  // Format date for display
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
-  }
 
   // Calculate total price
   const totalPrice = listing.tourFee * Number.parseInt(guests)
   const serviceFee = Math.round(totalPrice * 0.1)
-  const finalTotal = totalPrice + serviceFee
+  const finalTotal = totalPrice + serviceFee + guideProfile?.dailyRate! || 0
+
+  console.log("guideProfile", guideProfile)
 
   return (
     <>
@@ -374,10 +367,7 @@ export function TourDetailsClient({
                             View Profile
                           </Button>
                         </Link>
-                        <Button variant="outline" size="sm" className="hover:bg-slate-50 bg-transparent">
-                          <MessageCircle className="mr-2 h-4 w-4" />
-                          Contact
-                        </Button>
+                        
                       </div>
                     </div>
                   </div>
@@ -583,6 +573,12 @@ export function TourDetailsClient({
                         </span>
                         <span className="font-semibold text-foreground">${totalPrice}</span>
                       </div>
+                      {guideProfile?.dailyRate && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Guide Daily rate</span>
+                          <span className="font-semibold text-foreground">${guideProfile.dailyRate}</span>
+                        </div>
+                      )}
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Service fee</span>
                         <span className="font-semibold text-foreground">${serviceFee}</span>

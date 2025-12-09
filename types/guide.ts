@@ -19,6 +19,30 @@ export interface GuideListing {
   guideId: string
   createdAt: string
   updatedAt: string
+  guide?: {
+    id: string
+    expertise: string[]
+    dailyRate: number
+    stripeAccountId: string | null
+    user: {
+      id: string
+      name: string
+      profilePic: string | null
+      bio: string | null
+      languages: string[]
+      isVerified: boolean
+    }
+  }
+  availabilities?: [
+    {
+      id: string
+      startDateTime: string
+      endDateTime: string
+      _count: {
+        bookings: number
+      }
+    }
+  ]
   _count: {
     bookings: number
     reviews: number
@@ -27,13 +51,7 @@ export interface GuideListing {
   // Optional fields for backward compatibility with transformed data
   bookingsCount?: number
   reviewsCount?: number
-  guide?: {
-    id: string
-    user: {
-      id: string
-      name: string
-    }
-  }
+  
 }
 
 // Guide Booking (from API response)

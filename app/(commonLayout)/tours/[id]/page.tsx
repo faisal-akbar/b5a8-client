@@ -1,9 +1,6 @@
-import { Navbar } from "@/components/layout/navbar"
-import { Footer } from "@/components/layout/footer"
 import { TourDetailsClient } from "@/components/tours/tour-details-client"
 import { getListingById } from "@/services/listing/listing.service"
 import { getReviews } from "@/services/review/review.service"
-import { getUserById } from "@/services/user/user.service"
 import { notFound } from "next/navigation"
 import type { GuideListing, GuideReview } from "@/types/guide"
 
@@ -58,52 +55,39 @@ export default async function TourDetailsPage({ params }: PageProps) {
       }
     }
 
-    // Extract guide information from listing response
-    let guideProfile = undefined
-    if (listing.guide) {
-      guideProfile = {
-        name: listing.guide.user?.name || "Guide",
-        profilePic: listing.guide.user?.profilePic || null,
-        bio: listing.guide.user?.bio || null,
-        rating: listing.averageRating || 0,
-        reviewsCount: listing._count?.reviews || 0,
-        languages: listing.guide.user?.languages || [],
-        expertise: listing.guide.expertise || [],
-        dailyRate: listing.guide.dailyRate || null,
-        verified: false, // Add if available in API
-      }
-    }
+    // Transform guide profile data (guide-specific info only, not listing-specific metrics)
+    const guideProfile = listing.guide ? {
+      name: listing.guide.user?.name || "Guide",
+      profilePic: listing.guide.user?.profilePic ?? null,
+      bio: listing.guide.user?.bio ?? null,
+      languages: listing.guide.user?.languages ?? [],
+      expertise: listing.guide.expertise ?? [],
+      dailyRate: listing.guide.dailyRate ?? null,
+      verified: listing.guide.user?.isVerified ?? false,
+      // Note: rating and reviewsCount are listing-specific, not guide-specific
+      // They are already available in the listing object itself
+    } : undefined
 
-    // Extract availabilities for date selection
-    const availabilities = listing.availabilities || []
+    // Extract availabilities with default empty array
+    const availabilities = listing.availabilities ?? []
 
-    // Prepare listing data with all fields
+    // Transform listing data with proper type safety
     const listingData: GuideListing = {
-      id: listing.id,
-      title: listing.title,
-      description: listing.description,
-      itinerary: listing.itinerary || "",
-      tourFee: listing.tourFee,
-      durationDays: listing.durationDays,
-      meetingPoint: listing.meetingPoint,
-      maxGroupSize: listing.maxGroupSize,
-      city: listing.city,
-      category: listing.category,
-      images: listing.images || [],
-      isActive: listing.isActive,
-      createdAt: listing.createdAt,
-      updatedAt: listing.updatedAt,
-      guide: listing.guide ? {
-        id: listing.guide.id,
-        user: {
-          id: listing.guide.user.id,
-          name: listing.guide.user.name,
-        },
-      } : undefined,
-      bookingsCount: listing._count?.bookings || 0,
-      averageRating: listing.averageRating || 0,
-      reviewsCount: listing._count?.reviews || 0,
+      ...listing,
+      itinerary: listing.itinerary ?? "",
+      images: listing.images ?? [],
+      guideId: listing.guideId || listing.guide?.id,
+      averageRating: listing.averageRating ?? null,
+      _count: {
+        bookings: listing._count?.bookings ?? 0,
+        reviews: listing._count?.reviews ?? 0,
+      },
+      // Add backward compatibility fields
+      bookingsCount: listing._count?.bookings ?? 0,
+      reviewsCount: listing._count?.reviews ?? 0,
     }
+
+    
 
     return (
       <div className="flex min-h-screen flex-col">
@@ -116,7 +100,7 @@ export default async function TourDetailsPage({ params }: PageProps) {
             availabilities={availabilities}
           />
         </main>
-        <Footer />
+        
       </div>
     )
   } catch (error) {
