@@ -279,27 +279,27 @@ export default async function TouristDashboardPage({
       reviewsResult = rev
     }
 
-    // Process bookings
+    // Process bookings - updated to match booking service response format
     const upcomingBookings: Booking[] = upcomingResult?.success && upcomingResult.data
-      ? (upcomingResult.data.bookings || []).map(transformBooking)
+      ? (upcomingResult.data.data || []).map(transformBooking)
       : []
     const upcomingBookingsTotal = upcomingResult?.success ? upcomingResult.data?.meta?.total || 0 : 0
     const upcomingBookingsTotalPages = upcomingResult?.success ? upcomingResult.data?.meta?.totalPages || 0 : 0
 
     const pendingBookings: Booking[] = pendingResult?.success && pendingResult.data
-      ? (pendingResult.data.bookings || []).map(transformBooking)
+      ? (pendingResult.data.data || []).map(transformBooking)
       : []
     const pendingBookingsTotal = pendingResult?.success ? pendingResult.data?.meta?.total || 0 : 0
     const pendingBookingsTotalPages = pendingResult?.success ? pendingResult.data?.meta?.totalPages || 0 : 0
 
     const pastBookings: Booking[] = pastResult?.success && pastResult.data
-      ? (pastResult.data.bookings || []).map(transformBooking)
+      ? (pastResult.data.data || []).map(transformBooking)
       : []
     const pastBookingsTotal = pastResult?.success ? pastResult.data?.meta?.total || 0 : 0
     const pastBookingsTotalPages = pastResult?.success ? pastResult.data?.meta?.totalPages || 0 : 0
 
     const wishlistItems: WishlistTableItem[] = wishlistResult?.success && wishlistResult.data
-      ? (wishlistResult.data.wishlist || []).map(transformWishlistItem)
+      ? (wishlistResult.data.data || []).map(transformWishlistItem)
       : []
     const wishlistTotal = wishlistResult?.success ? wishlistResult.data?.meta?.total || 0 : 0
     const wishlistTotalPages = wishlistResult?.success ? wishlistResult.data?.meta?.totalPages || 0 : 0
