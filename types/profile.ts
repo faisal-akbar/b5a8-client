@@ -4,7 +4,10 @@ export type Badge = "SUPER_GUIDE" | "NEWCOMER" | "FOODIE_EXPERT" | "HIGHLY_RATED
 export type BookingStatus = "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED"
 export type Category = "CULTURE" | "HISTORY" | "FOOD" | "ADVENTURE" | "NATURE" | "ART" | "ARCHITECTURE" | "BEACH" | "WILDLIFE" | "SHOPPING" | "NIGHTLIFE" | "PHOTOGRAPHY" | "MUSIC" | "RELIGION" | "SPORTS" | "WELLNESS" | "FAMILY" | "HERITAGE" | "WATER_SPORTS" | "HIKING" | "CYCLING" | "MARKETS" | "FESTIVALS" | "LOCAL_LIFE" | "HIDDEN_GEMS" | "MUSEUM" | "ENTERTAINMENT" | "CULINARY" | "SPIRITUAL" | "ECO_TOURISM" | "URBAN_EXPLORATION" | "COUNTRYSIDE" | "MOUNTAIN" | "CAMPING" | "DIVING" | "SURFING" | "FOOD_TOUR" | "STREET_FOOD"
 
-
+export interface CategoryData {
+    category: Category,
+    listingsCount: number
+}
 // Base User Profile
 export interface BaseProfile {
     id: string

@@ -5,6 +5,7 @@ import { serverFetch } from "@/lib/server-fetch";
 export interface GetAllListingsParams {
   page?: number;
   limit?: number;
+  searchTerm?: string;
   city?: string;
   category?: string;
   minPrice?: number;
@@ -49,6 +50,7 @@ export async function getAllListings(params: GetAllListingsParams = {}) {
     
     if (params.page) queryParams.append("page", params.page.toString());
     if (params.limit) queryParams.append("limit", params.limit.toString());
+    if (params.searchTerm) queryParams.append("searchTerm", params.searchTerm);
     if (params.city) queryParams.append("city", params.city);
     if (params.category) queryParams.append("category", params.category);
     if (params.minPrice) queryParams.append("minPrice", params.minPrice.toString());
@@ -123,6 +125,29 @@ export async function getFeaturedCities() {
     return {
       success: false,
       message: error?.message || "Failed to get featured cities",
+    };
+  }
+}
+
+/**
+ * Retrieves distinct categories
+ */
+export async function getDistinctCategories() {
+  try {
+    const response = await serverFetch.get("/listings/distinct-categories");
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to get distinct categories");
+    }
+    return {
+      success: true,
+      data: data.data,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error?.message || "Failed to get distinct categories",
     };
   }
 }

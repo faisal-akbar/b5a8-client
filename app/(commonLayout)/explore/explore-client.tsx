@@ -14,105 +14,21 @@ import { motion } from "framer-motion"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useDebounce } from "@/hooks/useDebounce"
 import type { GuideListing } from "@/types/guide"
-import type { Category } from "@/types/profile"
-
-// Category mapping from enum to display name
-export const CATEGORY_MAP: Record<string, string> = {
-  CULTURE: "Culture",
-  HISTORY: "History", 
-  FOOD: "Food",
-  ADVENTURE: "Adventure",
-  NATURE: "Nature",
-  ART: "Art",
-  ARCHITECTURE: "Architecture",
-  BEACH: "Beach",
-  WILDLIFE: "Wildlife",
-  SHOPPING: "Shopping",
-  NIGHTLIFE: "Nightlife",
-  PHOTOGRAPHY: "Photography",
-  MUSIC: "Music",
-  RELIGION: "Religion",
-  SPORTS: "Sports",
-  WELLNESS: "Wellness",
-  FAMILY: "Family",
-  HERITAGE: "Heritage",
-  WATER_SPORTS: "Water Sports",
-  HIKING: "Hiking",
-  CYCLING: "Cycling",
-  MARKETS: "Markets",
-  FESTIVALS: "Festivals",
-  LOCAL_LIFE: "Local Life",
-  HIDDEN_GEMS: "Hidden Gems",
-  MUSEUM: "Museum",
-  ENTERTAINMENT: "Entertainment",
-  CULINARY: "Culinary",
-  SPIRITUAL: "Spiritual",
-  ECO_TOURISM: "Eco Tourism",
-  URBAN_EXPLORATION: "Urban Exploration",
-  COUNTRYSIDE: "Countryside",
-  MOUNTAIN: "Mountain",
-  CAMPING: "Camping",
-  DIVING: "Diving",
-  SURFING: "Surfing",
-  FOOD_TOUR: "Food Tour",
-  STREET_FOOD: "Street Food",
-}
-
-const All_CATEGORIES: Category[] = [
-  "CULTURE",
-  "HISTORY",
-  "FOOD",
-  "ADVENTURE",
-  "NATURE",
-  "ART",
-  "ARCHITECTURE",
-  "BEACH",
-  "WILDLIFE",
-  "SHOPPING",
-  "NIGHTLIFE",
-  "PHOTOGRAPHY",
-  "MUSIC",
-  "RELIGION",
-  "SPORTS",
-  "WELLNESS",
-  "FAMILY",
-  "HERITAGE",
-  "WATER_SPORTS",
-  "HIKING",
-  "CYCLING",
-  "MARKETS",
-  "FESTIVALS",
-  "LOCAL_LIFE",
-  "HIDDEN_GEMS",
-  "MUSEUM",
-  "ENTERTAINMENT",
-  "CULINARY",
-  "SPIRITUAL",
-  "ECO_TOURISM",
-  "URBAN_EXPLORATION",
-  "COUNTRYSIDE",
-  "MOUNTAIN",
-  "CAMPING",
-  "DIVING",
-  "SURFING",
-  "FOOD_TOUR",
-  "STREET_FOOD",
-]
+import type { CategoryData } from "@/types/profile"
 
 const LANGUAGES = [
   "English",
   "Spanish", 
   "French",
   "German",
-  "Italian",
   "Japanese",
   "Chinese",
-  "Arabic",
 ]
 
 type ExploreFilters = {
   searchTerm?: string
   category?: string
+  city?: string
   minPrice?: number
   maxPrice?: number
   language?: string
@@ -127,6 +43,8 @@ type ExploreClientProps = {
     totalPages: number
   }
   initialFilters: ExploreFilters
+  initialCategories: CategoryData[]
+  initialFeaturedCities: Array<{ city: string; listingsCount?: number; image?: string | null }>
 }
 
 /**
@@ -136,6 +54,8 @@ export function ExploreClient({
   initialListings, 
   initialMeta,
   initialFilters,
+  initialCategories,
+  initialFeaturedCities,
 }: ExploreClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -150,6 +70,9 @@ export function ExploreClient({
   ])
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
     initialFilters.category
+  )
+  const [selectedCity, setSelectedCity] = useState<string | undefined>(
+    initialFilters.city
   )
   const [selectedLanguage, setSelectedLanguage] = useState<string | undefined>(
     initialFilters.language
@@ -218,6 +141,15 @@ export function ExploreClient({
   }
 
   /**
+   * Handle city change
+   */
+  const handleCityChange = (city: string) => {
+    const newCity = city === selectedCity ? undefined : city
+    setSelectedCity(newCity)
+    updateFilters({ city: newCity })
+  }
+
+  /**
    * Handle language change
    */
   const handleLanguageChange = (language: string) => {
@@ -232,6 +164,7 @@ export function ExploreClient({
     setSearchInput("")
     setPriceRange([0, 1000])
     setSelectedCategory(undefined)
+    setSelectedCity(undefined)
     setSelectedLanguage(undefined)
     
     startTransition(() => {
@@ -258,6 +191,7 @@ export function ExploreClient({
   const hasActiveFilters = !!(
     debouncedSearchTerm ||
     selectedCategory ||
+    selectedCity ||
     selectedLanguage ||
     priceRange[0] > 0 ||
     priceRange[1] < 1000
@@ -371,14 +305,31 @@ export function ExploreClient({
                       <div className="mt-6 space-y-3">
                         <Label>Category</Label>
                         <div className="flex flex-wrap gap-2">
-                          {All_CATEGORIES.map((category) => (
+                          {initialCategories.length > 0 && initialCategories.map((category) => (
                             <Badge
-                              key={category}
-                              variant={selectedCategory === category ? "default" : "outline"}
+                              key={category.category}
+                              variant={selectedCategory === category.category ? "default" : "outline"}
                               className="cursor-pointer transition-all hover:scale-105"
-                              onClick={() => handleCategoryChange(category)}
+                              onClick={() => handleCategoryChange(category.category)}
                             >
-                              {CATEGORY_MAP[category]}
+                              {category.category.charAt(0).toUpperCase() + category.category.slice(1).toLowerCase()}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Featured Cities */}
+                      <div className="mt-6 space-y-3">
+                        <Label>Featured Cities</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {initialFeaturedCities.length > 0 && initialFeaturedCities.map((city) => (
+                            <Badge 
+                              key={city.city} 
+                              variant={selectedCity === city.city ? "default" : "outline"}
+                              className="cursor-pointer transition-all hover:scale-105"
+                              onClick={() => handleCityChange(city.city)}
+                            >
+                              {city.city}
                             </Badge>
                           ))}
                         </div>
@@ -444,7 +395,7 @@ export function ExploreClient({
                     )}
                     {selectedCategory && (
                       <Badge variant="secondary" className="gap-2">
-                        {CATEGORY_MAP[selectedCategory]}
+                        {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1).toLowerCase()}
 
                         <button
                           type="button"
@@ -456,6 +407,24 @@ export function ExploreClient({
                             updateFilters({ category: undefined });
                           }}
                         > <X className="h-3 w-3 cursor-pointer" /></button>
+                      </Badge>
+                    )}
+                    {selectedCity && (
+                      <Badge variant="secondary" className="gap-2">
+                        <MapPin className="h-3 w-3" />
+                        {selectedCity}
+                        <button
+                          type="button"
+                          aria-label="Clear city filter"
+                          className="flex items-center justify-center focus:outline-none"
+                          tabIndex={0}
+                          onClick={() => {
+                            setSelectedCity(undefined);
+                            updateFilters({ city: undefined });
+                          }}
+                        >
+                          <X className="h-3 w-3 cursor-pointer" />
+                        </button>
                       </Badge>
                     )}
                     {selectedLanguage && (
@@ -542,7 +511,7 @@ export function ExploreClient({
                                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                                 />
                                 <Badge className="absolute right-3 top-3 bg-background/90 text-foreground backdrop-blur-sm hover:bg-background/90">
-                                  {CATEGORY_MAP[listing.category]}
+                                  {listing.category.charAt(0).toUpperCase() + listing.category.slice(1).toLowerCase()}
                                 </Badge>
                                 {!listing.isActive && (
                                   <Badge 

@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { getAllListings } from "@/services/listing/listing.service"
+import { getAllListings, getDistinctCategories, getFeaturedCities } from "@/services/listing/listing.service"
 import { ExploreClient } from "./explore-client"
 import type { Category } from "@/types/profile"
 
@@ -8,6 +8,7 @@ type SearchParams = Promise<{
   limit?: string
   searchTerm?: string
   category?: string
+  city?: string
   minPrice?: string
   maxPrice?: string
   language?: string
@@ -27,6 +28,7 @@ export default async function ExplorePage(props: {
   const limit = Number(searchParams.limit) || 12
   const searchTerm = searchParams.searchTerm || undefined
   const category = searchParams.category as Category | undefined
+  const city = searchParams.city || undefined
   const minPrice = searchParams.minPrice ? Number(searchParams.minPrice) : undefined
   const maxPrice = searchParams.maxPrice ? Number(searchParams.maxPrice) : undefined
   const language = searchParams.language || undefined
@@ -35,16 +37,27 @@ export default async function ExplorePage(props: {
   const result = await getAllListings({
     page,
     limit,
-    city: searchTerm, // Use searchTerm for city filter in backend
+    searchTerm, // Search term for general search
+    city, // City filter from featured cities
     category,
     minPrice,
     maxPrice,
     language,
   })
 
+  // for showing in the filters
+  const distinctCategoriesResult = await getDistinctCategories()
+
+  // for showing in the filters
+  const featuredCitiesResult = await getFeaturedCities()
+
   // Extract data and metadata
   const listings = result.success && result.data ? result.data.data || [] : []
   const meta = result.success && result.data ? result.data.meta : { page: 1, limit: 12, total: 0, totalPages: 0 }
+
+  const categories = distinctCategoriesResult.success && distinctCategoriesResult.data ? distinctCategoriesResult.data : []
+
+  const featuredCities = featuredCitiesResult.success && featuredCitiesResult.data ? featuredCitiesResult.data : []
 
   return (
     <Suspense fallback={<ExploreLoadingState />}>
@@ -54,10 +67,13 @@ export default async function ExplorePage(props: {
         initialFilters={{
           searchTerm,
           category,
+          city,
           minPrice,
           maxPrice,
           language,
         }}
+        initialCategories={categories}
+        initialFeaturedCities={featuredCities}
       />
     </Suspense>
   )
