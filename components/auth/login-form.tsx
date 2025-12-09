@@ -16,7 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { MapPin } from "lucide-react";
 import Link from "next/link";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
@@ -29,6 +29,7 @@ type LoginFormData = z.infer<typeof loginValidationZodSchema>;
 
 export default function LoginForm({ redirect }: LoginFormProps) {
   const [state, formAction, isPending] = useActionState(loginUser, null);
+  const [, startTransition] = useTransition();
 
   const {
     register,
@@ -45,7 +46,9 @@ export default function LoginForm({ redirect }: LoginFormProps) {
     if (redirect) {
       formData.append("redirect", redirect);
     }
-    formAction(formData);
+    startTransition(() => {
+      formAction(formData);
+    });
   };
 
   useEffect(() => {

@@ -19,7 +19,7 @@ import { motion } from "framer-motion";
 import { Compass, MapPin, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
@@ -31,6 +31,7 @@ export default function RegisterForm() {
   const [userRole, setUserRole] = useState<"TOURIST" | "GUIDE">("TOURIST");
   const [state, formAction, isPending] = useActionState(registerUser, null);
   const [isSendingOTP, setIsSendingOTP] = useState(false);
+  const [, startTransition] = useTransition();
 
   const {
     register,
@@ -59,7 +60,9 @@ export default function RegisterForm() {
       formData.append("dailyRate", data.dailyRate.toString());
     }
 
-    formAction(formData);
+    startTransition(() => {
+      formAction(formData);
+    });
   };
 
   useEffect(() => {
