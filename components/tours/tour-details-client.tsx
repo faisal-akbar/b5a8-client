@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Calendar } from "@/components/ui/calendar"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   MapPin,
   Star,
@@ -75,10 +76,20 @@ export function TourDetailsClient({
     .map((avail) => new Date(avail.startDateTime))
     .filter((date) => !isNaN(date.getTime()))
 
+  // Booking mode: "available" for pre-set dates, "custom" for traveler's custom date/time
+  const [bookingMode, setBookingMode] = useState<"available" | "custom">(
+    availableDates.length > 0 ? "available" : "custom"
+  )
+  
   // Initialize selected date with first available date if exists
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     availableDates.length > 0 ? availableDates[0] : undefined
   )
+  
+  // Time selection for custom booking mode
+  const [selectedHour, setSelectedHour] = useState<string>("09")
+  const [selectedMinute, setSelectedMinute] = useState<string>("00")
+  
   const [guests, setGuests] = useState("1")
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
@@ -103,9 +114,21 @@ export function TourDetailsClient({
 
     try {
       setIsBooking(true)
+      
+      // For custom mode, combine date with selected time
+      let bookingDateTime: string
+      if (bookingMode === "custom") {
+        const dateWithTime = new Date(selectedDate)
+        dateWithTime.setHours(parseInt(selectedHour), parseInt(selectedMinute), 0, 0)
+        bookingDateTime = dateWithTime.toISOString()
+      } else {
+        // For available dates mode, use the date as-is
+        bookingDateTime = selectedDate.toISOString()
+      }
+      
       const result = await createBooking({
         listingId: listing.id,
-        date: selectedDate.toISOString(),
+        date: bookingDateTime,
       })
 
       if (result.success) {
@@ -504,9 +527,26 @@ export function TourDetailsClient({
                   </div>
 
                   <div className="mt-6 space-y-4">
+                    {/* Booking Mode Toggle - only show if guide has available dates */}
+                    {availableDates.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Booking Option</Label>
+                        <Tabs value={bookingMode} onValueChange={(value) => setBookingMode(value as "available" | "custom")}>
+                          <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="available">Available Dates</TabsTrigger>
+                            <TabsTrigger value="custom">Request Custom Date</TabsTrigger>
+                          </TabsList>
+                        </Tabs>
+                      </div>
+                    )}
+
+                    {/* Date Selection */}
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">Select Date</Label>
-                      {availableDates.length > 0 ? (
+                      <Label className="text-sm font-medium">
+                        {bookingMode === "custom" ? "Select Your Preferred Date" : "Select Date"}
+                      </Label>
+                      
+                      {bookingMode === "available" && availableDates.length > 0 ? (
                         <>
                           <Calendar
                             mode="single"
@@ -514,7 +554,11 @@ export function TourDetailsClient({
                             onSelect={setSelectedDate}
                             className="rounded-lg border-slate-200"
                             disabled={(date) => {
-                              // Disable dates that are not in availableDates
+                              // Only allow dates in the past to be disabled, plus dates not in availableDates
+                              const today = new Date()
+                              today.setHours(0, 0, 0, 0)
+                              if (date < today) return true
+                              
                               const dateStr = date.toISOString().split("T")[0]
                               return !availableDates.some(
                                 (availDate) => availDate.toISOString().split("T")[0] === dateStr
@@ -526,7 +570,7 @@ export function TourDetailsClient({
                             }}
                           />
                           <p className="text-xs text-muted-foreground">
-                            {availableDates.length} available date{availableDates.length !== 1 ? "s" : ""}
+                            {availableDates.length} available date{availableDates.length !== 1 ? "s" : ""} from guide
                           </p>
                         </>
                       ) : (
@@ -536,17 +580,66 @@ export function TourDetailsClient({
                             selected={selectedDate}
                             onSelect={setSelectedDate}
                             className="rounded-lg border-slate-200"
+                            disabled={(date) => {
+                              // Only disable past dates for custom requests
+                              const today = new Date()
+                              today.setHours(0, 0, 0, 0)
+                              return date < today
+                            }}
                             classNames={{
                               day_selected: "bg-primary text-white hover:bg-primary hover:text-white",
                               day_today: "bg-slate-100 text-slate-900",
                             }}
                           />
                           <p className="text-xs text-muted-foreground">
-                            Contact guide for available dates
+                            {availableDates.length === 0 
+                              ? "No pre-set dates. Request your preferred date & time." 
+                              : "Request a custom date & time from the guide"}
                           </p>
                         </>
                       )}
                     </div>
+
+                    {/* Time Picker - only show in custom mode */}
+                    {bookingMode === "custom" && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Preferred Time</Label>
+                        <div className="flex gap-2">
+                          <Select value={selectedHour} onValueChange={setSelectedHour}>
+                            <SelectTrigger className="flex-1 border-slate-200">
+                              <SelectValue placeholder="Hour" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: 24 }, (_, i) => {
+                                const hour = i.toString().padStart(2, "0")
+                                return (
+                                  <SelectItem key={hour} value={hour}>
+                                    {hour}:00
+                                  </SelectItem>
+                                )
+                              })}
+                            </SelectContent>
+                          </Select>
+                          <span className="flex items-center text-2xl font-bold text-muted-foreground">:</span>
+                          <Select value={selectedMinute} onValueChange={setSelectedMinute}>
+                            <SelectTrigger className="flex-1 border-slate-200">
+                              <SelectValue placeholder="Minute" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {["00", "15", "30", "45"].map((min) => (
+                                <SelectItem key={min} value={min}>
+                                  {min}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Your requested time: {selectedHour}:{selectedMinute}
+                        </p>
+                      </div>
+                    )}
+
 
                     <div className="space-y-2">
                       <Label htmlFor="guests" className="text-sm font-medium">
@@ -595,11 +688,17 @@ export function TourDetailsClient({
                       onClick={handleBooking}
                       disabled={isBooking || !selectedDate}
                     >
-                      {isBooking ? "Processing..." : "Request to Book"}
+                      {isBooking 
+                        ? "Processing..." 
+                        : bookingMode === "custom" 
+                          ? "Request Custom Date & Time" 
+                          : "Request to Book"}
                     </Button>
 
                     <p className="text-center text-xs text-muted-foreground">
-                      You won't be charged yet
+                      {bookingMode === "custom" 
+                        ? "Guide will review your custom date/time request" 
+                        : "You won't be charged yet"}
                     </p>
                   </div>
 
