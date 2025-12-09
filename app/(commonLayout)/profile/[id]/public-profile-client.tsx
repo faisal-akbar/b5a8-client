@@ -1,7 +1,5 @@
 "use client"
 
-import { Navbar } from "@/components/layout/navbar"
-import { Footer } from "@/components/layout/footer"
 import { ProfileHeader } from "@/components/profile/profile-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -107,8 +105,6 @@ export function PublicProfileClient({ userData, reviewsData }: PublicProfileClie
 
     return (
         <div className="flex min-h-screen flex-col">
-            <Navbar />
-
             <main className="flex-1 bg-muted/30 py-8">
                 <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
                     <div className="space-y-8">
@@ -355,8 +351,6 @@ export function PublicProfileClient({ userData, reviewsData }: PublicProfileClie
                     </div>
                 </div>
             </main>
-
-            <Footer />
         </div>
     )
 }

@@ -1,6 +1,5 @@
 "use client"
 
-import { Footer } from "@/components/layout/footer"
 import { StatCard } from "@/components/dashboard/stat-card"
 import { DataTable } from "@/components/dashboard/data-table"
 import { Button } from "@/components/ui/button"
@@ -1204,8 +1203,6 @@ export function GuideDashboardClient({ initialData }: GuideDashboardClientProps)
           </div>
         </div>
       </main>
-
-      <Footer />
 
       <BookingDetailsModal
         isOpen={isDetailsModalOpen}

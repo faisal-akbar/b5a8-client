@@ -78,11 +78,11 @@ export async function getMyBookings(params: GetMyBookingsParams = {}) {
     }
     
     // API returns: { success, message, data: [...], meta: {...} }
-    // Return the full response structure
+    // Return in the expected format: { success: true, data: { data: [...], meta: {...} } }
     return {
       success: true,
       data: {
-        bookings: data.data || [],
+        data: data.data || [],
         meta: data.meta || { total: 0, page: 1, limit: 10, totalPages: 0 },
       },
     };
