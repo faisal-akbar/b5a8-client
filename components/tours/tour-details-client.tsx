@@ -178,8 +178,6 @@ export function TourDetailsClient({
   const serviceFee = Math.round(totalPrice * 0.1);
   const finalTotal = totalPrice + serviceFee + guideProfile?.dailyRate! || 0;
 
-  console.log("guideProfile", guideProfile);
-
   return (
     <>
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
