@@ -16,6 +16,11 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth-context";
 import { createBooking } from "@/services/booking/booking.service";
+import {
+  addToWishlist,
+  checkWishlistStatus,
+  removeFromWishlist,
+} from "@/services/wishlist/wishlist.service";
 import type { GuideListing, GuideReview } from "@/types/guide";
 import { format } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
@@ -36,7 +41,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface Availability {
@@ -106,9 +111,42 @@ export function TourDetailsClient({
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isBooking, setIsBooking] = useState(false);
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [isWishlistLoading, setIsWishlistLoading] = useState(false);
+  const [isCheckingWishlist, setIsCheckingWishlist] = useState(true);
 
   // Itinerary is a plain string, display as-is
   const itineraryText = listing.itinerary || "";
+
+  // Check wishlist status when user is logged in
+  useEffect(() => {
+    const checkWishlist = async () => {
+      if (isLoading) {
+        return; // Wait for auth to load
+      }
+
+      if (!user || !user.role) {
+        setIsCheckingWishlist(false);
+        setIsInWishlist(false);
+        return; // User not logged in, no need to check
+      }
+
+      try {
+        setIsCheckingWishlist(true);
+        const result = await checkWishlistStatus(listing.id);
+        if (result.success && result.data) {
+          setIsInWishlist(result.data.isInWishlist || false);
+        }
+      } catch (error) {
+        console.error("Error checking wishlist status:", error);
+        setIsInWishlist(false);
+      } finally {
+        setIsCheckingWishlist(false);
+      }
+    };
+
+    checkWishlist();
+  }, [user, isLoading, listing.id]);
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -187,6 +225,50 @@ export function TourDetailsClient({
       toast.error("An error occurred while creating the booking");
     } finally {
       setIsBooking(false);
+    }
+  };
+
+  const handleWishlistToggle = async () => {
+    // Check if user is logged in
+    if (isLoading) {
+      return; // Still loading auth state
+    }
+
+    if (!user || !user.role) {
+      // User is not logged in, redirect to login with current tour URL as redirect
+      const redirectUrl = encodeURIComponent(pathname);
+      router.push(`/login?redirect=${redirectUrl}`);
+      toast.info("Please login to save to wishlist");
+      return;
+    }
+
+    try {
+      setIsWishlistLoading(true);
+
+      if (isInWishlist) {
+        // Remove from wishlist
+        const result = await removeFromWishlist(listing.id);
+        if (result.success) {
+          setIsInWishlist(false);
+          toast.success("Removed from wishlist");
+        } else {
+          toast.error(result.message || "Failed to remove from wishlist");
+        }
+      } else {
+        // Add to wishlist
+        const result = await addToWishlist({ listingId: listing.id });
+        if (result.success) {
+          setIsInWishlist(true);
+          toast.success("Added to wishlist");
+        } else {
+          toast.error(result.message || "Failed to add to wishlist");
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling wishlist:", error);
+      toast.error("An error occurred while updating wishlist");
+    } finally {
+      setIsWishlistLoading(false);
     }
   };
 
@@ -930,9 +1012,21 @@ export function TourDetailsClient({
                       variant="ghost"
                       size="sm"
                       className="hover:bg-slate-50"
+                      onClick={handleWishlistToggle}
+                      disabled={isWishlistLoading || isCheckingWishlist}
                     >
-                      <Heart className="mr-2 h-4 w-4" />
-                      Save
+                      <Heart
+                        className={`mr-2 h-4 w-4 ${
+                          isInWishlist
+                            ? "fill-red-500 text-red-500"
+                            : "text-muted-foreground"
+                        }`}
+                      />
+                      {isWishlistLoading
+                        ? "Loading..."
+                        : isInWishlist
+                        ? "Saved"
+                        : "Save"}
                     </Button>
                     <Button
                       variant="ghost"
