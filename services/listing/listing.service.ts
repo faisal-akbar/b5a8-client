@@ -11,6 +11,7 @@ export interface GetAllListingsParams {
   minPrice?: number;
   maxPrice?: number;
   language?: string;
+  isActive?: boolean;
 }
 
 export interface CreateListingParams {
@@ -47,23 +48,27 @@ export interface UpdateListingParams {
 export async function getAllListings(params: GetAllListingsParams = {}) {
   try {
     const queryParams = new URLSearchParams();
-    
+
     if (params.page) queryParams.append("page", params.page.toString());
     if (params.limit) queryParams.append("limit", params.limit.toString());
     if (params.searchTerm) queryParams.append("searchTerm", params.searchTerm);
     if (params.city) queryParams.append("city", params.city);
     if (params.category) queryParams.append("category", params.category);
-    if (params.minPrice) queryParams.append("minPrice", params.minPrice.toString());
-    if (params.maxPrice) queryParams.append("maxPrice", params.maxPrice.toString());
+    if (params.minPrice)
+      queryParams.append("minPrice", params.minPrice.toString());
+    if (params.maxPrice)
+      queryParams.append("maxPrice", params.maxPrice.toString());
     if (params.language) queryParams.append("language", params.language);
-    
+    if (params.isActive !== undefined)
+      queryParams.append("isActive", params.isActive.toString());
+
     const response = await serverFetch.get(`/listings?${queryParams}`);
     const result = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(result.message || "Failed to get listings");
     }
-    
+
     // Backend returns: { success: true, data: [...listings], meta: {...} }
     // Wrap it in the expected structure
     return {
@@ -88,11 +93,11 @@ export async function getListingById(id: string) {
   try {
     const response = await serverFetch.get(`/listings/${id}`);
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to get listing");
     }
-    
+
     return {
       success: true,
       data: data.data,
@@ -112,11 +117,11 @@ export async function getFeaturedCities() {
   try {
     const response = await serverFetch.get("/listings/featured-cities");
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to get featured cities");
     }
-    
+
     return {
       success: true,
       data: data.data,
@@ -136,7 +141,7 @@ export async function getDistinctCategories() {
   try {
     const response = await serverFetch.get("/listings/distinct-categories");
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to get distinct categories");
     }
@@ -155,27 +160,32 @@ export async function getDistinctCategories() {
 /**
  * Get my listings (Guide only)
  */
-export async function getMyListings({ page = 1, limit = 10 }: { page?: number; limit?: number } = {}) {
+export async function getMyListings({
+  page = 1,
+  limit = 10,
+}: { page?: number; limit?: number } = {}) {
   try {
     const queryParams = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
     });
-    
-    const response = await serverFetch.get(`/listings/my/listings?${queryParams}`);
+
+    const response = await serverFetch.get(
+      `/listings/my/listings?${queryParams}`
+    );
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to get my listings");
     }
-    
+
     // Backend returns: { success: true, data: [...listings], meta: {...} }
     // So data.data is the array of listings, and data.meta is pagination info
     // Wrap it in the expected structure for consistency with other paginated responses
     return {
       success: true,
       data: {
-        data: Array.isArray(data.data) ? data.data : (data.data || []),
+        data: Array.isArray(data.data) ? data.data : data.data || [],
         meta: data.meta || {},
       },
     };
@@ -193,7 +203,7 @@ export async function getMyListings({ page = 1, limit = 10 }: { page?: number; l
 export async function createListing(params: CreateListingParams) {
   try {
     const formData = new FormData();
-    
+
     formData.append("title", params.title);
     formData.append("description", params.description);
     formData.append("itinerary", params.itinerary);
@@ -203,23 +213,23 @@ export async function createListing(params: CreateListingParams) {
     formData.append("maxGroupSize", params.maxGroupSize.toString());
     formData.append("city", params.city);
     formData.append("category", params.category);
-    
+
     if (params.images && params.images.length > 0) {
       params.images.forEach((file) => {
         formData.append("files", file);
       });
     }
-    
+
     const response = await serverFetch.post("/listings", {
       body: formData,
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to create listing");
     }
-    
+
     return {
       success: true,
       data: data.data,
@@ -243,13 +253,13 @@ export async function updateListing({ id, ...params }: UpdateListingParams) {
       },
       body: JSON.stringify(params),
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to update listing");
     }
-    
+
     return {
       success: true,
       data: data.data,
@@ -269,11 +279,11 @@ export async function deleteListing(id: string) {
   try {
     const response = await serverFetch.delete(`/listings/${id}`);
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to delete listing");
     }
-    
+
     return {
       success: true,
       data: data.data,
@@ -285,5 +295,3 @@ export async function deleteListing(id: string) {
     };
   }
 }
-
-
