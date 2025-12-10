@@ -344,7 +344,7 @@ export function AdminDashboardClient({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CalendarDays className="h-5 w-5 text-primary" />
-                  Bookings Overview
+                  Bookings Management
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -352,9 +352,9 @@ export function AdminDashboardClient({
                   View all bookings, track booking status, and manage
                   booking-related issues
                 </p>
-                <Button className="w-full" variant="outline">
-                  View All Bookings
-                </Button>
+                <Link href="/admin/dashboard/booking-management">
+                  <Button className="w-full">Manage Bookings</Button>
+                </Link>
               </CardContent>
             </Card>
           </div>

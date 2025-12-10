@@ -1,59 +1,79 @@
-import React from "react"
-import { getUserInfo } from "@/services/auth/getUserInfo"
-import { hasAdminAccess } from "@/lib/auth-utils"
-import { redirect } from "next/navigation"
-import { Suspense } from "react"
-import { cookies } from "next/headers"
+import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
+import { hasAdminAccess } from "@/lib/auth-utils";
+import { getUserInfo } from "@/services/auth/getUserInfo";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import React, { Suspense } from "react";
 
-export const dynamic = "force-dynamic"
+export const dynamic = "force-dynamic";
 
-const AdminDashboardLayout = async ({ children }: { children: React.ReactNode }) => {
+const AdminDashboardLayout = async ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   // Check for cookies first to avoid unnecessary API calls
-  const cookieStore = await cookies()
-  const accessToken = cookieStore.get("accessToken")?.value
-  const refreshToken = cookieStore.get("refreshToken")?.value
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("accessToken")?.value;
+  const refreshToken = cookieStore.get("refreshToken")?.value;
 
   // If no tokens at all, redirect to login immediately
   if (!accessToken && !refreshToken) {
-    redirect("/login?redirect=/admin/dashboard")
+    redirect("/login?redirect=/admin/dashboard");
   }
 
   // Try to get user info - if this fails, we'll handle it gracefully
-  let userInfo
-  let userRole: string | undefined | null = null
-  let authError = false
+  let userInfo;
+  let userRole: string | undefined | null = null;
+  let authError = false;
 
   try {
-    userInfo = await getUserInfo()
-    userRole = userInfo?.role
+    userInfo = await getUserInfo();
+    userRole = userInfo?.role;
   } catch (error) {
     // If there's an error getting user info, mark it but don't redirect yet
-    console.error("Admin dashboard layout error:", error)
-    authError = true
+    console.error("Admin dashboard layout error:", error);
+    authError = true;
   }
 
   // If we successfully got user info and have a role
-  if (!authError && userRole && userRole !== null && userRole !== "" && String(userRole).trim() !== "") {
+  if (
+    !authError &&
+    userRole &&
+    userRole !== null &&
+    userRole !== "" &&
+    String(userRole).trim() !== ""
+  ) {
     // Normalize role to uppercase
-    const normalizedRole = String(userRole).toUpperCase()
+    const normalizedRole = String(userRole).toUpperCase();
 
     // Check if user has admin access (ADMIN or SUPER_ADMIN)
     if (hasAdminAccess(normalizedRole as any)) {
       // User has admin access, render the dashboard
       return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense
+          fallback={
+            <div className="flex min-h-screen flex-col">
+              <main className="flex-1 bg-muted/30 py-8">
+                <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+                  <DashboardSkeleton />
+                </div>
+              </main>
+            </div>
+          }
+        >
           {children}
         </Suspense>
-      )
+      );
     } else {
       // User is logged in but doesn't have admin access, redirect to their dashboard
       if (normalizedRole === "GUIDE") {
-        redirect("/guide/dashboard")
+        redirect("/guide/dashboard");
       } else if (normalizedRole === "TOURIST") {
-        redirect("/tourist/dashboard")
+        redirect("/tourist/dashboard");
       } else {
         // Fallback to home if role is unknown
-        redirect("/")
+        redirect("/");
       }
     }
   }
@@ -63,14 +83,13 @@ const AdminDashboardLayout = async ({ children }: { children: React.ReactNode })
   // 2. Auth error or no role - redirect to login
   // Only redirect if we don't have tokens to prevent loops
   if (!accessToken && !refreshToken) {
-    redirect("/login?redirect=/admin/dashboard")
+    redirect("/login?redirect=/admin/dashboard");
   }
 
   // If we have tokens but can't get user info, there might be a backend issue
   // Show an error or redirect to login - but be careful not to create a loop
   // For now, let's redirect to login but the login page won't redirect back
-  redirect("/login?redirect=/admin/dashboard")
-}
+  redirect("/login?redirect=/admin/dashboard");
+};
 
-export default AdminDashboardLayout
-
+export default AdminDashboardLayout;
