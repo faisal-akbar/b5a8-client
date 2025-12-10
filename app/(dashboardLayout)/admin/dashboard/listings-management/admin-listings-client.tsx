@@ -66,6 +66,9 @@ interface AdminListingsClientProps {
     currentLimit: number;
     statusFilter: string;
     categoryFilter: string;
+    distinctCategories: {
+      category: string;
+    }[];
   };
 }
 

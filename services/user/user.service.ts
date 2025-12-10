@@ -2,8 +2,6 @@
 
 import { serverFetch } from "@/lib/server-fetch";
 
-
-
 export interface UpdateUserParams {
   id: string;
   name?: string;
@@ -24,12 +22,18 @@ export interface CreateAdminParams {
 
 export interface BlockUserParams {
   id: string;
-  isActive: "ACTIVE" | "BLOCKED";
+  isActive: "ACTIVE" | "INACTIVE" | "BLOCKED";
 }
 
 export interface GetAllUsersParams {
   page?: number;
   limit?: number;
+  role?: string;
+}
+
+export interface DeleteUserParams {
+  id: string;
+  isDeleted: boolean;
 }
 
 /**
@@ -39,11 +43,11 @@ export async function getMyProfile() {
   try {
     const response = await serverFetch.get("/user/me");
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to get profile");
     }
-    
+
     return {
       success: true,
       data: data.data,
@@ -63,11 +67,11 @@ export async function getUserById(id: string) {
   try {
     const response = await serverFetch.get(`/user/${id}`);
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to get user");
     }
-    
+
     return {
       success: true,
       data: data.data,
@@ -87,11 +91,11 @@ export async function getTopRatedGuides() {
   try {
     const response = await serverFetch.get("/user/top-rated-guides");
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to get top rated guides");
     }
-    
+
     return {
       success: true,
       data: data.data,
@@ -107,23 +111,35 @@ export async function getTopRatedGuides() {
 /**
  * Get all users (Admin only)
  */
-export async function getAllUsers({ page = 1, limit = 10 }: GetAllUsersParams = {}) {
+export async function getAllUsers({
+  page = 1,
+  limit = 10,
+  role,
+}: GetAllUsersParams = {}) {
   try {
     const queryParams = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
     });
-    
-    const response = await serverFetch.get(`/user/all-users?${queryParams}`);
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.message || "Failed to get users");
+
+    if (role) {
+      queryParams.append("role", role);
     }
-    
+
+    const response = await serverFetch.get(`/user/all-users?${queryParams}`);
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || "Failed to get users");
+    }
+
+    // Backend returns: { success: true, data: [...users], meta: {...} }
     return {
       success: true,
-      data: data.data,
+      data: {
+        data: Array.isArray(result.data) ? result.data : [],
+        meta: result.meta || { page: 1, limit: 10, total: 0, totalPages: 0 },
+      },
     };
   } catch (error: any) {
     return {
@@ -139,28 +155,35 @@ export async function getAllUsers({ page = 1, limit = 10 }: GetAllUsersParams = 
 export async function updateUser({ id, ...params }: UpdateUserParams) {
   try {
     const formData = new FormData();
-    
+
     if (params.name) formData.append("name", params.name);
     if (params.bio !== undefined) formData.append("bio", params.bio || "");
-    if (params.languages) formData.append("languages", JSON.stringify(params.languages));
-    if (params.travelPreferences) formData.append("travelPreferences", JSON.stringify(params.travelPreferences));
-    if (params.expertise) formData.append("expertise", JSON.stringify(params.expertise));
-    if (params.dailyRate !== undefined) formData.append("dailyRate", params.dailyRate.toString());
+    if (params.languages)
+      formData.append("languages", JSON.stringify(params.languages));
+    if (params.travelPreferences)
+      formData.append(
+        "travelPreferences",
+        JSON.stringify(params.travelPreferences)
+      );
+    if (params.expertise)
+      formData.append("expertise", JSON.stringify(params.expertise));
+    if (params.dailyRate !== undefined)
+      formData.append("dailyRate", params.dailyRate.toString());
     if (params.profilePic) formData.append("profilePic", params.profilePic);
-    
+
     // For FormData, we need to let the browser set Content-Type with boundary
     // So we don't set it explicitly - the fetch API will handle it
     const response = await serverFetch.patch(`/user/${id}`, {
       body: formData,
       // Don't set Content-Type - fetch will set it automatically for FormData
     } as any);
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to update user");
     }
-    
+
     return {
       success: true,
       data: data.data,
@@ -184,13 +207,13 @@ export async function blockUser({ id, isActive }: BlockUserParams) {
       },
       body: JSON.stringify({ isActive }),
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to block user");
     }
-    
+
     return {
       success: true,
       data: data.data,
@@ -204,9 +227,41 @@ export async function blockUser({ id, isActive }: BlockUserParams) {
 }
 
 /**
+ * Delete User (Admin only)
+ */
+export async function deleteUser({ id, isDeleted }: DeleteUserParams) {
+  try {
+    const response = await serverFetch.delete(`/user/${id}`, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ isDeleted }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to delete user");
+    }
+    return {
+      success: true,
+      data: data.data,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error?.message || "Failed to delete user",
+    };
+  }
+}
+
+/**
  * Create admin (Admin only)
  */
-export async function createAdmin({ name, email, password, languages }: CreateAdminParams) {
+export async function createAdmin({
+  name,
+  email,
+  password,
+  languages,
+}: CreateAdminParams) {
   try {
     const response = await serverFetch.post("/user/create-admin", {
       headers: {
@@ -219,13 +274,13 @@ export async function createAdmin({ name, email, password, languages }: CreateAd
         languages: languages || [],
       }),
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to create admin");
     }
-    
+
     return {
       success: true,
       data: data.data,
@@ -237,4 +292,3 @@ export async function createAdmin({ name, email, password, languages }: CreateAd
     };
   }
 }
-
