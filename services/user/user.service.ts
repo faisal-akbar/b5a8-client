@@ -270,6 +270,10 @@ export async function createAdmin({
       body: JSON.stringify({
         name,
         email,
+        role: "ADMIN",
+        isActive: "ACTIVE",
+        isVerified: true,
+        isDeleted: false,
         password,
         languages: languages || [],
       }),

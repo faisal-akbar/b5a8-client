@@ -30,10 +30,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  getInputFieldError,
+  type IInputErrorState,
+} from "@/lib/getInputFieldError";
+import { zodValidator } from "@/lib/zodValidator";
+import {
   blockUser,
   createAdmin,
   deleteUser,
 } from "@/services/user/user.service";
+import { createAdminZodSchema } from "@/zod/user.validation";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   ArrowLeft,
@@ -92,6 +98,8 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
     password: "",
     languages: [] as string[],
   });
+  const [validationErrors, setValidationErrors] =
+    useState<IInputErrorState | null>(null);
 
   const { users, meta, stats, currentPage, currentLimit, roleFilter } =
     initialData;
@@ -212,21 +220,38 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
   };
 
   const handleCreateAdmin = async () => {
-    if (
-      !adminFormData.name ||
-      !adminFormData.email ||
-      !adminFormData.password
-    ) {
-      toast.error("Please fill in all required fields");
+    setValidationErrors(null);
+
+    // Prepare data for validation
+    const validationData = {
+      name: adminFormData.name.trim(),
+      email: adminFormData.email.trim(),
+      password: adminFormData.password,
+      languages: adminFormData.languages,
+    };
+
+    // Zod validation
+    const validation = zodValidator(validationData, createAdminZodSchema);
+    if (!validation.success) {
+      setValidationErrors(validation);
+      const errorCount = validation.errors?.length || 0;
+      const firstError = validation.errors?.[0]?.message || "Validation failed";
+      if (errorCount === 1) {
+        toast.error(firstError);
+      } else {
+        toast.error(
+          `${errorCount} validation errors found. Please check the form fields.`
+        );
+      }
       return;
     }
 
     try {
       const result = await createAdmin({
-        name: adminFormData.name,
-        email: adminFormData.email,
-        password: adminFormData.password,
-        languages: adminFormData.languages,
+        name: validationData.name,
+        email: validationData.email,
+        password: validationData.password,
+        languages: validationData.languages,
       });
       if (result.success) {
         toast.success(
@@ -234,6 +259,7 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
         );
         setIsCreateAdminDialogOpen(false);
         setAdminFormData({ name: "", email: "", password: "", languages: [] });
+        setValidationErrors(null);
         router.refresh();
       } else {
         toast.error(result.message || "Failed to create admin");
@@ -703,7 +729,18 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
       {/* Create Admin Dialog */}
       <Dialog
         open={isCreateAdminDialogOpen}
-        onOpenChange={setIsCreateAdminDialogOpen}
+        onOpenChange={(open) => {
+          setIsCreateAdminDialogOpen(open);
+          if (!open) {
+            setAdminFormData({
+              name: "",
+              email: "",
+              password: "",
+              languages: [],
+            });
+            setValidationErrors(null);
+          }
+        }}
       >
         <DialogContent>
           <DialogHeader>
@@ -719,10 +756,29 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
                 id="admin-name"
                 placeholder="Admin name"
                 value={adminFormData.name}
-                onChange={(e) =>
-                  setAdminFormData({ ...adminFormData, name: e.target.value })
+                onChange={(e) => {
+                  setAdminFormData({ ...adminFormData, name: e.target.value });
+                  // Clear validation error for this field when user types
+                  if (validationErrors?.errors) {
+                    setValidationErrors({
+                      ...validationErrors,
+                      errors: validationErrors.errors.filter(
+                        (err) => err.field !== "name"
+                      ),
+                    });
+                  }
+                }}
+                className={
+                  getInputFieldError("name", validationErrors)
+                    ? "border-destructive"
+                    : ""
                 }
               />
+              {getInputFieldError("name", validationErrors) && (
+                <p className="text-sm text-destructive">
+                  {getInputFieldError("name", validationErrors)}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="admin-email">Email</Label>
@@ -731,10 +787,29 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
                 type="email"
                 placeholder="admin@example.com"
                 value={adminFormData.email}
-                onChange={(e) =>
-                  setAdminFormData({ ...adminFormData, email: e.target.value })
+                onChange={(e) => {
+                  setAdminFormData({ ...adminFormData, email: e.target.value });
+                  // Clear validation error for this field when user types
+                  if (validationErrors?.errors) {
+                    setValidationErrors({
+                      ...validationErrors,
+                      errors: validationErrors.errors.filter(
+                        (err) => err.field !== "email"
+                      ),
+                    });
+                  }
+                }}
+                className={
+                  getInputFieldError("email", validationErrors)
+                    ? "border-destructive"
+                    : ""
                 }
               />
+              {getInputFieldError("email", validationErrors) && (
+                <p className="text-sm text-destructive">
+                  {getInputFieldError("email", validationErrors)}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="admin-password">Password</Label>
@@ -743,13 +818,32 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
                 type="password"
                 placeholder="Password"
                 value={adminFormData.password}
-                onChange={(e) =>
+                onChange={(e) => {
                   setAdminFormData({
                     ...adminFormData,
                     password: e.target.value,
-                  })
+                  });
+                  // Clear validation error for this field when user types
+                  if (validationErrors?.errors) {
+                    setValidationErrors({
+                      ...validationErrors,
+                      errors: validationErrors.errors.filter(
+                        (err) => err.field !== "password"
+                      ),
+                    });
+                  }
+                }}
+                className={
+                  getInputFieldError("password", validationErrors)
+                    ? "border-destructive"
+                    : ""
                 }
               />
+              {getInputFieldError("password", validationErrors) && (
+                <p className="text-sm text-destructive">
+                  {getInputFieldError("password", validationErrors)}
+                </p>
+              )}
             </div>
           </div>
           <DialogFooter>
@@ -763,6 +857,7 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
                   password: "",
                   languages: [],
                 });
+                setValidationErrors(null);
               }}
             >
               Cancel
