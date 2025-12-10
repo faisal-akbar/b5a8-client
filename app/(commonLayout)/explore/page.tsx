@@ -1,37 +1,46 @@
-import { Suspense } from "react"
-import { getAllListings, getDistinctCategories, getFeaturedCities } from "@/services/listing/listing.service"
-import { ExploreClient } from "./explore-client"
-import type { Category } from "@/types/profile"
+import {
+  getAllListings,
+  getDistinctCategories,
+  getFeaturedCities,
+} from "@/services/listing/listing.service";
+import type { Category } from "@/types/profile";
+import { Suspense } from "react";
+import { ExploreClient } from "./explore-client";
 
 type SearchParams = Promise<{
-  page?: string
-  limit?: string
-  searchTerm?: string
-  category?: string
-  city?: string
-  minPrice?: string
-  maxPrice?: string
-  language?: string
-}>
+  page?: string;
+  limit?: string;
+  searchTerm?: string;
+  category?: string;
+  city?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  language?: string;
+}>;
 
 /**
  * Server Component for Explore Tours Page
  * Handles data fetching and passes to client component for interactivity
  */
-export default async function ExplorePage(props: { 
-  searchParams: SearchParams 
+export default async function ExplorePage(props: {
+  searchParams: SearchParams;
 }) {
-  const searchParams = await props.searchParams
-  
+  const searchParams = await props.searchParams;
+
   // Parse and validate search parameters
-  const page = Number(searchParams.page) || 1
-  const limit = Number(searchParams.limit) || 12
-  const searchTerm = searchParams.searchTerm || undefined
-  const category = searchParams.category as Category | undefined
-  const city = searchParams.city || undefined
-  const minPrice = searchParams.minPrice ? Number(searchParams.minPrice) : undefined
-  const maxPrice = searchParams.maxPrice ? Number(searchParams.maxPrice) : undefined
-  const language = searchParams.language || undefined
+  const page = Number(searchParams.page) || 1;
+  const limit = Number(searchParams.limit) || 12;
+  const searchTerm = searchParams.searchTerm || undefined;
+  const category = searchParams.category as Category | undefined;
+  const city = searchParams.city || undefined;
+  const minPrice = searchParams.minPrice
+    ? Number(searchParams.minPrice)
+    : undefined;
+  const maxPrice = searchParams.maxPrice
+    ? Number(searchParams.maxPrice)
+    : undefined;
+  const language = searchParams.language || undefined;
+  const isActive = true; // for public view, all listings are active
 
   // Fetch listings with filters
   const result = await getAllListings({
@@ -43,25 +52,35 @@ export default async function ExplorePage(props: {
     minPrice,
     maxPrice,
     language,
-  })
+    isActive,
+  });
 
   // for showing in the filters
-  const distinctCategoriesResult = await getDistinctCategories()
+  const distinctCategoriesResult = await getDistinctCategories();
 
   // for showing in the filters
-  const featuredCitiesResult = await getFeaturedCities()
+  const featuredCitiesResult = await getFeaturedCities();
 
   // Extract data and metadata
-  const listings = result.success && result.data ? result.data.data || [] : []
-  const meta = result.success && result.data ? result.data.meta : { page: 1, limit: 12, total: 0, totalPages: 0 }
+  const listings = result.success && result.data ? result.data.data || [] : [];
+  const meta =
+    result.success && result.data
+      ? result.data.meta
+      : { page: 1, limit: 12, total: 0, totalPages: 0 };
 
-  const categories = distinctCategoriesResult.success && distinctCategoriesResult.data ? distinctCategoriesResult.data : []
+  const categories =
+    distinctCategoriesResult.success && distinctCategoriesResult.data
+      ? distinctCategoriesResult.data
+      : [];
 
-  const featuredCities = featuredCitiesResult.success && featuredCitiesResult.data ? featuredCitiesResult.data : []
+  const featuredCities =
+    featuredCitiesResult.success && featuredCitiesResult.data
+      ? featuredCitiesResult.data
+      : [];
 
   return (
     <Suspense fallback={<ExploreLoadingState />}>
-      <ExploreClient 
+      <ExploreClient
         initialListings={listings}
         initialMeta={meta}
         initialFilters={{
@@ -76,7 +95,7 @@ export default async function ExplorePage(props: {
         initialFeaturedCities={featuredCities}
       />
     </Suspense>
-  )
+  );
 }
 
 /**
@@ -107,7 +126,10 @@ function ExploreLoadingState() {
               <div className="flex-1">
                 <div className="grid gap-6">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-64 animate-pulse rounded bg-muted" />
+                    <div
+                      key={i}
+                      className="h-64 animate-pulse rounded bg-muted"
+                    />
                   ))}
                 </div>
               </div>
@@ -116,5 +138,5 @@ function ExploreLoadingState() {
         </section>
       </main>
     </div>
-  )
+  );
 }
