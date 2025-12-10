@@ -184,6 +184,7 @@ export function AdminListingsClient({ initialData }: AdminListingsClientProps) {
     if (!listingToUpdate) return;
 
     try {
+      console.log("listingToUpdate", listingToUpdate);
       const result = await deleteListing(listingToUpdate.id);
       if (result.success) {
         toast.success(
@@ -615,7 +616,8 @@ export function AdminListingsClient({ initialData }: AdminListingsClientProps) {
             <DialogTitle>Delete Listing</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete "{listingToUpdate?.title}"? This
-              action cannot be undone.
+              action will delete all listing related data inlcuding bookings,
+              reviews, etc. And this action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

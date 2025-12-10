@@ -278,6 +278,7 @@ export async function updateListing({ id, ...params }: UpdateListingParams) {
 export async function deleteListing(id: string) {
   try {
     const response = await serverFetch.delete(`/listings/${id}`);
+    console.log("response", response);
     const data = await response.json();
 
     if (!response.ok) {
