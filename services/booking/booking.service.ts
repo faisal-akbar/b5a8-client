@@ -39,13 +39,13 @@ export async function createBooking({ listingId, date }: CreateBookingParams) {
         date,
       }),
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to create booking");
     }
-    
+
     return {
       success: true,
       data: data.data,
@@ -64,19 +64,21 @@ export async function createBooking({ listingId, date }: CreateBookingParams) {
 export async function getMyBookings(params: GetMyBookingsParams = {}) {
   try {
     const queryParams = new URLSearchParams();
-    
+
     if (params.page) queryParams.append("page", params.page.toString());
     if (params.limit) queryParams.append("limit", params.limit.toString());
     if (params.type) queryParams.append("type", params.type);
     if (params.status) queryParams.append("status", params.status);
-    
-    const response = await serverFetch.get(`/bookings/my-bookings?${queryParams}`);
+
+    const response = await serverFetch.get(
+      `/bookings/my-bookings?${queryParams}`
+    );
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to get bookings");
     }
-    
+
     // API returns: { success, message, data: [...], meta: {...} }
     // Return in the expected format: { success: true, data: { data: [...], meta: {...} } }
     return {
@@ -100,21 +102,25 @@ export async function getMyBookings(params: GetMyBookingsParams = {}) {
 export async function getAllBookings(params: GetAllBookingsParams = {}) {
   try {
     const queryParams = new URLSearchParams();
-    
+
     if (params.page) queryParams.append("page", params.page.toString());
     if (params.limit) queryParams.append("limit", params.limit.toString());
     if (params.status) queryParams.append("status", params.status);
-    
+
     const response = await serverFetch.get(`/bookings?${queryParams}`);
-    const data = await response.json();
-    
+    const result = await response.json();
+
     if (!response.ok) {
-      throw new Error(data.message || "Failed to get bookings");
+      throw new Error(result.message || "Failed to get bookings");
     }
-    
+
+    // Backend returns: { success: true, data: [...bookings], meta: {...} }
     return {
       success: true,
-      data: data.data,
+      data: {
+        data: Array.isArray(result.data) ? result.data : [],
+        meta: result.meta || { page: 1, limit: 10, total: 0, totalPages: 0 },
+      },
     };
   } catch (error: any) {
     return {
@@ -131,11 +137,11 @@ export async function getBookingById(id: string) {
   try {
     const response = await serverFetch.get(`/bookings/${id}`);
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to get booking");
     }
-    
+
     return {
       success: true,
       data: data.data,
@@ -151,7 +157,10 @@ export async function getBookingById(id: string) {
 /**
  * Update booking status (Guide or Admin)
  */
-export async function updateBookingStatus({ id, status }: UpdateBookingStatusParams) {
+export async function updateBookingStatus({
+  id,
+  status,
+}: UpdateBookingStatusParams) {
   try {
     const response = await serverFetch.patch(`/bookings/${id}/status`, {
       headers: {
@@ -159,13 +168,13 @@ export async function updateBookingStatus({ id, status }: UpdateBookingStatusPar
       },
       body: JSON.stringify({ status }),
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || "Failed to update booking status");
     }
-    
+
     return {
       success: true,
       data: data.data,
@@ -177,4 +186,3 @@ export async function updateBookingStatus({ id, status }: UpdateBookingStatusPar
     };
   }
 }
-

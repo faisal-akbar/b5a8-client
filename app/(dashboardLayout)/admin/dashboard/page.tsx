@@ -21,6 +21,12 @@ interface PageProps {
     tab?: string;
     page?: string;
     limit?: string;
+    usersPage?: string;
+    usersLimit?: string;
+    listingsPage?: string;
+    listingsLimit?: string;
+    bookingsPage?: string;
+    bookingsLimit?: string;
   }>;
 }
 
@@ -29,6 +35,14 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
   const activeTab = params.tab || "overview";
   const page = parseInt(params.page || "1", 10);
   const limit = parseInt(params.limit || "10", 10);
+
+  // Pagination for recent sections (default to 5 records)
+  const usersPage = parseInt(params.usersPage || "1", 10);
+  const usersLimit = parseInt(params.usersLimit || "5", 10);
+  const listingsPage = parseInt(params.listingsPage || "1", 10);
+  const listingsLimit = parseInt(params.listingsLimit || "5", 10);
+  const bookingsPage = parseInt(params.bookingsPage || "1", 10);
+  const bookingsLimit = parseInt(params.bookingsLimit || "5", 10);
 
   try {
     // Fetch all stats in parallel
@@ -51,9 +65,9 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
       getListingStats(),
       getBookingStats(),
       getRevenueStats(),
-      getAllUsers({ page: 1, limit: 5 }),
-      getAllListings({ page: 1, limit: 5 }),
-      getAllBookings({ page: 1, limit: 5 }),
+      getAllUsers({ page: usersPage, limit: usersLimit }),
+      getAllListings({ page: listingsPage, limit: listingsLimit }),
+      getAllBookings({ page: bookingsPage, limit: bookingsLimit }),
     ]);
 
     const stats = {
@@ -70,23 +84,61 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
       usersResult.success && usersResult.data
         ? usersResult.data.data || []
         : [];
+    const usersMeta =
+      usersResult.success && usersResult.data
+        ? usersResult.data.meta || {
+            page: 1,
+            limit: 5,
+            total: 0,
+            totalPages: 0,
+          }
+        : { page: 1, limit: 5, total: 0, totalPages: 0 };
+
     const recentListings =
       listingsResult.success && listingsResult.data
         ? listingsResult.data.data || []
         : [];
+    const listingsMeta =
+      listingsResult.success && listingsResult.data
+        ? listingsResult.data.meta || {
+            page: 1,
+            limit: 5,
+            total: 0,
+            totalPages: 0,
+          }
+        : { page: 1, limit: 5, total: 0, totalPages: 0 };
+
     const recentBookings =
       bookingsResult.success && bookingsResult.data
-        ? bookingsResult.data || []
+        ? bookingsResult.data.data || []
         : [];
+    const bookingsMeta =
+      bookingsResult.success && bookingsResult.data
+        ? bookingsResult.data.meta || {
+            page: 1,
+            limit: 5,
+            total: 0,
+            totalPages: 0,
+          }
+        : { page: 1, limit: 5, total: 0, totalPages: 0 };
 
     const initialData = {
       stats,
       recentUsers,
       recentListings,
       recentBookings,
+      usersMeta,
+      listingsMeta,
+      bookingsMeta,
       activeTab,
       currentPage: page,
       currentLimit: limit,
+      usersPage,
+      usersLimit,
+      listingsPage,
+      listingsLimit,
+      bookingsPage,
+      bookingsLimit,
     };
 
     return (

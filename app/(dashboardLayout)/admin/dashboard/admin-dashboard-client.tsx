@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardPagination } from "@/components/dashboard/dashboard-pagination";
 import { DataTable } from "@/components/dashboard/data-table";
 import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
@@ -32,16 +33,48 @@ interface AdminDashboardClientProps {
     recentUsers: any[];
     recentListings: any[];
     recentBookings: any[];
+    usersMeta: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    listingsMeta: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    bookingsMeta: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
     activeTab: string;
     currentPage: number;
     currentLimit: number;
+    usersPage: number;
+    usersLimit: number;
+    listingsPage: number;
+    listingsLimit: number;
+    bookingsPage: number;
+    bookingsLimit: number;
   };
 }
 
 export function AdminDashboardClient({
   initialData,
 }: AdminDashboardClientProps) {
-  const { stats, recentUsers, recentListings, recentBookings } = initialData;
+  const {
+    stats,
+    recentUsers,
+    recentListings,
+    recentBookings,
+    usersMeta,
+    listingsMeta,
+    bookingsMeta,
+  } = initialData;
 
   // Extract stats safely
   const totalUsers = stats.overview?.totalUsers || stats.users?.totalUsers || 0;
@@ -340,6 +373,13 @@ export function AdminDashboardClient({
                   searchPlaceholder="Search users..."
                   disablePagination={true}
                 />
+                <DashboardPagination
+                  currentPage={usersMeta.page}
+                  totalPages={usersMeta.totalPages}
+                  total={usersMeta.total}
+                  limit={usersMeta.limit}
+                  paramPrefix="users"
+                />
               </CardContent>
             </Card>
 
@@ -355,6 +395,13 @@ export function AdminDashboardClient({
                   searchPlaceholder="Search listings..."
                   disablePagination={true}
                 />
+                <DashboardPagination
+                  currentPage={listingsMeta.page}
+                  totalPages={listingsMeta.totalPages}
+                  total={listingsMeta.total}
+                  limit={listingsMeta.limit}
+                  paramPrefix="listings"
+                />
               </CardContent>
             </Card>
 
@@ -369,6 +416,13 @@ export function AdminDashboardClient({
                   searchKey="id"
                   searchPlaceholder="Search bookings..."
                   disablePagination={true}
+                />
+                <DashboardPagination
+                  currentPage={bookingsMeta.page}
+                  totalPages={bookingsMeta.totalPages}
+                  total={bookingsMeta.total}
+                  limit={bookingsMeta.limit}
+                  paramPrefix="bookings"
                 />
               </CardContent>
             </Card>

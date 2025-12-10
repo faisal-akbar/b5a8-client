@@ -1,32 +1,53 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useRouter, useSearchParams } from "next/navigation";
 
-interface PaymentsPaginationProps {
-  currentPage: number
-  totalPages: number
-  total: number
-  limit: number
-  onPageChange: (page: number) => void
-  onLimitChange: (limit: number) => void
+interface DashboardPaginationProps {
+  currentPage: number;
+  totalPages: number;
+  total: number;
+  limit: number;
+  paramPrefix: string; // e.g., "users", "listings", "bookings"
 }
 
-export function PaymentsPagination({
+export function DashboardPagination({
   currentPage,
   totalPages,
   total,
   limit,
-  onPageChange,
-  onLimitChange,
-}: PaymentsPaginationProps) {
+  paramPrefix,
+}: DashboardPaginationProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   // Always show pagination if there's data, even if only 1 page (so users can change limit)
   if (total === 0) {
-    return null
+    return null;
   }
 
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set(`${paramPrefix}Page`, newPage.toString());
+    router.push(`?${params.toString()}`);
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set(`${paramPrefix}Limit`, newLimit.toString());
+    params.set(`${paramPrefix}Page`, "1"); // Reset to first page when changing limit
+    router.push(`?${params.toString()}`);
+  };
+
   return (
-    <div className="mt-6 flex items-center justify-between">
+    <div className="mt-4 flex items-center justify-between">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage} of {totalPages} ({total} total)
@@ -38,14 +59,14 @@ export function PaymentsPagination({
           <Select
             value={`${limit}`}
             onValueChange={(value) => {
-              onLimitChange(Number(value))
+              handleLimitChange(Number(value));
             }}
           >
             <SelectTrigger className="h-8 w-[70px]">
               <SelectValue placeholder={limit} />
             </SelectTrigger>
             <SelectContent side="top">
-              {[10, 20, 30, 40, 50].map((pageSize) => (
+              {[5, 10, 20, 30, 50].map((pageSize) => (
                 <SelectItem key={pageSize} value={`${pageSize}`}>
                   {pageSize}
                 </SelectItem>
@@ -58,7 +79,7 @@ export function PaymentsPagination({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange(1)}
+              onClick={() => handlePageChange(1)}
               disabled={currentPage === 1}
             >
               First
@@ -66,7 +87,7 @@ export function PaymentsPagination({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
             >
               Previous
@@ -74,7 +95,9 @@ export function PaymentsPagination({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+              onClick={() =>
+                handlePageChange(Math.min(totalPages, currentPage + 1))
+              }
               disabled={currentPage === totalPages}
             >
               Next
@@ -82,7 +105,7 @@ export function PaymentsPagination({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange(totalPages)}
+              onClick={() => handlePageChange(totalPages)}
               disabled={currentPage === totalPages}
             >
               Last
@@ -91,10 +114,6 @@ export function PaymentsPagination({
         )}
       </div>
     </div>
-  )
+  );
 }
-
-
-
-
 
