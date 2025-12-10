@@ -1,15 +1,7 @@
 import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
 import { getAllBookings } from "@/services/booking/booking.service";
 import { getAllListings } from "@/services/listing/listing.service";
-import {
-  getBookingStats,
-  getGuideStats,
-  getListingStats,
-  getOverviewStats,
-  getRevenueStats,
-  getTouristStats,
-  getUserStats,
-} from "@/services/stats/stats.service";
+import { getOverviewStats } from "@/services/stats/stats.service";
 import { getAllUsers } from "@/services/user/user.service";
 import { Suspense } from "react";
 import { AdminDashboardClient } from "./admin-dashboard-client";
@@ -46,38 +38,31 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
 
   try {
     // Fetch all stats in parallel
-    const [
-      overviewResult,
-      userStatsResult,
-      guideStatsResult,
-      touristStatsResult,
-      listingStatsResult,
-      bookingStatsResult,
-      revenueStatsResult,
-      usersResult,
-      listingsResult,
-      bookingsResult,
-    ] = await Promise.all([
-      getOverviewStats(),
-      getUserStats(),
-      getGuideStats(),
-      getTouristStats(),
-      getListingStats(),
-      getBookingStats(),
-      getRevenueStats(),
-      getAllUsers({ page: usersPage, limit: usersLimit }),
-      getAllListings({ page: listingsPage, limit: listingsLimit }),
-      getAllBookings({ page: bookingsPage, limit: bookingsLimit }),
-    ]);
+    const [overviewResult, usersResult, listingsResult, bookingsResult] =
+      await Promise.all([
+        getOverviewStats(),
+        getAllUsers({ page: usersPage, limit: usersLimit }),
+        getAllListings({ page: listingsPage, limit: listingsLimit }),
+        getAllBookings({ page: bookingsPage, limit: bookingsLimit }),
+      ]);
 
     const stats = {
       overview: overviewResult.success ? overviewResult.data : {},
-      users: userStatsResult.success ? userStatsResult.data : {},
-      guides: guideStatsResult.success ? guideStatsResult.data : {},
-      tourists: touristStatsResult.success ? touristStatsResult.data : {},
-      listings: listingStatsResult.success ? listingStatsResult.data : {},
-      bookings: bookingStatsResult.success ? bookingStatsResult.data : {},
-      revenue: revenueStatsResult.success ? revenueStatsResult.data : {},
+      users: overviewResult.success ? overviewResult.data.users : {},
+      guides: overviewResult.success
+        ? overviewResult.data.users.usersByRole.find(
+            (role: any) => role.role === "GUIDE"
+          )
+        : {},
+      tourists: overviewResult.success
+        ? overviewResult.data.users.usersByRole.find(
+            (role: any) => role.role === "TOURIST"
+          )
+        : {},
+      listings: overviewResult.success ? overviewResult.data.listings : {},
+      bookings: overviewResult.success ? overviewResult.data.bookings : {},
+      revenue: overviewResult.success ? overviewResult.data.revenue : {},
+      profit: overviewResult.success ? overviewResult.data.profit : {},
     };
 
     const recentUsers =

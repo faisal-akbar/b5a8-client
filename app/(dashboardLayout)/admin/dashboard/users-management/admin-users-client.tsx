@@ -494,7 +494,7 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
               <CardContent>
                 <div className="text-2xl font-bold">{totalUsers}</div>
                 <p className="text-xs text-muted-foreground">
-                  {guides} guides • {tourists} tourists
+                  {guides} guides • {tourists} tourists • {blockedUsers} blocked
                 </p>
               </CardContent>
             </Card>

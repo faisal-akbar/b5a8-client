@@ -29,6 +29,7 @@ interface AdminDashboardClientProps {
       listings: any;
       bookings: any;
       revenue: any;
+      profit: any;
     };
     recentUsers: any[];
     recentListings: any[];
@@ -76,15 +77,15 @@ export function AdminDashboardClient({
     bookingsMeta,
   } = initialData;
 
-  // Extract stats safely
-  const totalUsers = stats.overview?.totalUsers || stats.users?.totalUsers || 0;
-  const totalGuides = stats.guides?.totalGuides || 0;
-  const totalTourists = stats.tourists?.totalTourists || 0;
-  const totalListings = stats.listings?.totalListings || 0;
+  // Extract stats safely - prioritize overview stats, fallback to individual stats
+  const totalUsers = stats.users?.totalUsers || 0;
+  const totalGuides = stats.guides?.count || 0;
+  const totalTourists = stats.tourists?.count || 0;
+  const totalListings = stats.listings?.activeListings || 0;
   const totalBookings = stats.bookings?.totalBookings || 0;
   const totalRevenue = stats.revenue?.totalRevenue || 0;
-  const totalProfit = stats.revenue?.totalProfit || 0;
-  const platformFee = stats.revenue?.platformFeePercentage || 10;
+  const totalProfit = stats.profit?.totalProfit || 0;
+  const platformFee = stats.overview?.profit?.applicationFeePercentage || 10;
 
   const usersColumns: ColumnDef<any>[] = [
     {
@@ -243,7 +244,7 @@ export function AdminDashboardClient({
             <StatCard
               title="Total Users"
               value={totalUsers.toLocaleString()}
-              description={`${totalGuides.toLocaleString()} guides • ${totalTourists.toLocaleString()} tourists`}
+              description={`Total active users`}
               icon={Users}
               index={0}
             />
@@ -281,15 +282,15 @@ export function AdminDashboardClient({
             />
             <StatCard
               title="Active Guides"
-              value={stats.guides?.activeGuides?.toLocaleString() || "0"}
-              description="Currently active guides"
+              value={totalGuides.toLocaleString()}
+              description="Active guides"
               icon={Activity}
               index={5}
             />
             <StatCard
               title="Active Tourists"
-              value={stats.tourists?.activeTourists?.toLocaleString() || "0"}
-              description="Currently active tourists"
+              value={totalTourists.toLocaleString()}
+              description="Active tourists"
               icon={TrendingUp}
               index={6}
             />
