@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/lib/auth-context";
 import { createBooking } from "@/services/booking/booking.service";
 import type { GuideListing, GuideReview } from "@/types/guide";
 import { format } from "date-fns";
@@ -34,7 +35,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -71,6 +72,8 @@ export function TourDetailsClient({
   availabilities = [],
 }: TourDetailsClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const { user, isLoading } = useAuth();
 
   const images =
     listing.images && listing.images.length > 0
@@ -116,6 +119,20 @@ export function TourDetailsClient({
   };
 
   const handleBooking = async () => {
+    // Check if user is logged in
+    if (isLoading) {
+      // Still loading auth state, wait a bit
+      return;
+    }
+
+    if (!user || !user.role) {
+      // User is not logged in, redirect to login with current tour URL as redirect
+      const redirectUrl = encodeURIComponent(pathname);
+      router.push(`/login?redirect=${redirectUrl}`);
+      toast.info("Please login to book a tour");
+      return;
+    }
+
     if (!selectedDate) {
       toast.error("Please select a date");
       return;
