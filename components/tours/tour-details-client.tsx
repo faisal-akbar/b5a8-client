@@ -40,6 +40,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -294,10 +295,12 @@ export function TourDetailsClient({
             }}
             className="group relative h-[400px] overflow-hidden rounded-lg sm:col-span-2 sm:row-span-2 shadow-md transition-all hover:shadow-xl"
           >
-            <img
-              src={images[0] || "/placeholder.svg"}
+            <Image
+              src={images[0]}
               alt={listing.title}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              unoptimized={images[0]?.startsWith("http")}
             />
             <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
           </button>
@@ -310,10 +313,12 @@ export function TourDetailsClient({
               }}
               className="group relative h-[196px] overflow-hidden rounded-lg shadow-sm transition-all hover:shadow-md"
             >
-              <img
-                src={image || "/placeholder.svg"}
+              <Image
+                src={image}
                 alt={`${listing.title} ${index + 2}`}
+                fill
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                unoptimized={image?.startsWith("http")}
               />
               <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
             </button>

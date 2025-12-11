@@ -1,85 +1,98 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Slider } from "@/components/ui/slider"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, MapPin, Star, Clock, Users, Filter, X } from "lucide-react"
-import Link from "next/link"
-import { useState, useTransition, useEffect } from "react"
-import { motion } from "framer-motion"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useDebounce } from "@/hooks/useDebounce"
-import type { GuideListing } from "@/types/guide"
-import type { CategoryData } from "@/types/profile"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { useDebounce } from "@/hooks/useDebounce";
+import type { GuideListing } from "@/types/guide";
+import type { CategoryData } from "@/types/profile";
+import { motion } from "framer-motion";
+import { Clock, Filter, MapPin, Search, Star, Users, X } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 
 const LANGUAGES = [
   "English",
-  "Spanish", 
+  "Spanish",
   "French",
   "German",
   "Japanese",
   "Chinese",
-]
+];
 
 type ExploreFilters = {
-  searchTerm?: string
-  category?: string
-  city?: string
-  minPrice?: number
-  maxPrice?: number
-  language?: string
-}
+  searchTerm?: string;
+  category?: string;
+  city?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  language?: string;
+};
 
 type ExploreClientProps = {
-  initialListings: GuideListing[]
+  initialListings: GuideListing[];
   initialMeta: {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
-  }
-  initialFilters: ExploreFilters
-  initialCategories: CategoryData[]
-  initialFeaturedCities: Array<{ city: string; listingsCount?: number; image?: string | null }>
-}
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  initialFilters: ExploreFilters;
+  initialCategories: CategoryData[];
+  initialFeaturedCities: Array<{
+    city: string;
+    listingsCount?: number;
+    image?: string | null;
+  }>;
+};
 
 /**
  * Client component for explore page with interactive filtering
  */
-export function ExploreClient({ 
-  initialListings, 
+export function ExploreClient({
+  initialListings,
   initialMeta,
   initialFilters,
   initialCategories,
   initialFeaturedCities,
 }: ExploreClientProps) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [isPending, startTransition] = useTransition()
-  
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+
   // Local state for form inputs
-  const [showMobileFilters, setShowMobileFilters] = useState(false)
-  const [searchInput, setSearchInput] = useState(initialFilters.searchTerm || "")
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [searchInput, setSearchInput] = useState(
+    initialFilters.searchTerm || ""
+  );
   const [priceRange, setPriceRange] = useState<[number, number]>([
     initialFilters.minPrice || 0,
     initialFilters.maxPrice || 1000,
-  ])
+  ]);
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
     initialFilters.category
-  )
+  );
   const [selectedCity, setSelectedCity] = useState<string | undefined>(
     initialFilters.city
-  )
+  );
   const [selectedLanguage, setSelectedLanguage] = useState<string | undefined>(
     initialFilters.language
-  )
+  );
 
   // Debounce search input to avoid excessive API calls
-  const debouncedSearchTerm = useDebounce(searchInput, 500)
+  const debouncedSearchTerm = useDebounce(searchInput, 500);
 
   /**
    * Update URL when debounced search term changes
@@ -87,39 +100,39 @@ export function ExploreClient({
   useEffect(() => {
     updateFilters({
       searchTerm: debouncedSearchTerm || undefined,
-    })
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearchTerm])
+  }, [debouncedSearchTerm]);
 
   /**
    * Update URL with new filters
    */
   const updateFilters = (updates: Partial<ExploreFilters>) => {
-    const params = new URLSearchParams(searchParams.toString())
-    
+    const params = new URLSearchParams(searchParams.toString());
+
     // Update each filter parameter
     Object.entries(updates).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== "") {
-        params.set(key, String(value))
+        params.set(key, String(value));
       } else {
-        params.delete(key)
+        params.delete(key);
       }
-    })
-    
+    });
+
     // Reset to page 1 when filters change
-    params.set("page", "1")
-    
+    params.set("page", "1");
+
     startTransition(() => {
-      router.push(`/explore?${params.toString()}`)
-    })
-  }
+      router.push(`/explore?${params.toString()}`);
+    });
+  };
 
   /**
    * Handle search input change (local state only, debounced update to URL)
    */
   const handleSearchChange = (value: string) => {
-    setSearchInput(value)
-  }
+    setSearchInput(value);
+  };
 
   /**
    * Handle price range change (debounced via button)
@@ -128,64 +141,64 @@ export function ExploreClient({
     updateFilters({
       minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
       maxPrice: priceRange[1] < 1000 ? priceRange[1] : undefined,
-    })
-  }
+    });
+  };
 
   /**
    * Handle category change
    */
   const handleCategoryChange = (category: string) => {
-    const newCategory = category === selectedCategory ? undefined : category
-    setSelectedCategory(newCategory)
-    updateFilters({ category: newCategory })
-  }
+    const newCategory = category === selectedCategory ? undefined : category;
+    setSelectedCategory(newCategory);
+    updateFilters({ category: newCategory });
+  };
 
   /**
    * Handle city change
    */
   const handleCityChange = (city: string) => {
-    const newCity = city === selectedCity ? undefined : city
-    setSelectedCity(newCity)
-    updateFilters({ city: newCity })
-  }
+    const newCity = city === selectedCity ? undefined : city;
+    setSelectedCity(newCity);
+    updateFilters({ city: newCity });
+  };
 
   /**
    * Handle language change
    */
   const handleLanguageChange = (language: string) => {
-    setSelectedLanguage(language)
-    updateFilters({ language })
-  }
+    setSelectedLanguage(language);
+    updateFilters({ language });
+  };
 
   /**
    * Clear all filters
    */
   const handleClearFilters = () => {
-    setSearchInput("")
-    setPriceRange([0, 1000])
-    setSelectedCategory(undefined)
-    setSelectedCity(undefined)
-    setSelectedLanguage(undefined)
-    
+    setSearchInput("");
+    setPriceRange([0, 1000]);
+    setSelectedCategory(undefined);
+    setSelectedCity(undefined);
+    setSelectedLanguage(undefined);
+
     startTransition(() => {
-      router.push("/explore")
-    })
-  }
+      router.push("/explore");
+    });
+  };
 
   /**
    * Handle pagination with limit
    */
   const handlePageChange = (page: number, limit?: number) => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("page", String(page))
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(page));
     if (limit !== undefined) {
-      params.set("limit", String(limit))
+      params.set("limit", String(limit));
     }
-    
+
     startTransition(() => {
-      router.push(`/explore?${params.toString()}`)
-    })
-  }
+      router.push(`/explore?${params.toString()}`);
+    });
+  };
 
   // Check if any filters are active
   const hasActiveFilters = !!(
@@ -195,7 +208,7 @@ export function ExploreClient({
     selectedLanguage ||
     priceRange[0] > 0 ||
     priceRange[1] < 1000
-  )
+  );
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -260,11 +273,13 @@ export function ExploreClient({
                   <Card className="border-primary/10 shadow-md">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-foreground">Filters</h2>
+                        <h2 className="text-lg font-semibold text-foreground">
+                          Filters
+                        </h2>
                         {hasActiveFilters && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={handleClearFilters}
                             className="text-primary hover:text-primary/80"
                           >
@@ -279,7 +294,9 @@ export function ExploreClient({
                         <div className="space-y-4">
                           <Slider
                             value={priceRange}
-                            onValueChange={(value) => setPriceRange(value as [number, number])}
+                            onValueChange={(value) =>
+                              setPriceRange(value as [number, number])
+                            }
                             min={0}
                             max={1000}
                             step={10}
@@ -289,9 +306,9 @@ export function ExploreClient({
                             <span>${priceRange[0]}</span>
                             <span>${priceRange[1]}</span>
                           </div>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
+                          <Button
+                            size="sm"
+                            variant="outline"
                             onClick={handlePriceChange}
                             disabled={isPending}
                             className="w-full"
@@ -305,16 +322,24 @@ export function ExploreClient({
                       <div className="mt-6 space-y-3">
                         <Label>Category</Label>
                         <div className="flex flex-wrap gap-2">
-                          {initialCategories.length > 0 && initialCategories.map((category) => (
-                            <Badge
-                              key={category.category}
-                              variant={selectedCategory === category.category ? "default" : "outline"}
-                              className="cursor-pointer transition-all hover:scale-105"
-                              onClick={() => handleCategoryChange(category.category)}
-                            >
-                              {category.category.charAt(0).toUpperCase() + category.category.slice(1).toLowerCase()}
-                            </Badge>
-                          ))}
+                          {initialCategories.length > 0 &&
+                            initialCategories.map((category) => (
+                              <Badge
+                                key={category.category}
+                                variant={
+                                  selectedCategory === category.category
+                                    ? "default"
+                                    : "outline"
+                                }
+                                className="cursor-pointer transition-all hover:scale-105"
+                                onClick={() =>
+                                  handleCategoryChange(category.category)
+                                }
+                              >
+                                {category.category.charAt(0).toUpperCase() +
+                                  category.category.slice(1).toLowerCase()}
+                              </Badge>
+                            ))}
                         </div>
                       </div>
 
@@ -322,33 +347,37 @@ export function ExploreClient({
                       <div className="mt-6 space-y-3">
                         <Label>Featured Cities</Label>
                         <div className="flex flex-wrap gap-2">
-                          {initialFeaturedCities.length > 0 && initialFeaturedCities.map((city) => (
-                            <Badge 
-                              key={city.city} 
-                              variant={selectedCity === city.city ? "default" : "outline"}
-                              className="cursor-pointer transition-all hover:scale-105"
-                              onClick={() => handleCityChange(city.city)}
-                            >
-                              {city.city}
-                            </Badge>
-                          ))}
+                          {initialFeaturedCities.length > 0 &&
+                            initialFeaturedCities.map((city) => (
+                              <Badge
+                                key={city.city}
+                                variant={
+                                  selectedCity === city.city
+                                    ? "default"
+                                    : "outline"
+                                }
+                                className="cursor-pointer transition-all hover:scale-105"
+                                onClick={() => handleCityChange(city.city)}
+                              >
+                                {city.city}
+                              </Badge>
+                            ))}
                         </div>
                       </div>
 
                       {/* Language */}
                       <div className="mt-6 space-y-3">
                         <Label>Language</Label>
-                        <Select 
-                          value={selectedLanguage || "all"} 
-                          onValueChange={(value) => 
+                        <Select
+                          value={selectedLanguage || "all"}
+                          onValueChange={(value) =>
                             handleLanguageChange(value === "all" ? "" : value)
                           }
-                          
                         >
                           <SelectTrigger className="border-input bg-background w-full">
                             <SelectValue placeholder="All languages" />
                           </SelectTrigger>
-                          <SelectContent >
+                          <SelectContent>
                             <SelectItem value="all">All languages</SelectItem>
                             {LANGUAGES.map((language) => (
                               <SelectItem key={language} value={language}>
@@ -380,7 +409,6 @@ export function ExploreClient({
                     {debouncedSearchTerm && (
                       <Badge variant="secondary" className="gap-2">
                         Search: {debouncedSearchTerm}
-
                         <button
                           type="button"
                           aria-label="Clear search filter"
@@ -390,12 +418,16 @@ export function ExploreClient({
                             setSearchInput("");
                             updateFilters({ searchTerm: undefined });
                           }}
-                        > <X className="h-3 w-3 cursor-pointer" /></button>
+                        >
+                          {" "}
+                          <X className="h-3 w-3 cursor-pointer" />
+                        </button>
                       </Badge>
                     )}
                     {selectedCategory && (
                       <Badge variant="secondary" className="gap-2">
-                        {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1).toLowerCase()}
+                        {selectedCategory.charAt(0).toUpperCase() +
+                          selectedCategory.slice(1).toLowerCase()}
 
                         <button
                           type="button"
@@ -406,7 +438,10 @@ export function ExploreClient({
                             setSelectedCategory(undefined);
                             updateFilters({ category: undefined });
                           }}
-                        > <X className="h-3 w-3 cursor-pointer" /></button>
+                        >
+                          {" "}
+                          <X className="h-3 w-3 cursor-pointer" />
+                        </button>
                       </Badge>
                     )}
                     {selectedCity && (
@@ -454,7 +489,10 @@ export function ExploreClient({
                           tabIndex={0}
                           onClick={() => {
                             setPriceRange([0, 1000]);
-                            updateFilters({ minPrice: undefined, maxPrice: undefined });
+                            updateFilters({
+                              minPrice: undefined,
+                              maxPrice: undefined,
+                            });
                           }}
                         >
                           <X className="h-3 w-3 cursor-pointer" />
@@ -468,7 +506,10 @@ export function ExploreClient({
                 {isPending ? (
                   <div className="mt-6 grid gap-6">
                     {[1, 2, 3].map((i) => (
-                      <div key={i} className="h-64 animate-pulse rounded bg-muted" />
+                      <div
+                        key={i}
+                        className="h-64 animate-pulse rounded bg-muted"
+                      />
                     ))}
                   </div>
                 ) : initialListings.length === 0 ? (
@@ -480,14 +521,11 @@ export function ExploreClient({
                       No tours found
                     </h3>
                     <p className="mt-2 text-center text-muted-foreground">
-                      Try adjusting your filters or search terms to find what you're looking
-                      for.
+                      Try adjusting your filters or search terms to find what
+                      you're looking for.
                     </p>
                     {hasActiveFilters && (
-                      <Button 
-                        onClick={handleClearFilters} 
-                        className="mt-6"
-                      >
+                      <Button onClick={handleClearFilters} className="mt-6">
                         Clear all filters
                       </Button>
                     )}
@@ -505,16 +543,21 @@ export function ExploreClient({
                           <Card className="group cursor-pointer overflow-hidden border-primary/10 transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl">
                             <div className="flex flex-col sm:flex-row">
                               <div className="relative h-64 overflow-hidden sm:h-auto sm:w-80">
-                                <img
-                                  src={listing.images[0] || "/placeholder.svg"}
+                                <Image
+                                  src={listing.images[0]}
                                   alt={listing.title}
-                                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                  fill
+                                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                  unoptimized={listing.images[0]?.startsWith(
+                                    "http"
+                                  )}
                                 />
                                 <Badge className="absolute right-3 top-3 bg-background/90 text-foreground backdrop-blur-sm hover:bg-background/90">
-                                  {listing.category.charAt(0).toUpperCase() + listing.category.slice(1).toLowerCase()}
+                                  {listing.category.charAt(0).toUpperCase() +
+                                    listing.category.slice(1).toLowerCase()}
                                 </Badge>
                                 {!listing.isActive && (
-                                  <Badge 
+                                  <Badge
                                     variant="destructive"
                                     className="absolute left-3 top-3"
                                   >
@@ -530,7 +573,9 @@ export function ExploreClient({
                                         {listing.title}
                                       </h3>
                                       <p className="mt-1 text-sm text-muted-foreground">
-                                        by {listing.guide?.user?.name || "Local Guide"}
+                                        by{" "}
+                                        {listing.guide?.user?.name ||
+                                          "Local Guide"}
                                       </p>
                                     </div>
                                     <div className="text-right">
@@ -545,7 +590,9 @@ export function ExploreClient({
 
                                   <div className="mt-3 flex items-center gap-1 text-sm">
                                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                                    <span className="text-muted-foreground">{listing.city}</span>
+                                    <span className="text-muted-foreground">
+                                      {listing.city}
+                                    </span>
                                   </div>
 
                                   <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
@@ -566,7 +613,12 @@ export function ExploreClient({
                                     )}
                                     <div className="flex items-center gap-1 rounded-full bg-muted px-2 py-1">
                                       <Clock className="h-3.5 w-3.5" />
-                                      <span>{listing.durationDays} {listing.durationDays === 1 ? "day" : "days"}</span>
+                                      <span>
+                                        {listing.durationDays}{" "}
+                                        {listing.durationDays === 1
+                                          ? "day"
+                                          : "days"}
+                                      </span>
                                     </div>
                                     <div className="flex items-center gap-1 rounded-full bg-muted px-2 py-1">
                                       <Users className="h-3.5 w-3.5" />
@@ -597,7 +649,7 @@ export function ExploreClient({
                         <Select
                           value={`${initialMeta.page}`}
                           onValueChange={(value) => {
-                            handlePageChange(Number(value), initialMeta.limit)
+                            handlePageChange(Number(value), initialMeta.limit);
                           }}
                           disabled={isPending}
                         >
@@ -605,21 +657,26 @@ export function ExploreClient({
                             <SelectValue placeholder={initialMeta.page} />
                           </SelectTrigger>
                           <SelectContent side="top">
-                            {Array.from({ length: initialMeta.totalPages }, (_, i) => i + 1).map((pageNum) => (
+                            {Array.from(
+                              { length: initialMeta.totalPages },
+                              (_, i) => i + 1
+                            ).map((pageNum) => (
                               <SelectItem key={pageNum} value={`${pageNum}`}>
                                 {pageNum}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        <span className="text-sm text-muted-foreground">of {initialMeta.totalPages}</span>
+                        <span className="text-sm text-muted-foreground">
+                          of {initialMeta.totalPages}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <p className="text-sm font-medium">Rows per page</p>
                         <Select
                           value={`${initialMeta.limit}`}
                           onValueChange={(value) => {
-                            handlePageChange(1, Number(value)) // Reset to page 1 when limit changes
+                            handlePageChange(1, Number(value)); // Reset to page 1 when limit changes
                           }}
                           disabled={isPending}
                         >
@@ -644,6 +701,5 @@ export function ExploreClient({
         </section>
       </main>
     </div>
-  )
+  );
 }
-
