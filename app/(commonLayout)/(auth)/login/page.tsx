@@ -1,14 +1,14 @@
-import LoginForm from "@/components/auth/login-form"
+import LoginForm from "@/components/auth/login-form";
 
-export const dynamic = "force-dynamic"
+export const dynamic = "force-dynamic";
 
 const LoginPage = async ({
   searchParams,
 }: {
-  searchParams?: Promise<{ redirect?: string }>
+  searchParams?: Promise<{ redirect?: string }>;
 }) => {
-  const params = (await searchParams) || {}
-  const redirectTo = params.redirect
+  const params = (await searchParams) || {};
+  const redirectTo = params.redirect;
 
   // Don't check auth here - let the login form handle redirects after successful login
   // This prevents redirect loops when user is already logged in
@@ -18,7 +18,7 @@ const LoginPage = async ({
         <LoginForm redirect={redirectTo} />
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default LoginPage
+export default LoginPage;

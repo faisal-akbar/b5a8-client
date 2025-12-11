@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SERVICE_FEE } from "@/constants/service-fee";
 import { useAuth } from "@/lib/auth-context";
 import { createBooking } from "@/services/booking/booking.service";
 import {
@@ -274,7 +275,7 @@ export function TourDetailsClient({
 
   // Calculate total price
   const totalPrice = listing.tourFee * Number.parseInt(guests);
-  const serviceFee = Math.round(totalPrice * 0.1);
+  const serviceFee = Math.round(totalPrice * SERVICE_FEE);
   const finalTotal = totalPrice + serviceFee + guideProfile?.dailyRate! || 0;
 
   return (
