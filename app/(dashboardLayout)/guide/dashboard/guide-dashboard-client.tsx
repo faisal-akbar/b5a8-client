@@ -93,9 +93,19 @@ export function GuideDashboardClient({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Get active tab from URL or initialData
-  const activeTab =
+  // Get initial tab from URL or initialData
+  const initialTab =
     searchParams.get("tab") || initialData.activeTab || "upcoming";
+
+  // Use local state for active tab to update immediately on click
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Sync local state with URL params when they change (e.g., browser back/forward)
+  useEffect(() => {
+    const urlTab =
+      searchParams.get("tab") || initialData.activeTab || "upcoming";
+    setActiveTab(urlTab);
+  }, [searchParams, initialData.activeTab]);
 
   // Get pagination from URL or initialData
   const currentPage = parseInt(
@@ -126,8 +136,8 @@ export function GuideDashboardClient({
       params.set("page", page.toString());
       params.set("limit", limit.toString());
       const url = `/guide/dashboard?${params.toString()}`;
-      // Update URL and refresh server component
-      router.push(url);
+      // Update URL without adding to history and refresh server component
+      router.replace(url, { scroll: false });
       // Force server component to re-fetch with new params
       router.refresh();
     },
@@ -145,6 +155,8 @@ export function GuideDashboardClient({
   // Update tab (resets to page 1)
   const updateTab = useCallback(
     (tab: string) => {
+      // Update local state immediately for instant UI feedback
+      setActiveTab(tab);
       const defaultLimit = tab === "reviews" ? 5 : 10;
       updateTabAndPagination(tab, 1, defaultLimit);
     },

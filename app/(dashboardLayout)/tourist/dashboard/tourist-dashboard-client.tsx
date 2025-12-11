@@ -156,8 +156,17 @@ export function TouristDashboardClient({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Get active tab from URL or initialData
-  const activeTab = searchParams.get("tab") || initialActiveTab || "upcoming";
+  // Get initial tab from URL or initialData
+  const initialTab = searchParams.get("tab") || initialActiveTab || "upcoming";
+
+  // Use local state for active tab to update immediately on click
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Sync local state with URL params when they change (e.g., browser back/forward)
+  useEffect(() => {
+    const urlTab = searchParams.get("tab") || initialActiveTab || "upcoming";
+    setActiveTab(urlTab);
+  }, [searchParams, initialActiveTab]);
 
   // Get pagination from URL or initialData
   const currentPage = parseInt(
@@ -186,8 +195,8 @@ export function TouristDashboardClient({
       params.set("page", page.toString());
       params.set("limit", limit.toString());
       const url = `/tourist/dashboard?${params.toString()}`;
-      // Update URL and refresh server component
-      router.push(url);
+      // Update URL without adding to history and refresh server component
+      router.replace(url, { scroll: false });
       // Force server component to re-fetch with new params
       router.refresh();
     },
@@ -205,6 +214,8 @@ export function TouristDashboardClient({
   // Update tab (resets to page 1)
   const updateTab = useCallback(
     (tab: string) => {
+      // Update local state immediately for instant UI feedback
+      setActiveTab(tab);
       const defaultLimit = tab === "reviews" ? 5 : 10;
       updateTabAndPagination(tab, 1, defaultLimit);
     },
