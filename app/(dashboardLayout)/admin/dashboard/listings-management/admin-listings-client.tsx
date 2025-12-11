@@ -67,8 +67,11 @@ interface AdminListingsClientProps {
     statusFilter: string;
     categoryFilter: string;
     distinctCategories: {
-      category: string;
-    }[];
+      success: boolean;
+      data: {
+        category: string;
+      }[];
+    };
   };
 }
 
