@@ -124,6 +124,7 @@ type Booking = {
   paymentStatus: string;
   paymentAmount?: number;
   paymentProvider?: string;
+  stripePaymentIntentId?: string | null;
   rating?: number;
   reviewed?: boolean;
   meetingPoint?: string;
