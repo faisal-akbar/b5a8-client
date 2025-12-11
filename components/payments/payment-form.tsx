@@ -126,7 +126,7 @@ export default function PaymentForm({
                 business: {
                   name: "Local Guide Platform",
                 },
-              }}
+              } as any}
             />
           </div>
 
