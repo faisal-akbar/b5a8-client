@@ -187,6 +187,7 @@ function transformBooking(apiBooking: ApiBooking): Booking {
         ? apiBooking.payment.amount
         : undefined,
       paymentProvider: apiBooking.payment?.provider || undefined,
+      stripePaymentIntentId: apiBooking.payment?.stripePaymentIntentId || null,
       rating: apiBooking.review?.rating,
       reviewed: !!apiBooking.review,
       meetingPoint: apiBooking.listing?.meetingPoint,

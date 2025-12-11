@@ -29,6 +29,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { motion } from "framer-motion";
 import {
   CalendarDays,
+  CreditCard,
   Eye,
   Heart,
   Loader2,
@@ -63,6 +64,7 @@ type Booking = {
   paymentStatus: string;
   paymentAmount?: number;
   paymentProvider?: string;
+  stripePaymentIntentId?: string | null;
   rating?: number;
   reviewed?: boolean;
   meetingPoint?: string;
@@ -266,6 +268,8 @@ export function TouristDashboardClient({
             ? result.data.payment.amount
             : undefined,
           paymentProvider: result.data.payment?.provider || undefined,
+          stripePaymentIntentId:
+            result.data.payment?.stripePaymentIntentId || null,
           rating: booking.rating,
           reviewed: booking.reviewed,
           meetingPoint: result.data.listing?.meetingPoint || "N/A",
@@ -439,6 +443,7 @@ export function TouristDashboardClient({
         );
       },
     },
+
     {
       accessorKey: "status",
       header: "Booking Status",
@@ -449,6 +454,30 @@ export function TouristDashboardClient({
             {status}
           </Badge>
         );
+      },
+    },
+    {
+      id: "payNow",
+      header: "Payment",
+      cell: ({ row }) => {
+        const booking = row.original;
+        const isConfirmed = booking.status === "confirmed";
+        const isUnpaid =
+          booking.paymentStatus?.toUpperCase() === "UNPAID" ||
+          !booking.paymentStatus;
+
+        if (isConfirmed && isUnpaid) {
+          return (
+            <Link href={`/payment/${booking.id}`}>
+              <Button size="sm" className="h-7">
+                <CreditCard className="mr-1 h-3 w-3" />
+                Pay Now
+              </Button>
+            </Link>
+          );
+        }
+
+        return <span className="text-sm text-muted-foreground">—</span>;
       },
     },
     {
@@ -1341,6 +1370,7 @@ export function TouristDashboardClient({
                 createdAt: selectedBooking.createdAt,
                 confirmationNumber: selectedBooking.id.slice(0, 8),
                 paymentStatus: selectedBooking.paymentStatus,
+                stripePaymentIntentId: selectedBooking.stripePaymentIntentId,
               }
             : undefined
         }

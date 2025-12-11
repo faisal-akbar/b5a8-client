@@ -48,6 +48,7 @@ interface BookingDetailsModalProps {
     guidePhone?: string;
     confirmationNumber?: string;
     paymentStatus?: string; // Payment status (UNPAID, PAID, etc.)
+    stripePaymentIntentId?: string | null; // Stripe payment intent ID
   };
   onSuccess?: () => void;
   userRole?: "TOURIST" | "GUIDE" | "ADMIN"; // User role to determine which actions to show
@@ -239,6 +240,24 @@ export function BookingDetailsModal({
                   ${booking.price + Math.round(booking.price * SERVICE_FEE)}
                 </span>
               </div>
+              {booking.paymentStatus?.toUpperCase() === "PAID" && (
+                <div className="flex items-center gap-2 pt-2">
+                  <Badge variant="default" className="text-xs">
+                    {booking.paymentStatus}
+                  </Badge>
+                </div>
+              )}
+              {booking.paymentStatus?.toUpperCase() === "PAID" &&
+                booking.stripePaymentIntentId && (
+                  <div className="pt-1">
+                    <div className="text-xs text-muted-foreground mb-1">
+                      Payment Intent ID
+                    </div>
+                    <div className="text-xs font-mono text-foreground bg-muted px-2 py-1 rounded break-all">
+                      {booking.stripePaymentIntentId}
+                    </div>
+                  </div>
+                )}
             </div>
 
             {showPayButton && (
