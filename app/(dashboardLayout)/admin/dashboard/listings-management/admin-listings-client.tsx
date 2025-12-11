@@ -67,9 +67,7 @@ interface AdminListingsClientProps {
     statusFilter: string;
     categoryFilter: string;
     distinctCategories: {
-      statusCode: number;
       success: boolean;
-      message: string;
       data: {
         category: string;
         listingsCount: number;
