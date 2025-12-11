@@ -1,175 +1,186 @@
 // Guide-specific type definitions based on API responses
 
-import type { BookingStatus, Category } from "./profile"
+import type { BookingStatus, Category } from "./profile";
 
 // Guide Listing (from API response)
 export interface GuideListing {
-  id: string
-  title: string
-  description: string
-  itinerary: string
-  tourFee: number
-  durationDays: number
-  meetingPoint: string
-  maxGroupSize: number
-  city: string
-  category: Category
-  images: string[]
-  isActive: boolean
-  guideId: string
-  createdAt: string
-  updatedAt: string
+  id: string;
+  title: string;
+  description: string;
+  itinerary: string;
+  tourFee: number;
+  durationDays: number;
+  meetingPoint: string;
+  maxGroupSize: number;
+  city: string;
+  category: Category;
+  images: string[];
+  isActive: boolean;
+  guideId: string;
+  createdAt: string;
+  updatedAt: string;
   guide?: {
-    id: string
-    expertise: string[]
-    dailyRate: number
-    stripeAccountId: string | null
+    id: string;
+    expertise: string[];
+    dailyRate: number;
+    stripeAccountId: string | null;
     user: {
-      id: string
-      name: string
-      profilePic: string | null
-      bio: string | null
-      languages: string[]
-      isVerified: boolean
-    }
-  }
+      id: string;
+      name: string;
+      profilePic: string | null;
+      bio: string | null;
+      languages: string[];
+      isVerified: boolean;
+    };
+  };
   availabilities?: [
     {
-      id: string
-      startDateTime: string
-      endDateTime: string
+      id: string;
+      startDateTime: string;
+      endDateTime: string;
       _count: {
-        bookings: number
-      }
+        bookings: number;
+      };
     }
-  ]
+  ];
   _count: {
-    bookings: number
-    reviews: number
-  }
-  averageRating: number | null
+    bookings: number;
+    reviews: number;
+  };
+  averageRating: number | null;
   // Optional fields for backward compatibility with transformed data
-  bookingsCount?: number
-  reviewsCount?: number
-  
+  bookingsCount?: number;
+  reviewsCount?: number;
 }
 
 // Guide Booking (from API response)
 export interface GuideBooking {
-  id: string
-  date: string
-  status: BookingStatus
-  numberOfGuests: number
+  id: string;
+  date: string;
+  status: BookingStatus;
+  numberOfGuests: number;
   listing: {
-    id: string
-    title: string
-    city: string
-    category: Category
-    tourFee: number
-    images: string[]
-    meetingPoint: string
-    maxGroupSize: number
-    durationDays?: number
-  }
+    id: string;
+    title: string;
+    city: string;
+    category: Category;
+    tourFee: number;
+    images: string[];
+    meetingPoint: string;
+    maxGroupSize: number;
+    durationDays?: number;
+  };
   tourist: {
-    id: string
+    id: string;
     user: {
-      id: string
-      name: string
-      email: string
-      profilePic?: string | null
-    }
-  }
-  createdAt: string
-  updatedAt: string
+      id: string;
+      name: string;
+      email: string;
+      profilePic?: string | null;
+    };
+  };
+  payment?: {
+    id?: string;
+    status?: string;
+    amount?: number;
+    provider?: string;
+    stripePaymentIntentId?: string | null;
+    paymentIntentId?: string | null;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Guide Availability (from API response)
 export interface GuideAvailability {
-  id: string
-  listingId: string
-  startDateTime: string
-  endDateTime: string
-  isAvailable: boolean
+  id: string;
+  listingId: string;
+  startDateTime: string;
+  endDateTime: string;
+  isAvailable: boolean;
   listing?: {
-    id: string
-    title: string
-  }
-  createdAt: string
-  updatedAt: string
+    id: string;
+    title: string;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Guide Payment (from API response)
 export interface GuidePayment {
-  id: string
-  amount: number
-  status: "PENDING" | "COMPLETED" | "RELEASED" | "REFUNDED"
-  paymentIntentId?: string | null
+  id: string;
+  amount: number;
+  status: "PENDING" | "COMPLETED" | "RELEASED" | "REFUNDED";
+  paymentIntentId?: string | null;
   booking: {
-    id: string
-    date: string
-    status?: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED"
+    id: string;
+    date: string;
+    status?: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED";
     listing: {
-      id: string
-      title: string
-    }
+      id: string;
+      title: string;
+    };
     tourist: {
       user: {
-        name: string
-        email: string
-      }
-    }
-  }
-  createdAt: string
-  updatedAt: string
-  releasedAt?: string | null
+        name: string;
+        email: string;
+      };
+    };
+  };
+  createdAt: string;
+  updatedAt: string;
+  releasedAt?: string | null;
 }
 
 // Guide Review (from API response)
 export interface GuideReview {
-  id: string
-  rating: number
-  comment?: string | null
+  id: string;
+  rating: number;
+  comment?: string | null;
   listing: {
-    id: string
-    title: string
-  }
+    id: string;
+    title: string;
+  };
   tourist: {
     user: {
-      name: string
-      profilePic?: string | null
-    }
-  }
-  createdAt: string
+      name: string;
+      profilePic?: string | null;
+    };
+  };
+  createdAt: string;
 }
 
 // Guide Badge (from API response)
 export interface GuideBadge {
-  id: string
-  badge: "SUPER_GUIDE" | "NEWCOMER" | "FOODIE_EXPERT" | "HIGHLY_RATED" | "POPULAR"
-  createdAt: string
+  id: string;
+  badge:
+    | "SUPER_GUIDE"
+    | "NEWCOMER"
+    | "FOODIE_EXPERT"
+    | "HIGHLY_RATED"
+    | "POPULAR";
+  createdAt: string;
 }
 
 // Guide Stats (computed from API data)
 export interface GuideStats {
-  totalEarnings: number
-  thisMonthEarnings: number
-  upcomingTours: number
-  totalReviews: number
-  averageRating: number
-  totalTours: number
-  activeTours: number
-  totalCompletedBookings: number
+  totalEarnings: number;
+  thisMonthEarnings: number;
+  upcomingTours: number;
+  totalReviews: number;
+  averageRating: number;
+  totalTours: number;
+  activeTours: number;
+  totalCompletedBookings: number;
 }
 
 // Paginated response wrapper
 export interface PaginatedResponse<T> {
-  data: T[]
+  data: T[];
   meta: {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
-  }
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
-
