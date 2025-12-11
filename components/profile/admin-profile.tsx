@@ -6,14 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminProfile as AdminProfileType } from "@/types/profile";
 import { motion } from "framer-motion";
-import {
-  Activity,
-  MapPin,
-  Settings,
-  Shield,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import { MapPin, Shield, TrendingUp, Users } from "lucide-react";
 import Link from "next/link";
 
 interface AdminProfileProps {
@@ -37,20 +30,6 @@ export function AdminProfile({ profile, stats }: AdminProfileProps) {
     totalTours: stats?.totalTours ?? 0,
     pendingVerifications: stats?.pendingVerifications ?? 0,
   };
-
-  const recentActivity = [
-    {
-      action: "Approved guide verification",
-      user: "Elena Garcia",
-      time: "2 hours ago",
-    },
-    { action: "Suspended user account", user: "John Doe", time: "5 hours ago" },
-    {
-      action: "Reviewed tour listing",
-      tour: "Paris Walking Tour",
-      time: "1 day ago",
-    },
-  ];
 
   return (
     <div className="space-y-8">
@@ -157,83 +136,6 @@ export function AdminProfile({ profile, stats }: AdminProfileProps) {
                   View Analytics
                 </Button>
               </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Recent Activity */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.5 }}
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              Recent Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivity.map((activity, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-4 border-b border-slate-100 pb-4 last:border-0 last:pb-0"
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                    <Settings className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">
-                      {activity.action}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {activity.user || activity.tour} • {activity.time}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Account Settings */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.6 }}
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Settings</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-foreground">
-                  Email Notifications
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Receive updates about platform activity
-                </p>
-              </div>
-              <Button variant="outline" size="sm">
-                Configure
-              </Button>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-foreground">Security Settings</p>
-                <p className="text-sm text-muted-foreground">
-                  Manage password and 2FA
-                </p>
-              </div>
-              <Button variant="outline" size="sm">
-                Manage
-              </Button>
             </div>
           </CardContent>
         </Card>
