@@ -36,7 +36,7 @@ async function AdminListingsData({ searchParams }: PageProps) {
   // Fetch listing stats from listing stats API
   const listingStatsResult = await getListingStats();
 
-  const distinctCategories = await getDistinctCategories();
+  const distinctCategoriesResult = await getDistinctCategories();
 
   // Extract listing stats
   let stats = {
@@ -49,6 +49,16 @@ async function AdminListingsData({ searchParams }: PageProps) {
     stats.total = listingStatsResult.data.totalListings || 0;
     stats.active = listingStatsResult.data.activeListings || 0;
     stats.inactive = listingStatsResult.data.inactiveListings || 0;
+  }
+
+  // Extract distinct categories
+  let distinctCategories: {
+    category: string;
+    listingsCount: number;
+  }[] = [];
+
+  if (distinctCategoriesResult.success && distinctCategoriesResult.data) {
+    distinctCategories = distinctCategoriesResult.data || [];
   }
 
   // Fetch paginated listings for the table with proper filters

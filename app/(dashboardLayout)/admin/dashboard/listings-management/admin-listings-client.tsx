@@ -67,12 +67,9 @@ interface AdminListingsClientProps {
     statusFilter: string;
     categoryFilter: string;
     distinctCategories: {
-      success: boolean;
-      data: {
-        category: string;
-        listingsCount: number;
-      }[];
-    };
+      category: string;
+      listingsCount: number;
+    }[];
   };
 }
 
@@ -423,14 +420,12 @@ export function AdminListingsClient({ initialData }: AdminListingsClientProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    {distinctCategories.data.map(
-                      (item: { category: string }) => (
-                        <SelectItem key={item.category} value={item.category}>
-                          {item.category.charAt(0).toUpperCase() +
-                            item.category.slice(1).toLowerCase()}
-                        </SelectItem>
-                      )
-                    )}
+                    {distinctCategories.map((item: { category: string }) => (
+                      <SelectItem key={item.category} value={item.category}>
+                        {item.category.charAt(0).toUpperCase() +
+                          item.category.slice(1).toLowerCase()}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
