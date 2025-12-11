@@ -1,17 +1,12 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useCallback } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Footer } from "@/components/layout/footer"
-import { StatCard } from "@/components/dashboard/stat-card"
-import { DataTable } from "@/components/dashboard/data-table"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CalendarDays, MapPin, Heart, Star, MessageCircle, MoreHorizontal, Eye, Loader2, Trash2, Users } from "lucide-react"
-import type { ColumnDef } from "@tanstack/react-table"
+import { DataTable } from "@/components/dashboard/data-table";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { BookingDetailsModal } from "@/components/modals/booking-details-modal";
+import { ReviewModal } from "@/components/modals/review-modal";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,99 +14,120 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { motion } from "framer-motion"
-import Link from "next/link"
-import { removeFromWishlist } from "@/services/wishlist/wishlist.service"
-import { BookingDetailsModal } from "@/components/modals/booking-details-modal"
-import { ReviewModal } from "@/components/modals/review-modal"
-import { getBookingById } from "@/services/booking/booking.service"
-import { toast } from "sonner"
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getBookingById } from "@/services/booking/booking.service";
+import { removeFromWishlist } from "@/services/wishlist/wishlist.service";
+import type { ColumnDef } from "@tanstack/react-table";
+import { motion } from "framer-motion";
+import {
+  CalendarDays,
+  Eye,
+  Heart,
+  Loader2,
+  MapPin,
+  MessageCircle,
+  MoreHorizontal,
+  Star,
+  Trash2,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 // Types
 type Booking = {
-  id: string
-  tourTitle: string
-  tourImage: string
-  guide: string
-  guideImage: string | null
-  guideId?: string
-  listingId?: string
-  location: string
-  city: string
-  date: string
-  guests: number
-  price: number
-  status: "confirmed" | "pending" | "completed" | "cancelled"
-  createdAt: string
-  paymentStatus: string
-  paymentAmount?: number
-  paymentProvider?: string
-  rating?: number
-  reviewed?: boolean
-  meetingPoint?: string
-  category?: string
-  durationDays?: number
-  guideEmail?: string
-  totalPrice?: number
-}
+  id: string;
+  tourTitle: string;
+  tourImage: string;
+  guide: string;
+  guideImage: string | null;
+  guideId?: string;
+  listingId?: string;
+  location: string;
+  city: string;
+  date: string;
+  guests: number;
+  price: number;
+  status: "confirmed" | "pending" | "completed" | "cancelled";
+  createdAt: string;
+  paymentStatus: string;
+  paymentAmount?: number;
+  paymentProvider?: string;
+  rating?: number;
+  reviewed?: boolean;
+  meetingPoint?: string;
+  category?: string;
+  durationDays?: number;
+  guideEmail?: string;
+  totalPrice?: number;
+};
 
 type WishlistTableItem = {
-  id: string
-  tourTitle: string
-  tourImage: string
-  guide: string
-  location: string
-  category: string
-  price: number
-  durationDays: number
-  bookingsCount: number
-  reviewsCount: number
-  listingId: string
-}
+  id: string;
+  tourTitle: string;
+  tourImage: string;
+  guide: string;
+  location: string;
+  category: string;
+  price: number;
+  durationDays: number;
+  bookingsCount: number;
+  reviewsCount: number;
+  listingId: string;
+};
 
 type TouristReview = {
-  id: string
-  rating: number
-  comment: string
-  createdAt: string
+  id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
   listing: {
-    title: string
-  } | null
+    title: string;
+  } | null;
   guide: {
     user: {
-      name: string
-    }
-  } | null
-}
+      name: string;
+    };
+  } | null;
+};
 
 type Stats = {
-  upcomingTrips: number
-  completedTrips: number
-  wishlist: number
-  totalSpent: number
-}
+  upcomingTrips: number;
+  completedTrips: number;
+  wishlist: number;
+  totalSpent: number;
+};
 
 interface TouristDashboardClientProps {
-  upcomingBookings: Booking[]
-  upcomingBookingsTotal: number
-  upcomingBookingsTotalPages: number
-  pendingBookings: Booking[]
-  pendingBookingsTotal: number
-  pendingBookingsTotalPages: number
-  pastBookings: Booking[]
-  pastBookingsTotal: number
-  pastBookingsTotalPages: number
-  wishlistItems: WishlistTableItem[]
-  wishlistTotal: number
-  wishlistTotalPages: number
-  reviews: TouristReview[]
-  reviewsTotal: number
-  reviewsTotalPages: number
-  stats: Stats
-  activeTab: string
-  currentPage: number
-  currentLimit: number
+  upcomingBookings: Booking[];
+  upcomingBookingsTotal: number;
+  upcomingBookingsTotalPages: number;
+  pendingBookings: Booking[];
+  pendingBookingsTotal: number;
+  pendingBookingsTotalPages: number;
+  pastBookings: Booking[];
+  pastBookingsTotal: number;
+  pastBookingsTotalPages: number;
+  wishlistItems: WishlistTableItem[];
+  wishlistTotal: number;
+  wishlistTotalPages: number;
+  reviews: TouristReview[];
+  reviewsTotal: number;
+  reviewsTotalPages: number;
+  stats: Stats;
+  activeTab: string;
+  currentPage: number;
+  currentLimit: number;
 }
 
 export function TouristDashboardClient({
@@ -135,76 +151,95 @@ export function TouristDashboardClient({
   currentPage: initialCurrentPage,
   currentLimit: initialCurrentLimit,
 }: TouristDashboardClientProps) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Get active tab from URL or initialData
-  const activeTab = searchParams.get("tab") || initialActiveTab || "upcoming"
+  const activeTab = searchParams.get("tab") || initialActiveTab || "upcoming";
 
   // Get pagination from URL or initialData
-  const currentPage = parseInt(searchParams.get("page") || initialCurrentPage.toString(), 10)
-  const currentLimit = parseInt(searchParams.get("limit") || initialCurrentLimit.toString(), 10)
+  const currentPage = parseInt(
+    searchParams.get("page") || initialCurrentPage.toString(),
+    10
+  );
+  const currentLimit = parseInt(
+    searchParams.get("limit") || initialCurrentLimit.toString(),
+    10
+  );
 
-  const [removingWishlistId, setRemovingWishlistId] = useState<string | null>(null)
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
-  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
-  const [bookingToReview, setBookingToReview] = useState<Booking | null>(null)
-  const [reviewMode, setReviewMode] = useState<"create" | "edit">("create")
+  const [removingWishlistId, setRemovingWishlistId] = useState<string | null>(
+    null
+  );
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [bookingToReview, setBookingToReview] = useState<Booking | null>(null);
+  const [reviewMode, setReviewMode] = useState<"create" | "edit">("create");
 
   // Update URL with tab and pagination params
-  const updateTabAndPagination = useCallback((tab: string, page: number, limit: number) => {
-    const params = new URLSearchParams()
-    params.set("tab", tab)
-    params.set("page", page.toString())
-    params.set("limit", limit.toString())
-    const url = `/tourist/dashboard?${params.toString()}`
-    // Update URL and refresh server component
-    router.push(url)
-    // Force server component to re-fetch with new params
-    router.refresh()
-  }, [router])
+  const updateTabAndPagination = useCallback(
+    (tab: string, page: number, limit: number) => {
+      const params = new URLSearchParams();
+      params.set("tab", tab);
+      params.set("page", page.toString());
+      params.set("limit", limit.toString());
+      const url = `/tourist/dashboard?${params.toString()}`;
+      // Update URL and refresh server component
+      router.push(url);
+      // Force server component to re-fetch with new params
+      router.refresh();
+    },
+    [router]
+  );
 
   // Update pagination for current tab
-  const updatePagination = useCallback((page: number, limit: number) => {
-    updateTabAndPagination(activeTab, page, limit)
-  }, [activeTab, updateTabAndPagination])
+  const updatePagination = useCallback(
+    (page: number, limit: number) => {
+      updateTabAndPagination(activeTab, page, limit);
+    },
+    [activeTab, updateTabAndPagination]
+  );
 
   // Update tab (resets to page 1)
-  const updateTab = useCallback((tab: string) => {
-    const defaultLimit = tab === "reviews" ? 5 : 10
-    updateTabAndPagination(tab, 1, defaultLimit)
-  }, [updateTabAndPagination])
+  const updateTab = useCallback(
+    (tab: string) => {
+      const defaultLimit = tab === "reviews" ? 5 : 10;
+      updateTabAndPagination(tab, 1, defaultLimit);
+    },
+    [updateTabAndPagination]
+  );
 
   // Refresh data when refresh query param is present
   useEffect(() => {
-    const refresh = searchParams.get("refresh")
+    const refresh = searchParams.get("refresh");
     if (refresh) {
       // Clean up the URL and trigger server re-fetch
-      const params = new URLSearchParams(searchParams.toString())
-      params.delete("refresh")
-      router.replace(`/tourist/dashboard?${params.toString()}`, { scroll: false })
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("refresh");
+      router.replace(`/tourist/dashboard?${params.toString()}`, {
+        scroll: false,
+      });
     }
-  }, [searchParams, router])
+  }, [searchParams, router]);
 
   // Handle removing item from wishlist
   const handleRemoveFromWishlist = async (listingId: string) => {
-    setRemovingWishlistId(listingId)
-    const result = await removeFromWishlist(listingId)
+    setRemovingWishlistId(listingId);
+    const result = await removeFromWishlist(listingId);
     if (result.success) {
-      toast.success("Removed from wishlist")
+      toast.success("Removed from wishlist");
       // Refresh the page to get updated data from server
-      router.refresh()
+      router.refresh();
     } else {
-      toast.error("Failed to remove from wishlist")
+      toast.error("Failed to remove from wishlist");
     }
-    setRemovingWishlistId(null)
-  }
+    setRemovingWishlistId(null);
+  };
 
   // Handle viewing booking details
   const handleViewBookingDetails = async (booking: Booking) => {
     try {
-      const result = await getBookingById(booking.id)
+      const result = await getBookingById(booking.id);
       if (result.success && result.data) {
         // Transform the API data to match the Booking type with full details
         const transformedBooking: Booking = {
@@ -220,10 +255,16 @@ export function TouristDashboardClient({
           date: result.data.date,
           guests: result.data.numberOfGuests || 0,
           price: result.data.listing?.tourFee || 0,
-          status: result.data.status.toLowerCase() as "confirmed" | "pending" | "completed" | "cancelled",
+          status: result.data.status.toLowerCase() as
+            | "confirmed"
+            | "pending"
+            | "completed"
+            | "cancelled",
           createdAt: result.data.createdAt,
           paymentStatus: result.data.payment?.status || "UNPAID",
-          paymentAmount: result.data.payment?.amount ? result.data.payment.amount : undefined,
+          paymentAmount: result.data.payment?.amount
+            ? result.data.payment.amount
+            : undefined,
           paymentProvider: result.data.payment?.provider || undefined,
           rating: booking.rating,
           reviewed: booking.reviewed,
@@ -231,31 +272,33 @@ export function TouristDashboardClient({
           category: result.data.listing?.category || undefined,
           durationDays: result.data.listing?.durationDays || undefined,
           guideEmail: result.data.guide?.user?.email || undefined,
-          totalPrice: result.data.payment?.amount ? result.data.payment.amount : result.data.listing?.tourFee || 0,
-        }
-        setSelectedBooking(transformedBooking)
-        setIsDetailsModalOpen(true)
+          totalPrice: result.data.payment?.amount
+            ? result.data.payment.amount
+            : result.data.listing?.tourFee || 0,
+        };
+        setSelectedBooking(transformedBooking);
+        setIsDetailsModalOpen(true);
       } else {
-        toast.error("Failed to load booking details")
+        toast.error("Failed to load booking details");
       }
     } catch (error) {
-      toast.error("Failed to load booking details")
+      toast.error("Failed to load booking details");
     }
-  }
+  };
 
   // Handle opening write review modal
   const handleWriteReview = (booking: Booking) => {
-    setBookingToReview(booking)
-    setReviewMode("create")
-    setIsReviewModalOpen(true)
-  }
+    setBookingToReview(booking);
+    setReviewMode("create");
+    setIsReviewModalOpen(true);
+  };
 
   // Handle opening view/edit review modal
   const handleViewReview = (booking: Booking) => {
-    setBookingToReview(booking)
-    setReviewMode("edit")
-    setIsReviewModalOpen(true)
-  }
+    setBookingToReview(booking);
+    setReviewMode("edit");
+    setIsReviewModalOpen(true);
+  };
 
   const upcomingColumns: ColumnDef<Booking>[] = [
     {
@@ -284,7 +327,7 @@ export function TouristDashboardClient({
               </div>
             </div>
           </div>
-        )
+        );
       },
     },
     {
@@ -308,7 +351,7 @@ export function TouristDashboardClient({
             )}
             <span>{row.getValue("guide")}</span>
           </div>
-        )
+        );
       },
     },
     {
@@ -319,7 +362,7 @@ export function TouristDashboardClient({
           year: "numeric",
           month: "short",
           day: "numeric",
-        })
+        });
       },
     },
     {
@@ -331,73 +374,87 @@ export function TouristDashboardClient({
             <Users className="h-3 w-3 text-muted-foreground" />
             {row.getValue("guests")}
           </div>
-        )
+        );
       },
     },
     {
       accessorKey: "price",
       header: "Tour Fee",
       cell: ({ row }) => {
-        const amount = Number.parseFloat(row.getValue("price"))
+        const amount = Number.parseFloat(row.getValue("price"));
         const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
-        }).format(amount)
-        return <div className="font-medium">{formatted}</div>
+        }).format(amount);
+        return <div className="font-medium">{formatted}</div>;
       },
     },
     {
       accessorKey: "paymentAmount",
       header: "Total Amount",
       cell: ({ row }) => {
-        const amount = row.original.paymentAmount || row.original.price
+        const amount = row.original.paymentAmount || row.original.price;
         const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
-        }).format(amount)
-        return <div className="font-medium">{formatted}</div>
+        }).format(amount);
+        return <div className="font-medium">{formatted}</div>;
       },
     },
     {
       accessorKey: "paymentProvider",
       header: "Payment Method",
       cell: ({ row }) => {
-        const provider = row.original.paymentProvider
-        if (!provider) return <span className="text-muted-foreground text-sm">N/A</span>
+        const provider = row.original.paymentProvider;
+        if (!provider)
+          return <span className="text-muted-foreground text-sm">N/A</span>;
 
-        const displayName = {
-          stripe: "Stripe",
-          bank_transfer: "Bank Transfer",
-          paypal: "PayPal",
-        }[provider] || provider
+        const displayName =
+          {
+            stripe: "Stripe",
+            bank_transfer: "Bank Transfer",
+            paypal: "PayPal",
+          }[provider] || provider;
 
-        return <span className="text-sm">{displayName}</span>
+        return <span className="text-sm">{displayName}</span>;
       },
     },
     {
       accessorKey: "paymentStatus",
       header: "Payment Status",
       cell: ({ row }) => {
-        const status = row.getValue("paymentStatus") as string
+        const status = row.getValue("paymentStatus") as string;
         return (
-          <Badge variant={status === "PAID" ? "default" : status === "UNPAID" ? "secondary" : "outline"}>
+          <Badge
+            variant={
+              status === "PAID"
+                ? "default"
+                : status === "UNPAID"
+                ? "secondary"
+                : "outline"
+            }
+          >
             {status}
           </Badge>
-        )
+        );
       },
     },
     {
       accessorKey: "status",
       header: "Booking Status",
       cell: ({ row }) => {
-        const status = row.getValue("status") as string
-        return <Badge variant={status === "confirmed" ? "default" : "secondary"}>{status}</Badge>
+        const status = row.getValue("status") as string;
+        return (
+          <Badge variant={status === "confirmed" ? "default" : "secondary"}>
+            {status}
+          </Badge>
+        );
       },
     },
     {
       id: "actions",
       cell: ({ row }) => {
-        const booking = row.original
+        const booking = row.original;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -408,17 +465,18 @@ export function TouristDashboardClient({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => handleViewBookingDetails(booking)}>
+              <DropdownMenuItem
+                onClick={() => handleViewBookingDetails(booking)}
+              >
                 <Eye className="mr-2 h-4 w-4" />
                 View details
               </DropdownMenuItem>
-
             </DropdownMenuContent>
           </DropdownMenu>
-        )
+        );
       },
     },
-  ]
+  ];
 
   const pastColumns: ColumnDef<Booking>[] = [
     {
@@ -447,7 +505,7 @@ export function TouristDashboardClient({
               </div>
             </div>
           </div>
-        )
+        );
       },
     },
     {
@@ -471,7 +529,7 @@ export function TouristDashboardClient({
             )}
             <span>{row.getValue("guide")}</span>
           </div>
-        )
+        );
       },
     },
     {
@@ -482,7 +540,7 @@ export function TouristDashboardClient({
           year: "numeric",
           month: "short",
           day: "numeric",
-        })
+        });
       },
     },
     {
@@ -494,43 +552,45 @@ export function TouristDashboardClient({
             <Users className="h-3 w-3 text-muted-foreground" />
             {row.getValue("guests")}
           </div>
-        )
+        );
       },
     },
     {
       accessorKey: "price",
       header: "Amount Paid",
       cell: ({ row }) => {
-        const amount = row.original.paymentAmount || row.original.price
+        const amount = row.original.paymentAmount || row.original.price;
         const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
-        }).format(amount)
-        return <div className="font-medium">{formatted}</div>
+        }).format(amount);
+        return <div className="font-medium">{formatted}</div>;
       },
     },
     {
       accessorKey: "paymentProvider",
       header: "Payment Method",
       cell: ({ row }) => {
-        const provider = row.original.paymentProvider
-        if (!provider) return <span className="text-muted-foreground text-sm">N/A</span>
+        const provider = row.original.paymentProvider;
+        if (!provider)
+          return <span className="text-muted-foreground text-sm">N/A</span>;
 
-        const displayName = {
-          stripe: "Stripe",
-          bank_transfer: "Bank Transfer",
-          paypal: "PayPal",
-        }[provider] || provider
+        const displayName =
+          {
+            stripe: "Stripe",
+            bank_transfer: "Bank Transfer",
+            paypal: "PayPal",
+          }[provider] || provider;
 
-        return <span className="text-sm">{displayName}</span>
+        return <span className="text-sm">{displayName}</span>;
       },
     },
     {
       accessorKey: "rating",
       header: "Review Status",
       cell: ({ row }) => {
-        const rating = row.original.rating
-        const reviewed = row.original.reviewed
+        const rating = row.original.rating;
+        const reviewed = row.original.reviewed;
 
         if (rating || reviewed) {
           return (
@@ -540,10 +600,12 @@ export function TouristDashboardClient({
                 Rated
               </Badge>
               {rating && (
-                <span className="font-semibold text-primary">{rating.toFixed(1)}</span>
+                <span className="font-semibold text-primary">
+                  {rating.toFixed(1)}
+                </span>
               )}
             </div>
-          )
+          );
         }
 
         return (
@@ -551,14 +613,14 @@ export function TouristDashboardClient({
             <MessageCircle className="h-3 w-3" />
             Not Reviewed
           </Badge>
-        )
+        );
       },
     },
     {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => {
-        const booking = row.original
+        const booking = row.original;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -569,7 +631,9 @@ export function TouristDashboardClient({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => handleViewBookingDetails(booking)}>
+              <DropdownMenuItem
+                onClick={() => handleViewBookingDetails(booking)}
+              >
                 <Eye className="mr-2 h-4 w-4" />
                 View details
               </DropdownMenuItem>
@@ -587,10 +651,10 @@ export function TouristDashboardClient({
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-        )
+        );
       },
     },
-  ]
+  ];
 
   const wishlistColumns: ColumnDef<WishlistTableItem>[] = [
     {
@@ -619,7 +683,7 @@ export function TouristDashboardClient({
               </div>
             </div>
           </div>
-        )
+        );
       },
     },
     {
@@ -630,53 +694,53 @@ export function TouristDashboardClient({
       accessorKey: "category",
       header: "Category",
       cell: ({ row }) => {
-        return <Badge variant="outline">{row.getValue("category")}</Badge>
+        return <Badge variant="outline">{row.getValue("category")}</Badge>;
       },
     },
     {
       accessorKey: "durationDays",
       header: "Duration",
       cell: ({ row }) => {
-        const days = row.getValue("durationDays") as number
-        return `${days} ${days === 1 ? "day" : "days"}`
+        const days = row.getValue("durationDays") as number;
+        return `${days} ${days === 1 ? "day" : "days"}`;
       },
     },
     {
       accessorKey: "price",
       header: "Price",
       cell: ({ row }) => {
-        const amount = Number.parseFloat(row.getValue("price"))
+        const amount = Number.parseFloat(row.getValue("price"));
         const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
-        }).format(amount)
-        return <div className="font-medium">{formatted}</div>
+        }).format(amount);
+        return <div className="font-medium">{formatted}</div>;
       },
     },
     {
       accessorKey: "bookingsCount",
       header: "Bookings",
       cell: ({ row }) => {
-        return <span className="text-sm">{row.getValue("bookingsCount")}</span>
+        return <span className="text-sm">{row.getValue("bookingsCount")}</span>;
       },
     },
     {
       accessorKey: "reviewsCount",
       header: "Reviews",
       cell: ({ row }) => {
-        const reviews = row.getValue("reviewsCount") as number
+        const reviews = row.getValue("reviewsCount") as number;
         return (
           <div className="flex items-center gap-1">
             <Star className="h-3 w-3 text-muted-foreground" />
             <span className="text-sm">{reviews}</span>
           </div>
-        )
+        );
       },
     },
     {
       id: "actions",
       cell: ({ row }) => {
-        const item = row.original
+        const item = row.original;
         return (
           <div className="flex gap-2">
             <Button
@@ -699,10 +763,10 @@ export function TouristDashboardClient({
               </Button>
             </Link>
           </div>
-        )
+        );
       },
     },
-  ]
+  ];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -715,7 +779,9 @@ export function TouristDashboardClient({
             className="mb-8"
           >
             <h1 className="text-3xl font-bold text-foreground">My Trips</h1>
-            <p className="mt-2 text-muted-foreground">View and manage your bookings</p>
+            <p className="mt-2 text-muted-foreground">
+              View and manage your bookings
+            </p>
           </motion.div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -733,7 +799,13 @@ export function TouristDashboardClient({
               icon={MapPin}
               index={1}
             />
-            <StatCard title="Wishlist" value={stats.wishlist} description="Saved experiences" icon={Heart} index={2} />
+            <StatCard
+              title="Wishlist"
+              value={stats.wishlist}
+              description="Saved experiences"
+              icon={Heart}
+              index={2}
+            />
             <StatCard
               title="Total Spent"
               value={`$${stats.totalSpent.toLocaleString()}`}
@@ -743,8 +815,16 @@ export function TouristDashboardClient({
             />
           </div>
 
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.4 }}>
-            <Tabs value={activeTab} onValueChange={updateTab} className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.4 }}
+          >
+            <Tabs
+              value={activeTab}
+              onValueChange={updateTab}
+              className="space-y-6"
+            >
               <div className="flex items-center justify-between">
                 <TabsList>
                   <TabsTrigger value="upcoming">
@@ -789,7 +869,10 @@ export function TouristDashboardClient({
                   data={initialUpcoming}
                   searchKey="tourTitle"
                   searchPlaceholder="Search tours..."
-                  initialColumnVisibility={{ id: false, paymentProvider: false }}
+                  initialColumnVisibility={{
+                    id: false,
+                    paymentProvider: false,
+                  }}
                 />
                 {/* Pagination for upcoming bookings */}
                 {activeTab === "upcoming" && initialUpcoming.length > 0 && (
@@ -805,28 +888,33 @@ export function TouristDashboardClient({
                         <Select
                           value={`${currentPage}`}
                           onValueChange={(value) => {
-                            updatePagination(Number(value), currentLimit)
+                            updatePagination(Number(value), currentLimit);
                           }}
                         >
                           <SelectTrigger className="h-8 w-[70px]">
                             <SelectValue placeholder={currentPage} />
                           </SelectTrigger>
                           <SelectContent side="top">
-                            {Array.from({ length: upcomingBookingsTotalPages }, (_, i) => i + 1).map((pageNum) => (
+                            {Array.from(
+                              { length: upcomingBookingsTotalPages },
+                              (_, i) => i + 1
+                            ).map((pageNum) => (
                               <SelectItem key={pageNum} value={`${pageNum}`}>
                                 {pageNum}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        <span className="text-sm text-muted-foreground">of {upcomingBookingsTotalPages}</span>
+                        <span className="text-sm text-muted-foreground">
+                          of {upcomingBookingsTotalPages}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <p className="text-sm font-medium">Rows per page</p>
                         <Select
                           value={`${currentLimit}`}
                           onValueChange={(value) => {
-                            updatePagination(1, Number(value))
+                            updatePagination(1, Number(value));
                           }}
                         >
                           <SelectTrigger className="h-8 w-[70px]">
@@ -852,7 +940,10 @@ export function TouristDashboardClient({
                   data={initialPending}
                   searchKey="tourTitle"
                   searchPlaceholder="Search tours..."
-                  initialColumnVisibility={{ id: false, paymentProvider: false }}
+                  initialColumnVisibility={{
+                    id: false,
+                    paymentProvider: false,
+                  }}
                 />
                 {/* Pagination for pending bookings */}
                 {activeTab === "pending" && initialPending.length > 0 && (
@@ -868,28 +959,33 @@ export function TouristDashboardClient({
                         <Select
                           value={`${currentPage}`}
                           onValueChange={(value) => {
-                            updatePagination(Number(value), currentLimit)
+                            updatePagination(Number(value), currentLimit);
                           }}
                         >
                           <SelectTrigger className="h-8 w-[70px]">
                             <SelectValue placeholder={currentPage} />
                           </SelectTrigger>
                           <SelectContent side="top">
-                            {Array.from({ length: pendingBookingsTotalPages }, (_, i) => i + 1).map((pageNum) => (
+                            {Array.from(
+                              { length: pendingBookingsTotalPages },
+                              (_, i) => i + 1
+                            ).map((pageNum) => (
                               <SelectItem key={pageNum} value={`${pageNum}`}>
                                 {pageNum}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        <span className="text-sm text-muted-foreground">of {pendingBookingsTotalPages}</span>
+                        <span className="text-sm text-muted-foreground">
+                          of {pendingBookingsTotalPages}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <p className="text-sm font-medium">Rows per page</p>
                         <Select
                           value={`${currentLimit}`}
                           onValueChange={(value) => {
-                            updatePagination(1, Number(value))
+                            updatePagination(1, Number(value));
                           }}
                         >
                           <SelectTrigger className="h-8 w-[70px]">
@@ -915,7 +1011,10 @@ export function TouristDashboardClient({
                   data={initialPast}
                   searchKey="tourTitle"
                   searchPlaceholder="Search tours..."
-                  initialColumnVisibility={{ id: false, paymentProvider: false }}
+                  initialColumnVisibility={{
+                    id: false,
+                    paymentProvider: false,
+                  }}
                 />
                 {/* Pagination for past bookings */}
                 {activeTab === "past" && initialPast.length > 0 && (
@@ -931,28 +1030,33 @@ export function TouristDashboardClient({
                         <Select
                           value={`${currentPage}`}
                           onValueChange={(value) => {
-                            updatePagination(Number(value), currentLimit)
+                            updatePagination(Number(value), currentLimit);
                           }}
                         >
                           <SelectTrigger className="h-8 w-[70px]">
                             <SelectValue placeholder={currentPage} />
                           </SelectTrigger>
                           <SelectContent side="top">
-                            {Array.from({ length: pastBookingsTotalPages }, (_, i) => i + 1).map((pageNum) => (
+                            {Array.from(
+                              { length: pastBookingsTotalPages },
+                              (_, i) => i + 1
+                            ).map((pageNum) => (
                               <SelectItem key={pageNum} value={`${pageNum}`}>
                                 {pageNum}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        <span className="text-sm text-muted-foreground">of {pastBookingsTotalPages}</span>
+                        <span className="text-sm text-muted-foreground">
+                          of {pastBookingsTotalPages}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <p className="text-sm font-medium">Rows per page</p>
                         <Select
                           value={`${currentLimit}`}
                           onValueChange={(value) => {
-                            updatePagination(1, Number(value))
+                            updatePagination(1, Number(value));
                           }}
                         >
                           <SelectTrigger className="h-8 w-[70px]">
@@ -994,28 +1098,33 @@ export function TouristDashboardClient({
                         <Select
                           value={`${currentPage}`}
                           onValueChange={(value) => {
-                            updatePagination(Number(value), currentLimit)
+                            updatePagination(Number(value), currentLimit);
                           }}
                         >
                           <SelectTrigger className="h-8 w-[70px]">
                             <SelectValue placeholder={currentPage} />
                           </SelectTrigger>
                           <SelectContent side="top">
-                            {Array.from({ length: wishlistTotalPages }, (_, i) => i + 1).map((pageNum) => (
+                            {Array.from(
+                              { length: wishlistTotalPages },
+                              (_, i) => i + 1
+                            ).map((pageNum) => (
                               <SelectItem key={pageNum} value={`${pageNum}`}>
                                 {pageNum}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        <span className="text-sm text-muted-foreground">of {wishlistTotalPages}</span>
+                        <span className="text-sm text-muted-foreground">
+                          of {wishlistTotalPages}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <p className="text-sm font-medium">Rows per page</p>
                         <Select
                           value={`${currentLimit}`}
                           onValueChange={(value) => {
-                            updatePagination(1, Number(value))
+                            updatePagination(1, Number(value));
                           }}
                         >
                           <SelectTrigger className="h-8 w-[70px]">
@@ -1039,8 +1148,12 @@ export function TouristDashboardClient({
                 {reviews.length === 0 ? (
                   <div className="text-center py-12">
                     <Star className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No reviews yet</h3>
-                    <p className="text-muted-foreground">Complete a trip and leave a review to see it here</p>
+                    <h3 className="text-lg font-semibold mb-2">
+                      No reviews yet
+                    </h3>
+                    <p className="text-muted-foreground">
+                      Complete a trip and leave a review to see it here
+                    </p>
                   </div>
                 ) : (
                   <>
@@ -1055,14 +1168,17 @@ export function TouristDashboardClient({
                                     {[...Array(5)].map((_, i) => (
                                       <Star
                                         key={i}
-                                        className={`h-4 w-4 ${i < review.rating
-                                          ? "fill-primary text-primary"
-                                          : "text-muted-foreground"
-                                          }`}
+                                        className={`h-4 w-4 ${
+                                          i < review.rating
+                                            ? "fill-primary text-primary"
+                                            : "text-muted-foreground"
+                                        }`}
                                       />
                                     ))}
                                   </div>
-                                  <span className="text-sm font-medium">{review.rating}/5</span>
+                                  <span className="text-sm font-medium">
+                                    {review.rating}/5
+                                  </span>
                                 </div>
                                 <p className="text-sm text-muted-foreground mb-2">
                                   {review.listing?.title || "N/A"}
@@ -1073,11 +1189,15 @@ export function TouristDashboardClient({
                                   </p>
                                 )}
                                 {review.comment && (
-                                  <p className="text-foreground">{review.comment}</p>
+                                  <p className="text-foreground">
+                                    {review.comment}
+                                  </p>
                                 )}
                                 <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
                                   <span>
-                                    {new Date(review.createdAt).toLocaleDateString("en-US", {
+                                    {new Date(
+                                      review.createdAt
+                                    ).toLocaleDateString("en-US", {
                                       year: "numeric",
                                       month: "short",
                                       day: "numeric",
@@ -1095,11 +1215,13 @@ export function TouristDashboardClient({
                     {activeTab === "reviews" && reviews.length > 0 && (
                       <div className="mt-6 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <p className="text-sm text-muted-foreground">Rows per page</p>
+                          <p className="text-sm text-muted-foreground">
+                            Rows per page
+                          </p>
                           <Select
                             value={currentLimit.toString()}
                             onValueChange={(value) => {
-                              updatePagination(1, Number(value))
+                              updatePagination(1, Number(value));
                             }}
                           >
                             <SelectTrigger className="h-8 w-[70px]">
@@ -1116,14 +1238,17 @@ export function TouristDashboardClient({
                         </div>
                         <div className="flex items-center gap-2">
                           <p className="text-sm text-muted-foreground">
-                            Page {currentPage} of {reviewsTotalPages || 1} ({reviewsTotal || reviews.length} total)
+                            Page {currentPage} of {reviewsTotalPages || 1} (
+                            {reviewsTotal || reviews.length} total)
                           </p>
                           {reviewsTotalPages > 1 && (
                             <div className="flex gap-1">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => updatePagination(1, currentLimit)}
+                                onClick={() =>
+                                  updatePagination(1, currentLimit)
+                                }
                                 disabled={currentPage === 1}
                               >
                                 First
@@ -1131,7 +1256,12 @@ export function TouristDashboardClient({
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => updatePagination(Math.max(1, currentPage - 1), currentLimit)}
+                                onClick={() =>
+                                  updatePagination(
+                                    Math.max(1, currentPage - 1),
+                                    currentLimit
+                                  )
+                                }
                                 disabled={currentPage === 1}
                               >
                                 Previous
@@ -1139,7 +1269,15 @@ export function TouristDashboardClient({
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => updatePagination(Math.min(reviewsTotalPages, currentPage + 1), currentLimit)}
+                                onClick={() =>
+                                  updatePagination(
+                                    Math.min(
+                                      reviewsTotalPages,
+                                      currentPage + 1
+                                    ),
+                                    currentLimit
+                                  )
+                                }
                                 disabled={currentPage === reviewsTotalPages}
                               >
                                 Next
@@ -1147,7 +1285,12 @@ export function TouristDashboardClient({
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => updatePagination(reviewsTotalPages, currentLimit)}
+                                onClick={() =>
+                                  updatePagination(
+                                    reviewsTotalPages,
+                                    currentLimit
+                                  )
+                                }
                                 disabled={currentPage === reviewsTotalPages}
                               >
                                 Last
@@ -1168,31 +1311,37 @@ export function TouristDashboardClient({
       <BookingDetailsModal
         isOpen={isDetailsModalOpen}
         onClose={() => {
-          setIsDetailsModalOpen(false)
-          setSelectedBooking(null)
+          setIsDetailsModalOpen(false);
+          setSelectedBooking(null);
         }}
+        userRole="TOURIST"
         booking={
           selectedBooking
             ? {
-              id: selectedBooking.id,
-              tourTitle: selectedBooking.tourTitle,
-              guide: selectedBooking.guide,
-              date: selectedBooking.date,
-              time: new Date(selectedBooking.date).toLocaleTimeString("en-US", {
-                hour: "numeric",
-                minute: "2-digit",
-              }),
-              guests: selectedBooking.guests,
-              numberOfGuests: selectedBooking.guests,
-              price: selectedBooking.totalPrice || selectedBooking.price,
-              status: selectedBooking.status,
-              location: selectedBooking.city,
-              meetingPoint: selectedBooking.meetingPoint || selectedBooking.city,
-              category: selectedBooking.category,
-              durationDays: selectedBooking.durationDays,
-              createdAt: selectedBooking.createdAt,
-              confirmationNumber: selectedBooking.id.slice(0, 8),
-            }
+                id: selectedBooking.id,
+                tourTitle: selectedBooking.tourTitle,
+                guide: selectedBooking.guide,
+                date: selectedBooking.date,
+                time: new Date(selectedBooking.date).toLocaleTimeString(
+                  "en-US",
+                  {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  }
+                ),
+                guests: selectedBooking.guests,
+                numberOfGuests: selectedBooking.guests,
+                price: selectedBooking.totalPrice || selectedBooking.price,
+                status: selectedBooking.status,
+                location: selectedBooking.city,
+                meetingPoint:
+                  selectedBooking.meetingPoint || selectedBooking.city,
+                category: selectedBooking.category,
+                durationDays: selectedBooking.durationDays,
+                createdAt: selectedBooking.createdAt,
+                confirmationNumber: selectedBooking.id.slice(0, 8),
+                paymentStatus: selectedBooking.paymentStatus,
+              }
             : undefined
         }
       />
@@ -1200,8 +1349,8 @@ export function TouristDashboardClient({
       <ReviewModal
         isOpen={isReviewModalOpen}
         onClose={() => {
-          setIsReviewModalOpen(false)
-          setBookingToReview(null)
+          setIsReviewModalOpen(false);
+          setBookingToReview(null);
         }}
         tourTitle={bookingToReview?.tourTitle || ""}
         guideName={bookingToReview?.guide || ""}
@@ -1209,10 +1358,9 @@ export function TouristDashboardClient({
         mode={reviewMode}
         onSuccess={() => {
           // Refresh the page to get updated data from server
-          router.refresh()
+          router.refresh();
         }}
       />
     </div>
-  )
+  );
 }
-

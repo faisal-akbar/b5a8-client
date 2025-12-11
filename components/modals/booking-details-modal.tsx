@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,15 +10,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { SERVICE_FEE } from "@/constants/service-fee";
 import {
   CalendarDays,
+  Check,
   Clock,
+  CreditCard,
   Mail,
   MapPin,
   Tag,
   User,
   Users,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface BookingDetailsModalProps {
   isOpen: boolean;
@@ -42,8 +47,11 @@ interface BookingDetailsModalProps {
     updatedAt?: string;
     guidePhone?: string;
     confirmationNumber?: string;
+    paymentStatus?: string; // Payment status (UNPAID, PAID, etc.)
   };
   onSuccess?: () => void;
+  userRole?: "TOURIST" | "GUIDE" | "ADMIN"; // User role to determine which actions to show
+  onMarkAsCompleted?: (bookingId: string) => void; // Callback for marking booking as completed (for guides)
 }
 
 export function BookingDetailsModal({
@@ -51,8 +59,22 @@ export function BookingDetailsModal({
   onClose,
   booking,
   onSuccess,
+  userRole,
+  onMarkAsCompleted,
 }: BookingDetailsModalProps) {
+  const router = useRouter();
+
   if (!booking) return null;
+
+  const isConfirmed = booking.status.toUpperCase() === "CONFIRMED";
+  const isCompleted = booking.status.toUpperCase() === "COMPLETED";
+  const isUnpaid =
+    booking.paymentStatus?.toUpperCase() === "UNPAID" || !booking.paymentStatus;
+  // Only show Pay Now button for tourists
+  const showPayButton = isConfirmed && isUnpaid && userRole === "TOURIST";
+  // Show Mark as Completed button for guides on CONFIRMED bookings
+  const showCompleteButton =
+    isConfirmed && !isCompleted && userRole === "GUIDE" && onMarkAsCompleted;
 
   return (
     <>
@@ -218,6 +240,40 @@ export function BookingDetailsModal({
                 </span>
               </div>
             </div>
+
+            {showPayButton && (
+              <>
+                <Separator />
+                <Button
+                  onClick={() => {
+                    router.push(`/payment/${booking.id}`);
+                    onClose();
+                  }}
+                  className="w-full"
+                  size="lg"
+                >
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Pay Now
+                </Button>
+              </>
+            )}
+
+            {showCompleteButton && (
+              <>
+                <Separator />
+                <Button
+                  onClick={() => {
+                    onMarkAsCompleted?.(booking.id);
+                    onClose();
+                  }}
+                  className="w-full"
+                  size="lg"
+                >
+                  <Check className="mr-2 h-4 w-4" />
+                  Mark as Completed
+                </Button>
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>
