@@ -382,11 +382,22 @@ export function TouristDashboardClient({
       accessorKey: "date",
       header: "Date",
       cell: ({ row }) => {
-        return new Date(row.getValue("date")).toLocaleDateString("en-US", {
+        const date = new Date(row.getValue("date"));
+        const dateStr = date.toLocaleDateString("en-US", {
           year: "numeric",
           month: "short",
           day: "numeric",
         });
+        const timeStr = date.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        });
+        return (
+          <div>
+            <div>{dateStr}</div>
+            <div className="text-xs text-muted-foreground">{timeStr}</div>
+          </div>
+        );
       },
     },
     {
@@ -607,11 +618,22 @@ export function TouristDashboardClient({
       accessorKey: "date",
       header: "Completed Date",
       cell: ({ row }) => {
-        return new Date(row.getValue("date")).toLocaleDateString("en-US", {
+        const date = new Date(row.getValue("date"));
+        const dateStr = date.toLocaleDateString("en-US", {
           year: "numeric",
           month: "short",
           day: "numeric",
         });
+        const timeStr = date.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        });
+        return (
+          <div>
+            <div>{dateStr}</div>
+            <div className="text-xs text-muted-foreground">{timeStr}</div>
+          </div>
+        );
       },
     },
     {
