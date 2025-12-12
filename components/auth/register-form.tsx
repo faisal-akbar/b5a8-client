@@ -12,13 +12,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { registerUser } from "@/services/auth/registerUser";
-import { sendOTP } from "@/services/otp/otp.service";
 import { registerValidationZodSchema } from "@/zod/auth.validation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { Compass, MapPin, User } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -27,10 +25,8 @@ import type { z } from "zod";
 type RegisterFormData = z.infer<typeof registerValidationZodSchema>;
 
 export default function RegisterForm() {
-  const router = useRouter();
   const [userRole, setUserRole] = useState<"TOURIST" | "GUIDE">("TOURIST");
   const [state, formAction, isPending] = useActionState(registerUser, null);
-  const [isSendingOTP, setIsSendingOTP] = useState(false);
   const [, startTransition] = useTransition();
 
   const {
@@ -70,37 +66,12 @@ export default function RegisterForm() {
       toast.error(state.message);
     }
 
-    // If registration successful, send OTP
-    if (state && state.success && state.data) {
-      const sendOTPToUser = async () => {
-        setIsSendingOTP(true);
-        try {
-          const result = await sendOTP({
-            email: state.data.email,
-            name: state.data.name,
-          });
-
-          if (result.success) {
-            toast.success("Registration successful! Please verify your email.");
-            // Redirect to OTP verification page
-            router.push(
-              `/verify-otp?email=${encodeURIComponent(
-                state.data.email
-              )}&name=${encodeURIComponent(state.data.name)}`
-            );
-          } else {
-            toast.error(result.message || "Failed to send verification code");
-          }
-        } catch (error) {
-          toast.error("Failed to send verification code. Please try again.");
-        } finally {
-          setIsSendingOTP(false);
-        }
-      };
-
-      sendOTPToUser();
+    // If registration successful, show success message
+    // The registerUser service will handle login and redirect automatically
+    if (state && state.success) {
+      toast.success("Registration successful! Logging you in...");
     }
-  }, [state, router]);
+  }, [state]);
 
   return (
     <motion.div
@@ -294,13 +265,9 @@ export default function RegisterForm() {
               type="submit"
               className="w-full h-11 text-base shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
               size="lg"
-              disabled={isPending || isSendingOTP}
+              disabled={isPending}
             >
-              {isSendingOTP
-                ? "Sending verification code..."
-                : isPending
-                ? "Creating Account..."
-                : "Create Account"}
+              {isPending ? "Creating Account..." : "Create Account"}
             </Button>
           </form>
 
