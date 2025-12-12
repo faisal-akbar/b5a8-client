@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { getReviews } from "@/services/review/review.service";
 import type { GuideReview } from "@/types/guide";
 import { Star } from "lucide-react";
+import Image from "next/image";
 
 type Testimonial = {
   id?: string;
@@ -120,10 +121,12 @@ export async function TestimonialsSection() {
                 </p>
                 <div className="mt-8 flex items-center gap-4 pt-6 border-t">
                   {testimonial.image ? (
-                    <img
+                    <Image
                       src={testimonial.image}
                       alt={testimonial.name}
                       className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/10"
+                      width={100}
+                      height={100}
                     />
                   ) : (
                     <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary/10">

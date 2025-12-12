@@ -1,26 +1,36 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { Footer } from "@/components/layout/footer"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { ArrowLeft, Upload, X, Loader2 } from "lucide-react"
-import Link from "next/link"
-import { useState, useEffect } from "react"
-import { useRouter, useParams } from "next/navigation"
-import { toast } from "sonner"
-import { getListingById, updateListing } from "@/services/listing/listing.service"
-import type { Category } from "@/types/profile"
-import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton"
-import { updateListingZodSchema } from "@/zod/listing.validation"
-import { zodValidator } from "@/lib/zodValidator"
-import InputFieldError from "@/components/shared/InputFieldError"
-import type { IInputErrorState } from "@/lib/getInputFieldError"
+import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
+import { Footer } from "@/components/layout/footer";
+import InputFieldError from "@/components/shared/InputFieldError";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import type { IInputErrorState } from "@/lib/getInputFieldError";
+import { zodValidator } from "@/lib/zodValidator";
+import {
+  getListingById,
+  updateListing,
+} from "@/services/listing/listing.service";
+import type { Category } from "@/types/profile";
+import { updateListingZodSchema } from "@/zod/listing.validation";
+import { ArrowLeft, Loader2, Upload, X } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 const categories: { value: Category; label: string }[] = [
   { value: "CULTURE", label: "Culture" },
@@ -51,8 +61,6 @@ const categories: { value: Category; label: string }[] = [
   { value: "MUSEUM", label: "Museum" },
   { value: "ENTERTAINMENT", label: "Entertainment" },
   { value: "CULINARY", label: "Culinary" },
-  { value: "SPIRITUAL", label: "Spiritual" },
-  { value: "ECO_TOURISM", label: "Eco Tourism" },
   { value: "URBAN_EXPLORATION", label: "Urban Exploration" },
   { value: "COUNTRYSIDE", label: "Countryside" },
   { value: "MOUNTAIN", label: "Mountain" },
@@ -61,15 +69,15 @@ const categories: { value: Category; label: string }[] = [
   { value: "SURFING", label: "Surfing" },
   { value: "FOOD_TOUR", label: "Food Tour" },
   { value: "STREET_FOOD", label: "Street Food" },
-]
+];
 
 export default function EditListingPage() {
-  const router = useRouter()
-  const params = useParams()
-  const listingId = params.id as string
-  
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const router = useRouter();
+  const params = useParams();
+  const listingId = params.id as string;
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -81,20 +89,21 @@ export default function EditListingPage() {
     city: "",
     category: "" as Category | "",
     isActive: true,
-  })
-  const [existingImages, setExistingImages] = useState<string[]>([])
-  const [imageFiles, setImageFiles] = useState<File[]>([])
-  const [imagePreviews, setImagePreviews] = useState<string[]>([])
-  const [validationErrors, setValidationErrors] = useState<IInputErrorState | null>(null)
+  });
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [validationErrors, setValidationErrors] =
+    useState<IInputErrorState | null>(null);
 
   useEffect(() => {
     const fetchListing = async () => {
       try {
-        setIsLoading(true)
-        const result = await getListingById(listingId)
-        
+        setIsLoading(true);
+        const result = await getListingById(listingId);
+
         if (result.success && result.data) {
-          const listing = result.data
+          const listing = result.data;
           setFormData({
             title: listing.title || "",
             description: listing.description || "",
@@ -106,73 +115,77 @@ export default function EditListingPage() {
             city: listing.city || "",
             category: listing.category || ("" as Category | ""),
             isActive: listing.isActive ?? true,
-          })
-          setExistingImages(listing.images || [])
+          });
+          setExistingImages(listing.images || []);
         } else {
-          toast.error("Failed to load listing")
-          router.push("/guide/dashboard")
+          toast.error("Failed to load listing");
+          router.push("/guide/dashboard");
         }
       } catch (error) {
-        console.error("Error fetching listing:", error)
-        toast.error("An error occurred while loading the listing")
-        router.push("/guide/dashboard")
+        console.error("Error fetching listing:", error);
+        toast.error("An error occurred while loading the listing");
+        router.push("/guide/dashboard");
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
     if (listingId) {
-      fetchListing()
+      fetchListing();
     }
-  }, [listingId, router])
+  }, [listingId, router]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleCategoryChange = (value: Category) => {
-    setFormData((prev) => ({ ...prev, category: value }))
-  }
+    setFormData((prev) => ({ ...prev, category: value }));
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
+    const files = e.target.files;
     if (files) {
-      const newFiles = Array.from(files)
-      setImageFiles((prev) => [...prev, ...newFiles])
-      
+      const newFiles = Array.from(files);
+      setImageFiles((prev) => [...prev, ...newFiles]);
+
       // Create previews
       newFiles.forEach((file) => {
-        const reader = new FileReader()
+        const reader = new FileReader();
         reader.onloadend = () => {
-          setImagePreviews((prev) => [...prev, reader.result as string])
-        }
-        reader.readAsDataURL(file)
-      })
+          setImagePreviews((prev) => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
     }
-  }
+  };
 
   const removeExistingImage = (index: number) => {
-    setExistingImages((prev) => prev.filter((_, i) => i !== index))
-  }
+    setExistingImages((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const removeNewImage = (index: number) => {
-    setImageFiles((prev) => prev.filter((_, i) => i !== index))
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index))
-  }
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setValidationErrors(null)
+    e.preventDefault();
+    setValidationErrors(null);
 
     // Validate images
-    const allImages = [...existingImages]
+    const allImages = [...existingImages];
     if (allImages.length === 0) {
       setValidationErrors({
         success: false,
-        errors: [{ field: "images", message: "At least one image is required." }],
-      })
-      return
+        errors: [
+          { field: "images", message: "At least one image is required." },
+        ],
+      });
+      return;
     }
 
     // Prepare data for validation
@@ -180,52 +193,60 @@ export default function EditListingPage() {
       title: formData.title || undefined,
       description: formData.description || undefined,
       itinerary: formData.itinerary || undefined,
-      tourFee: formData.tourFee ? Number.parseFloat(formData.tourFee) : undefined,
-      durationDays: formData.durationDays ? Number.parseInt(formData.durationDays) : undefined,
+      tourFee: formData.tourFee
+        ? Number.parseFloat(formData.tourFee)
+        : undefined,
+      durationDays: formData.durationDays
+        ? Number.parseInt(formData.durationDays)
+        : undefined,
       meetingPoint: formData.meetingPoint || undefined,
-      maxGroupSize: formData.maxGroupSize ? Number.parseInt(formData.maxGroupSize) : undefined,
+      maxGroupSize: formData.maxGroupSize
+        ? Number.parseInt(formData.maxGroupSize)
+        : undefined,
       city: formData.city || undefined,
       category: formData.category || undefined,
       images: allImages,
       isActive: formData.isActive,
-    }
+    };
 
     // Zod validation
-    const validation = zodValidator(validationData, updateListingZodSchema)
+    const validation = zodValidator(validationData, updateListingZodSchema);
     if (!validation.success) {
-      setValidationErrors(validation)
-      const errorCount = validation.errors?.length || 0
-      const firstError = validation.errors?.[0]?.message || "Validation failed"
+      setValidationErrors(validation);
+      const errorCount = validation.errors?.length || 0;
+      const firstError = validation.errors?.[0]?.message || "Validation failed";
       if (errorCount === 1) {
-        toast.error(firstError)
+        toast.error(firstError);
       } else {
-        toast.error(`${errorCount} validation errors found. Please check the form fields.`)
+        toast.error(
+          `${errorCount} validation errors found. Please check the form fields.`
+        );
       }
-      return
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
       const result = await updateListing({
         id: listingId,
         ...validationData,
-      })
+      });
 
       if (result.success) {
-        toast.success("Tour listing updated successfully!")
-        router.refresh() // Refresh server-side data
-        router.push("/guide/dashboard?refresh=" + Date.now()) // Add timestamp to force client-side refresh
+        toast.success("Tour listing updated successfully!");
+        router.refresh(); // Refresh server-side data
+        router.push("/guide/dashboard?refresh=" + Date.now()); // Add timestamp to force client-side refresh
       } else {
-        toast.error(result.message || "Failed to update listing")
+        toast.error(result.message || "Failed to update listing");
       }
     } catch (error) {
-      console.error("Error updating listing:", error)
-      toast.error("An error occurred while updating the listing")
+      console.error("Error updating listing:", error);
+      toast.error("An error occurred while updating the listing");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   if (isLoading) {
     return (
@@ -237,7 +258,7 @@ export default function EditListingPage() {
         </main>
         <Footer />
       </div>
-    )
+    );
   }
 
   return (
@@ -254,12 +275,20 @@ export default function EditListingPage() {
           <Card>
             <CardContent className="p-8">
               <h1 className="text-2xl font-bold text-foreground">Edit Tour</h1>
-              <p className="mt-2 text-muted-foreground">Update your tour listing</p>
+              <p className="mt-2 text-muted-foreground">
+                Update your tour listing
+              </p>
 
-              <form onSubmit={handleSubmit} className="mt-8 space-y-6" noValidate>
+              <form
+                onSubmit={handleSubmit}
+                className="mt-8 space-y-6"
+                noValidate
+              >
                 {/* Basic Info */}
                 <div className="space-y-4">
-                  <h2 className="text-lg font-semibold text-foreground">Basic Information</h2>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Basic Information
+                  </h2>
 
                   <div className="space-y-2">
                     <Label htmlFor="title">Tour Title *</Label>
@@ -275,19 +304,28 @@ export default function EditListingPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="category">Category *</Label>
-                    <Select value={formData.category} onValueChange={handleCategoryChange}>
+                    <Select
+                      value={formData.category}
+                      onValueChange={handleCategoryChange}
+                    >
                       <SelectTrigger id="category">
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                       <SelectContent>
                         {categories.map((category) => (
-                          <SelectItem key={category.value} value={category.value}>
+                          <SelectItem
+                            key={category.value}
+                            value={category.value}
+                          >
                             {category.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <InputFieldError field="category" state={validationErrors} />
+                    <InputFieldError
+                      field="category"
+                      state={validationErrors}
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -312,34 +350,45 @@ export default function EditListingPage() {
                       placeholder="Describe your tour, what makes it special, and what travelers can expect..."
                       rows={6}
                     />
-                    <InputFieldError field="description" state={validationErrors} />
+                    <InputFieldError
+                      field="description"
+                      state={validationErrors}
+                    />
                   </div>
                 </div>
 
                 {/* Tour Status */}
                 <div className="space-y-4 border-t border-border pt-6">
-                  <h2 className="text-lg font-semibold text-foreground">Tour Status</h2>
-                  
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Tour Status
+                  </h2>
+
                   <div className="flex items-center justify-between rounded-lg border border-border p-4">
                     <div className="space-y-0.5">
-                      <Label htmlFor="isActive" className="text-base">Tour Status</Label>
+                      <Label htmlFor="isActive" className="text-base">
+                        Tour Status
+                      </Label>
                       <p className="text-sm text-muted-foreground">
-                        {formData.isActive 
-                          ? "Your tour is currently active and visible to tourists" 
+                        {formData.isActive
+                          ? "Your tour is currently active and visible to tourists"
                           : "Your tour is currently inactive and hidden from tourists"}
                       </p>
                     </div>
                     <Switch
                       id="isActive"
                       checked={formData.isActive}
-                      onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isActive: checked }))}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({ ...prev, isActive: checked }))
+                      }
                     />
                   </div>
                 </div>
 
                 {/* Tour Details */}
                 <div className="space-y-4 border-t border-border pt-6">
-                  <h2 className="text-lg font-semibold text-foreground">Tour Details</h2>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Tour Details
+                  </h2>
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
@@ -353,7 +402,10 @@ export default function EditListingPage() {
                         onChange={handleInputChange}
                         placeholder="1"
                       />
-                      <InputFieldError field="durationDays" state={validationErrors} />
+                      <InputFieldError
+                        field="durationDays"
+                        state={validationErrors}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="tourFee">Price per Person ($) *</Label>
@@ -367,7 +419,10 @@ export default function EditListingPage() {
                         onChange={handleInputChange}
                         placeholder="85"
                       />
-                      <InputFieldError field="tourFee" state={validationErrors} />
+                      <InputFieldError
+                        field="tourFee"
+                        state={validationErrors}
+                      />
                     </div>
                   </div>
 
@@ -383,7 +438,10 @@ export default function EditListingPage() {
                         onChange={handleInputChange}
                         placeholder="8"
                       />
-                      <InputFieldError field="maxGroupSize" state={validationErrors} />
+                      <InputFieldError
+                        field="maxGroupSize"
+                        state={validationErrors}
+                      />
                     </div>
                   </div>
 
@@ -396,14 +454,21 @@ export default function EditListingPage() {
                       onChange={handleInputChange}
                       placeholder="e.g., Jackson Square, in front of St. Louis Cathedral"
                     />
-                    <InputFieldError field="meetingPoint" state={validationErrors} />
+                    <InputFieldError
+                      field="meetingPoint"
+                      state={validationErrors}
+                    />
                   </div>
                 </div>
 
                 {/* Itinerary */}
                 <div className="space-y-4 border-t border-border pt-6">
-                  <h2 className="text-lg font-semibold text-foreground">Itinerary</h2>
-                  <p className="text-sm text-muted-foreground">Add the main stops or activities in your tour</p>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Itinerary
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Add the main stops or activities in your tour
+                  </p>
 
                   <div className="space-y-2">
                     <Label htmlFor="itinerary">Tour Itinerary *</Label>
@@ -415,14 +480,21 @@ export default function EditListingPage() {
                       placeholder="Describe the main stops and activities during your tour..."
                       rows={4}
                     />
-                    <InputFieldError field="itinerary" state={validationErrors} />
+                    <InputFieldError
+                      field="itinerary"
+                      state={validationErrors}
+                    />
                   </div>
                 </div>
 
                 {/* Photos */}
                 <div className="space-y-4 border-t border-border pt-6">
-                  <h2 className="text-lg font-semibold text-foreground">Photos</h2>
-                  <p className="text-sm text-muted-foreground">Manage your tour photos</p>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Photos
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Manage your tour photos
+                  </p>
                   <InputFieldError field="images" state={validationErrors} />
 
                   <div className="space-y-4">
@@ -435,10 +507,12 @@ export default function EditListingPage() {
                               key={index}
                               className="relative aspect-video overflow-hidden rounded-lg border-2 border-border"
                             >
-                              <img
+                              <Image
                                 src={imageUrl}
                                 alt={`Existing ${index + 1}`}
                                 className="h-full w-full object-cover"
+                                width={300}
+                                height={300}
                               />
                               <button
                                 type="button"
@@ -462,10 +536,12 @@ export default function EditListingPage() {
                               key={index}
                               className="relative aspect-video overflow-hidden rounded-lg border-2 border-border"
                             >
-                              <img
+                              <Image
                                 src={preview}
                                 alt={`New ${index + 1}`}
                                 className="h-full w-full object-cover"
+                                width={300}
+                                height={300}
                               />
                               <button
                                 type="button"
@@ -480,10 +556,12 @@ export default function EditListingPage() {
                       </div>
                     )}
 
-                    {(existingImages.length + imageFiles.length) < 10 && (
+                    {existingImages.length + imageFiles.length < 10 && (
                       <label className="flex aspect-video cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 hover:bg-muted">
                         <Upload className="h-8 w-8 text-muted-foreground" />
-                        <span className="mt-2 text-sm text-muted-foreground">Upload Photo</span>
+                        <span className="mt-2 text-sm text-muted-foreground">
+                          Upload Photo
+                        </span>
                         <input
                           type="file"
                           accept="image/*"
@@ -498,7 +576,12 @@ export default function EditListingPage() {
 
                 {/* Submit */}
                 <div className="flex gap-4 border-t border-border pt-6">
-                  <Button type="submit" size="lg" className="flex-1 sm:flex-none" disabled={isSubmitting}>
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="flex-1 sm:flex-none"
+                    disabled={isSubmitting}
+                  >
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -509,7 +592,13 @@ export default function EditListingPage() {
                     )}
                   </Button>
                   <Link href="/guide/dashboard" className="flex-1 sm:flex-none">
-                    <Button type="button" variant="outline" size="lg" className="w-full bg-transparent" disabled={isSubmitting}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      className="w-full bg-transparent"
+                      disabled={isSubmitting}
+                    >
                       Cancel
                     </Button>
                   </Link>
@@ -522,6 +611,5 @@ export default function EditListingPage() {
 
       <Footer />
     </div>
-  )
+  );
 }
-

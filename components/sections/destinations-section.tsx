@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { getFeaturedCities } from "@/services/listing/listing.service";
+import Image from "next/image";
 import Link from "next/link";
 
 type FeaturedCity = {
@@ -37,10 +38,12 @@ export async function DestinationsSection() {
               >
                 <Card className="group cursor-pointer overflow-hidden border-0 transition-all hover:shadow-xl hover:-translate-y-1">
                   <div className="relative h-72 overflow-hidden">
-                    <img
+                    <Image
                       src={destination.image || "/placeholder.svg"}
                       alt={destination.city}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      width={100}
+                      height={100}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 transition-opacity group-hover:opacity-90" />
                     <div className="absolute bottom-0 left-0 p-6 text-white transform transition-transform duration-300 group-hover:translate-y-[-4px]">

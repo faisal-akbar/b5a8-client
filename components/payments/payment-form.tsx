@@ -109,24 +109,26 @@ export default function PaymentForm({
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="border rounded-lg p-4">
             <PaymentElement
-              options={{
-                layout: "tabs",
-                appearance: {
-                  theme: "stripe",
-                  variables: {
-                    colorPrimary: "#0570de",
-                    colorBackground: "#ffffff",
-                    colorText: "#30313d",
-                    colorDanger: "#df1b41",
-                    fontFamily: "system-ui, sans-serif",
-                    spacingUnit: "4px",
-                    borderRadius: "8px",
+              options={
+                {
+                  layout: "tabs",
+                  appearance: {
+                    theme: "stripe",
+                    variables: {
+                      colorPrimary: "#0570de",
+                      colorBackground: "#ffffff",
+                      colorText: "#30313d",
+                      colorDanger: "#df1b41",
+                      fontFamily: "system-ui, sans-serif",
+                      spacingUnit: "4px",
+                      borderRadius: "8px",
+                    },
                   },
-                },
-                business: {
-                  name: "Local Guide Platform",
-                },
-              } as any}
+                  business: {
+                    name: "Local Guide Platform",
+                  },
+                } as any
+              }
             />
           </div>
 

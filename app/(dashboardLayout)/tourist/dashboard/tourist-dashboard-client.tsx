@@ -40,6 +40,7 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -328,10 +329,12 @@ export function TouristDashboardClient({
         return (
           <div className="flex items-center gap-3">
             <div className="relative h-12 w-16 overflow-hidden rounded">
-              <img
+              <Image
                 src={row.original.tourImage || "/placeholder.svg"}
                 alt={row.getValue("tourTitle")}
                 className="h-full w-full object-cover"
+                width={100}
+                height={100}
               />
             </div>
             <div>
@@ -352,10 +355,12 @@ export function TouristDashboardClient({
         return (
           <div className="flex items-center gap-2">
             {row.original.guideImage ? (
-              <img
+              <Image
                 src={row.original.guideImage}
                 alt={row.getValue("guide")}
                 className="h-8 w-8 rounded-full object-cover"
+                width={100}
+                height={100}
               />
             ) : (
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -531,10 +536,12 @@ export function TouristDashboardClient({
         return (
           <div className="flex items-center gap-3">
             <div className="relative h-12 w-16 overflow-hidden rounded">
-              <img
+              <Image
                 src={row.original.tourImage || "/placeholder.svg"}
                 alt={row.getValue("tourTitle")}
                 className="h-full w-full object-cover"
+                width={100}
+                height={100}
               />
             </div>
             <div>
@@ -555,10 +562,12 @@ export function TouristDashboardClient({
         return (
           <div className="flex items-center gap-2">
             {row.original.guideImage ? (
-              <img
+              <Image
                 src={row.original.guideImage}
                 alt={row.getValue("guide")}
                 className="h-8 w-8 rounded-full object-cover"
+                width={100}
+                height={100}
               />
             ) : (
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -709,10 +718,12 @@ export function TouristDashboardClient({
         return (
           <div className="flex items-center gap-3">
             <div className="relative h-12 w-16 overflow-hidden rounded">
-              <img
-                src={row.original.tourImage || "/placeholder.svg"}
+              <Image
+                src={row.original.tourImage}
                 alt={row.getValue("tourTitle")}
                 className="h-full w-full object-cover"
+                width={100}
+                height={100}
               />
             </div>
             <div>

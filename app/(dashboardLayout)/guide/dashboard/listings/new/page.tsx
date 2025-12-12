@@ -1,24 +1,31 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { Footer } from "@/components/layout/footer"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Upload, X, Loader2 } from "lucide-react"
-import Link from "next/link"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
-import { createListing } from "@/services/listing/listing.service"
-import type { Category } from "@/types/profile"
-import { createListingZodSchema } from "@/zod/listing.validation"
-import { zodValidator } from "@/lib/zodValidator"
-import InputFieldError from "@/components/shared/InputFieldError"
-import type { IInputErrorState } from "@/lib/getInputFieldError"
+import { Footer } from "@/components/layout/footer";
+import InputFieldError from "@/components/shared/InputFieldError";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import type { IInputErrorState } from "@/lib/getInputFieldError";
+import { zodValidator } from "@/lib/zodValidator";
+import { createListing } from "@/services/listing/listing.service";
+import type { Category } from "@/types/profile";
+import { createListingZodSchema } from "@/zod/listing.validation";
+import { ArrowLeft, Loader2, Upload, X } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type React from "react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const categories: { value: Category; label: string }[] = [
   { value: "CULTURE", label: "Culture" },
@@ -59,11 +66,11 @@ const categories: { value: Category; label: string }[] = [
   { value: "SURFING", label: "Surfing" },
   { value: "FOOD_TOUR", label: "Food Tour" },
   { value: "STREET_FOOD", label: "Street Food" },
-]
+];
 
 export default function CreateTourPage() {
-  const router = useRouter()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -74,99 +81,107 @@ export default function CreateTourPage() {
     maxGroupSize: "",
     city: "",
     category: "" as Category | "",
-  })
-  const [imageFiles, setImageFiles] = useState<File[]>([])
-  const [imagePreviews, setImagePreviews] = useState<string[]>([])
-  const [validationErrors, setValidationErrors] = useState<IInputErrorState | null>(null)
+  });
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [validationErrors, setValidationErrors] =
+    useState<IInputErrorState | null>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleCategoryChange = (value: Category) => {
-    setFormData((prev) => ({ ...prev, category: value }))
-  }
+    setFormData((prev) => ({ ...prev, category: value }));
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
+    const files = e.target.files;
     if (files) {
-      const newFiles = Array.from(files)
-      setImageFiles((prev) => [...prev, ...newFiles])
-      
+      const newFiles = Array.from(files);
+      setImageFiles((prev) => [...prev, ...newFiles]);
+
       // Create previews
       newFiles.forEach((file) => {
-        const reader = new FileReader()
+        const reader = new FileReader();
         reader.onloadend = () => {
-          setImagePreviews((prev) => [...prev, reader.result as string])
-        }
-        reader.readAsDataURL(file)
-      })
+          setImagePreviews((prev) => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
     }
-  }
+  };
 
   const removeImage = (index: number) => {
-    setImageFiles((prev) => prev.filter((_, i) => i !== index))
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index))
-  }
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setValidationErrors(null)
+    e.preventDefault();
+    setValidationErrors(null);
 
     // Prepare data for validation - Zod will validate all fields and return all errors
     const validationData = {
       title: formData.title.trim(),
       description: formData.description.trim(),
       itinerary: formData.itinerary.trim(),
-      tourFee: formData.tourFee && formData.tourFee.trim() !== "" 
-        ? Number.parseFloat(formData.tourFee) 
-        : 0, // Pass 0 so Zod's positive check will catch it
-      durationDays: formData.durationDays && formData.durationDays.trim() !== "" 
-        ? Number.parseInt(formData.durationDays) 
-        : 0, // Pass 0 so Zod's positive check will catch it
+      tourFee:
+        formData.tourFee && formData.tourFee.trim() !== ""
+          ? Number.parseFloat(formData.tourFee)
+          : 0, // Pass 0 so Zod's positive check will catch it
+      durationDays:
+        formData.durationDays && formData.durationDays.trim() !== ""
+          ? Number.parseInt(formData.durationDays)
+          : 0, // Pass 0 so Zod's positive check will catch it
       meetingPoint: formData.meetingPoint.trim(),
-      maxGroupSize: formData.maxGroupSize && formData.maxGroupSize.trim() !== "" 
-        ? Number.parseInt(formData.maxGroupSize) 
-        : 0, // Pass 0 so Zod's positive check will catch it
+      maxGroupSize:
+        formData.maxGroupSize && formData.maxGroupSize.trim() !== ""
+          ? Number.parseInt(formData.maxGroupSize)
+          : 0, // Pass 0 so Zod's positive check will catch it
       city: formData.city.trim(),
       category: formData.category || ("" as Category), // Empty string will fail enum validation
       images: imageFiles,
-    }
+    };
 
     // Zod validation - this will validate all fields including images
-    const validation = zodValidator(validationData, createListingZodSchema)
+    const validation = zodValidator(validationData, createListingZodSchema);
     if (!validation.success) {
-      setValidationErrors(validation)
-      const errorCount = validation.errors?.length || 0
-      const firstError = validation.errors?.[0]?.message || "Validation failed"
+      setValidationErrors(validation);
+      const errorCount = validation.errors?.length || 0;
+      const firstError = validation.errors?.[0]?.message || "Validation failed";
       if (errorCount === 1) {
-        toast.error(firstError)
+        toast.error(firstError);
       } else {
-        toast.error(`${errorCount} validation errors found. Please check the form fields.`)
+        toast.error(
+          `${errorCount} validation errors found. Please check the form fields.`
+        );
       }
-      return
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
-      const result = await createListing(validationData)
+      const result = await createListing(validationData);
 
       if (result.success) {
-        toast.success("Tour listing created successfully!")
-        router.refresh() // Refresh server-side data
-        router.push("/guide/dashboard?refresh=" + Date.now()) // Add timestamp to force client-side refresh
+        toast.success("Tour listing created successfully!");
+        router.refresh(); // Refresh server-side data
+        router.push("/guide/dashboard?refresh=" + Date.now()); // Add timestamp to force client-side refresh
       } else {
-        toast.error(result.message || "Failed to create listing")
+        toast.error(result.message || "Failed to create listing");
       }
     } catch (error) {
-      console.error("Error creating listing:", error)
-      toast.error("An error occurred while creating the listing")
+      console.error("Error creating listing:", error);
+      toast.error("An error occurred while creating the listing");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -181,13 +196,23 @@ export default function CreateTourPage() {
 
           <Card>
             <CardContent className="p-8">
-              <h1 className="text-2xl font-bold text-foreground">Create New Tour</h1>
-              <p className="mt-2 text-muted-foreground">Share your unique experience with travelers</p>
+              <h1 className="text-2xl font-bold text-foreground">
+                Create New Tour
+              </h1>
+              <p className="mt-2 text-muted-foreground">
+                Share your unique experience with travelers
+              </p>
 
-              <form onSubmit={handleSubmit} className="mt-8 space-y-6" noValidate>
+              <form
+                onSubmit={handleSubmit}
+                className="mt-8 space-y-6"
+                noValidate
+              >
                 {/* Basic Info */}
                 <div className="space-y-4">
-                  <h2 className="text-lg font-semibold text-foreground">Basic Information</h2>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Basic Information
+                  </h2>
 
                   <div className="space-y-2">
                     <Label htmlFor="title">Tour Title *</Label>
@@ -203,19 +228,28 @@ export default function CreateTourPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="category">Category *</Label>
-                    <Select value={formData.category} onValueChange={handleCategoryChange}>
+                    <Select
+                      value={formData.category}
+                      onValueChange={handleCategoryChange}
+                    >
                       <SelectTrigger id="category">
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                       <SelectContent>
                         {categories.map((category) => (
-                          <SelectItem key={category.value} value={category.value}>
+                          <SelectItem
+                            key={category.value}
+                            value={category.value}
+                          >
                             {category.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <InputFieldError field="category" state={validationErrors} />
+                    <InputFieldError
+                      field="category"
+                      state={validationErrors}
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -240,13 +274,18 @@ export default function CreateTourPage() {
                       placeholder="Describe your tour, what makes it special, and what travelers can expect..."
                       rows={6}
                     />
-                    <InputFieldError field="description" state={validationErrors} />
+                    <InputFieldError
+                      field="description"
+                      state={validationErrors}
+                    />
                   </div>
                 </div>
 
                 {/* Tour Details */}
                 <div className="space-y-4 border-t border-border pt-6">
-                  <h2 className="text-lg font-semibold text-foreground">Tour Details</h2>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Tour Details
+                  </h2>
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
@@ -260,7 +299,10 @@ export default function CreateTourPage() {
                         onChange={handleInputChange}
                         placeholder="1"
                       />
-                      <InputFieldError field="durationDays" state={validationErrors} />
+                      <InputFieldError
+                        field="durationDays"
+                        state={validationErrors}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="tourFee">Price per Person ($) *</Label>
@@ -274,7 +316,10 @@ export default function CreateTourPage() {
                         onChange={handleInputChange}
                         placeholder="85"
                       />
-                      <InputFieldError field="tourFee" state={validationErrors} />
+                      <InputFieldError
+                        field="tourFee"
+                        state={validationErrors}
+                      />
                     </div>
                   </div>
 
@@ -290,7 +335,10 @@ export default function CreateTourPage() {
                         onChange={handleInputChange}
                         placeholder="8"
                       />
-                      <InputFieldError field="maxGroupSize" state={validationErrors} />
+                      <InputFieldError
+                        field="maxGroupSize"
+                        state={validationErrors}
+                      />
                     </div>
                   </div>
 
@@ -303,14 +351,21 @@ export default function CreateTourPage() {
                       onChange={handleInputChange}
                       placeholder="e.g., Jackson Square, in front of St. Louis Cathedral"
                     />
-                    <InputFieldError field="meetingPoint" state={validationErrors} />
+                    <InputFieldError
+                      field="meetingPoint"
+                      state={validationErrors}
+                    />
                   </div>
                 </div>
 
                 {/* Itinerary */}
                 <div className="space-y-4 border-t border-border pt-6">
-                  <h2 className="text-lg font-semibold text-foreground">Itinerary</h2>
-                  <p className="text-sm text-muted-foreground">Add the main stops or activities in your tour</p>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Itinerary
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Add the main stops or activities in your tour
+                  </p>
 
                   <div className="space-y-2">
                     <Label htmlFor="itinerary">Tour Itinerary *</Label>
@@ -322,14 +377,21 @@ export default function CreateTourPage() {
                       placeholder="Describe the main stops and activities during your tour..."
                       rows={4}
                     />
-                    <InputFieldError field="itinerary" state={validationErrors} />
+                    <InputFieldError
+                      field="itinerary"
+                      state={validationErrors}
+                    />
                   </div>
                 </div>
 
                 {/* Photos */}
                 <div className="space-y-4 border-t border-border pt-6">
-                  <h2 className="text-lg font-semibold text-foreground">Photos</h2>
-                  <p className="text-sm text-muted-foreground">Add at least 1 high-quality photo of your tour</p>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Photos
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Add at least 1 high-quality photo of your tour
+                  </p>
                   <InputFieldError field="images" state={validationErrors} />
 
                   <div className="space-y-4">
@@ -339,10 +401,12 @@ export default function CreateTourPage() {
                           key={index}
                           className="relative aspect-video overflow-hidden rounded-lg border-2 border-border"
                         >
-                          <img
+                          <Image
                             src={preview}
                             alt={`Upload ${index + 1}`}
                             className="h-full w-full object-cover"
+                            width={300}
+                            height={300}
                           />
                           <button
                             type="button"
@@ -357,7 +421,9 @@ export default function CreateTourPage() {
                       {imageFiles.length < 10 && (
                         <label className="flex aspect-video cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 hover:bg-muted">
                           <Upload className="h-8 w-8 text-muted-foreground" />
-                          <span className="mt-2 text-sm text-muted-foreground">Upload Photo</span>
+                          <span className="mt-2 text-sm text-muted-foreground">
+                            Upload Photo
+                          </span>
                           <input
                             type="file"
                             accept="image/*"
@@ -373,7 +439,12 @@ export default function CreateTourPage() {
 
                 {/* Submit */}
                 <div className="flex gap-4 border-t border-border pt-6">
-                  <Button type="submit" size="lg" className="flex-1 sm:flex-none" disabled={isSubmitting}>
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="flex-1 sm:flex-none"
+                    disabled={isSubmitting}
+                  >
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -384,7 +455,13 @@ export default function CreateTourPage() {
                     )}
                   </Button>
                   <Link href="/guide/dashboard" className="flex-1 sm:flex-none">
-                    <Button type="button" variant="outline" size="lg" className="w-full bg-transparent" disabled={isSubmitting}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      className="w-full bg-transparent"
+                      disabled={isSubmitting}
+                    >
                       Cancel
                     </Button>
                   </Link>
@@ -397,5 +474,5 @@ export default function CreateTourPage() {
 
       <Footer />
     </div>
-  )
+  );
 }
