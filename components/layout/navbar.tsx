@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import { logoutUser } from "@/services/auth/logoutUser";
-import { MapPin, Menu, X } from "lucide-react";
+import { LogOut, MapPin, Menu, User as UserIcon, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -71,8 +71,8 @@ export function Navbar() {
           variant={isActive ? "secondary" : "ghost"}
           size="sm"
           className={cn(
-            "font-medium transition-all",
-            isActive && "bg-secondary text-secondary-foreground"
+            "font-medium transition-all duration-300 hover:scale-105",
+            isActive && "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20"
           )}
         >
           {children}
@@ -87,12 +87,14 @@ export function Navbar() {
         <div className="flex h-full items-center justify-between">
           <Link
             href="/"
-            className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
+            className="group flex items-center gap-2.5 transition-opacity hover:opacity-80"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-sm">
-              <MapPin className="h-4.5 w-4.5 text-primary-foreground" />
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg ring-1 ring-primary/20 transition-all duration-300 group-hover:scale-110">
+              {/* Glow effect */}
+              <div className="absolute inset-0 rounded-xl bg-primary/40 opacity-0 blur-lg transition-opacity duration-300 group-hover:opacity-100" />
+              <MapPin className="relative h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-lg font-semibold tracking-tight text-foreground">
+            <span className="text-lg font-bold tracking-tight text-foreground">
               LocalGuide
             </span>
           </Link>
@@ -105,8 +107,10 @@ export function Navbar() {
                 <div className="ml-2 flex items-center gap-2">
                   <NavLink href="/login">Login</NavLink>
                   <Link href="/register">
-                    <Button size="sm" className="font-medium shadow-sm">
-                      Register
+                    <Button size="sm" className="group relative font-medium shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                      {/* Glow effect */}
+                      <div className="absolute inset-0 rounded-md bg-primary/20 opacity-0 blur-lg transition-opacity duration-300 group-hover:opacity-75" />
+                      <span className="relative">Register</span>
                     </Button>
                   </Link>
                 </div>
@@ -115,29 +119,45 @@ export function Navbar() {
               <>
                 <NavLink href="/explore">Explore Tours</NavLink>
                 <NavLink href="/tourist/dashboard">My Bookings</NavLink>
-                <NavLink href="/profile">Profile</NavLink>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="font-medium"
-                  onClick={handleLogout}
-                >
-                  Logout
-                </Button>
+                <div className="ml-2 flex items-center gap-3">
+                  <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-1.5">
+                    <UserIcon className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium text-foreground">
+                      {user?.name?.split(' ')[0] || 'User'}
+                    </span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="group font-medium transition-all duration-300 hover:scale-105 hover:text-destructive"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="mr-1.5 h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                    Logout
+                  </Button>
+                </div>
               </>
             ) : normalizedRole === "GUIDE" ? (
               <>
                 <NavLink href="/explore">Explore Tours</NavLink>
                 <NavLink href="/guide/dashboard">Dashboard</NavLink>
-                <NavLink href="/profile">Profile</NavLink>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="font-medium"
-                  onClick={handleLogout}
-                >
-                  Logout
-                </Button>
+                <div className="ml-2 flex items-center gap-3">
+                  <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-1.5">
+                    <UserIcon className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium text-foreground">
+                      {user?.name?.split(' ')[0] || 'User'}
+                    </span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="group font-medium transition-all duration-300 hover:scale-105 hover:text-destructive"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="mr-1.5 h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                    Logout
+                  </Button>
+                </div>
               </>
             ) : normalizedRole === "ADMIN" ? (
               <>
@@ -151,21 +171,29 @@ export function Navbar() {
                 <NavLink href="/admin/dashboard/booking-management">
                   Manage Bookings
                 </NavLink>
-                <NavLink href="/profile">Profile</NavLink>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="font-medium"
-                  onClick={handleLogout}
-                >
-                  Logout
-                </Button>
+                <div className="ml-2 flex items-center gap-3">
+                  <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-1.5">
+                    <UserIcon className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium text-foreground">
+                      {user?.name?.split(' ')[0] || 'Admin'}
+                    </span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="group font-medium transition-all duration-300 hover:scale-105 hover:text-destructive"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="mr-1.5 h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                    Logout
+                  </Button>
+                </div>
               </>
             ) : null}
           </div>
 
           <button
-            className="md:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border-2 border-border/50 bg-background transition-all duration-300 hover:border-primary/30 hover:bg-primary/5 hover:scale-110 md:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -178,7 +206,7 @@ export function Navbar() {
         </div>
 
         {isMenuOpen && (
-          <div className="absolute left-0 right-0 top-16 border-t bg-background/95 backdrop-blur-md py-4 shadow-lg md:hidden animate-in slide-in-from-top-5">
+          <div className="absolute left-0 right-0 top-16 border-t border-border/50 bg-gradient-to-b from-background via-background to-muted/20 backdrop-blur-xl py-4 shadow-2xl md:hidden animate-in slide-in-from-top-5">
             <div className="flex flex-col gap-2 px-4">
               {!isLoggedIn ? (
                 <>

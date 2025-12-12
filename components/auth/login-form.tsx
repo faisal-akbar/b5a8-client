@@ -14,7 +14,7 @@ import { loginUser } from "@/services/auth/loginUser";
 import { loginValidationZodSchema } from "@/zod/auth.validation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
-import { MapPin } from "lucide-react";
+import { ArrowRight, Lock, Mail, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -64,8 +64,10 @@ export default function LoginForm({ redirect }: LoginFormProps) {
       transition={{ duration: 0.5 }}
       className="w-full max-w-md"
     >
-      <Card className="border-slate-200 shadow-xl">
-        <CardHeader className="space-y-1 text-center pb-8">
+      <Card className="relative overflow-hidden border-2 border-primary/20 shadow-2xl backdrop-blur-sm">
+        {/* Decorative gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
+        <CardHeader className="relative space-y-1 text-center pb-8">
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -75,28 +77,33 @@ export default function LoginForm({ redirect }: LoginFormProps) {
               damping: 20,
               delay: 0.1,
             }}
-            className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10"
+            className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-primary/20"
           >
-            <MapPin className="h-7 w-7 text-primary" />
+            {/* Glow effect */}
+            <div className="absolute inset-0 rounded-2xl bg-primary/20 opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-50" />
+            <MapPin className="relative h-8 w-8 text-primary" />
           </motion.div>
-          <CardTitle className="text-2xl font-bold tracking-tight">
+          <CardTitle className="text-3xl font-bold tracking-tight">
             Welcome Back
           </CardTitle>
-          <CardDescription className="text-base">
+          <CardDescription className="text-base text-muted-foreground">
             Sign in to your account to continue your journey
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <CardContent className="relative space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="text"
-                placeholder="name@example.com"
-                className="h-11 bg-muted/30 focus:bg-background"
-                {...register("email")}
-              />
+              <Label htmlFor="email" className="font-medium">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="text"
+                  placeholder="name@example.com"
+                  className="h-12 border-2 border-border/50 bg-background pl-11 transition-all duration-300 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                  {...register("email")}
+                />
+              </div>
               {errors.email && (
                 <p className="text-sm text-destructive">
                   {errors.email.message}
@@ -105,7 +112,7 @@ export default function LoginForm({ redirect }: LoginFormProps) {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="font-medium">Password</Label>
                 {/* <Link
                   href="/forgot-password"
                   className="text-sm font-medium text-primary hover:underline"
@@ -113,13 +120,16 @@ export default function LoginForm({ redirect }: LoginFormProps) {
                   Forgot password?
                 </Link> */}
               </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                className="h-11 bg-muted/30 focus:bg-background"
-                {...register("password")}
-              />
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  className="h-12 border-2 border-border/50 bg-background pl-11 transition-all duration-300 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                  {...register("password")}
+                />
+              </div>
               {errors.password && (
                 <p className="text-sm text-destructive">
                   {errors.password.message}
@@ -129,19 +139,28 @@ export default function LoginForm({ redirect }: LoginFormProps) {
 
             <Button
               type="submit"
-              className="w-full h-11 text-base shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
+              className="group relative w-full h-12 text-base font-semibold shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-0.5"
               size="lg"
               disabled={isPending}
             >
-              {isPending ? "Signing in..." : "Sign In"}
+              {/* Glow effect */}
+              <div className="absolute inset-0 rounded-md bg-primary/20 opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-75" />
+              <span className="relative flex items-center justify-center gap-2">
+                {isPending ? "Signing in..." : (
+                  <>
+                    Sign In
+                    <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+                  </>
+                )}
+              </span>
             </Button>
-          </form>
+          </form>          
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-muted-foreground">
             Don't have an account?{" "}
             <Link
               href="/register"
-              className="font-medium text-primary hover:underline hover:text-primary/80 transition-colors"
+              className="font-semibold text-primary underline-offset-4 transition-all duration-300 hover:underline hover:text-primary/80"
             >
               Sign up
             </Link>

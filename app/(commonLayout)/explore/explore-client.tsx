@@ -17,7 +17,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import type { GuideListing } from "@/types/guide";
 import type { CategoryData } from "@/types/profile";
 import { motion } from "framer-motion";
-import { Clock, Filter, MapPin, Search, Star, Users, X } from "lucide-react";
+import { Clock, DollarSign, Filter, Globe, MapPin, Search, Sparkles, Star, Tag, Users, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -214,7 +214,12 @@ export function ExploreClient({
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
         {/* Search Header */}
-        <section className="relative border-b border-border bg-linear-to-r from-primary/10 via-primary/5 to-background py-12 lg:py-16">
+        <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-primary/5 via-background to-background py-12 lg:py-16">
+          {/* Decorative background elements */}
+          <div className="absolute inset-0 -z-10">
+            <div className="absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-primary/10 blur-3xl animate-pulse" />
+            <div className="absolute right-1/4 bottom-1/3 h-96 w-96 rounded-full bg-primary/10 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          </div>
           <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -222,10 +227,10 @@ export function ExploreClient({
               transition={{ duration: 0.5 }}
               className="max-w-3xl"
             >
-              <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-                Explore Tours
+              <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+                Explore <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Tours</span>
               </h1>
-              <p className="mt-4 text-lg text-muted-foreground">
+              <p className="mt-4 text-lg text-muted-foreground lg:text-xl">
                 Discover unique experiences with local experts around the world.
               </p>
             </motion.div>
@@ -238,18 +243,18 @@ export function ExploreClient({
               className="mt-8 flex flex-col gap-4 sm:flex-row"
             >
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-primary transition-all duration-300 group-hover:scale-110" />
                 <Input
                   placeholder="Search tours, cities, descriptions..."
                   value={searchInput}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  className="h-12 border-primary/20 bg-background pl-11 shadow-sm transition-all focus:border-primary focus:ring-primary"
+                  className="group h-14 border-2 border-border/50 bg-background/50 pl-12 text-base font-medium shadow-lg backdrop-blur-sm transition-all duration-300 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 hover:border-primary/30"
                 />
               </div>
               <Button
                 size="lg"
                 variant="outline"
-                className="h-12 border-primary/20 bg-background sm:w-auto lg:hidden"
+                className="h-14 border-2 border-border/50 bg-background/50 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-primary/50 hover:scale-105 sm:w-auto lg:hidden"
                 onClick={() => setShowMobileFilters(!showMobileFilters)}
               >
                 <Filter className="mr-2 h-5 w-5" />
@@ -270,27 +275,39 @@ export function ExploreClient({
                 }`}
               >
                 <div className="sticky top-24">
-                  <Card className="border-primary/10 shadow-md">
-                    <CardContent className="p-6">
+                  <Card className="relative overflow-hidden border-2 border-primary/20 shadow-xl backdrop-blur-sm transition-all duration-300 hover:border-primary/30 hover:shadow-2xl">
+                    {/* Decorative gradient background */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
+                    
+                    <CardContent className="relative p-6">
                       <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-foreground">
-                          Filters
-                        </h2>
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                            <Filter className="h-4 w-4 text-primary" />
+                          </div>
+                          <h2 className="text-lg font-bold text-foreground">
+                            Filters
+                          </h2>
+                        </div>
                         {hasActiveFilters && (
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={handleClearFilters}
-                            className="text-primary hover:text-primary/80"
+                            className="text-primary transition-all duration-300 hover:text-primary/80 hover:scale-105"
                           >
+                            <X className="mr-1 h-4 w-4" />
                             Clear all
                           </Button>
                         )}
                       </div>
 
                       {/* Price Range */}
-                      <div className="mt-6 space-y-4">
-                        <Label>Price Range</Label>
+                      <div className="mt-6 space-y-4 rounded-lg border border-border/50 bg-muted/20 p-4">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-primary" />
+                          <Label className="font-semibold">Price Range</Label>
+                        </div>
                         <div className="space-y-4">
                           <Slider
                             value={priceRange}
@@ -302,16 +319,20 @@ export function ExploreClient({
                             step={10}
                             className="w-full"
                           />
-                          <div className="flex items-center justify-between text-sm text-muted-foreground">
-                            <span>${priceRange[0]}</span>
-                            <span>${priceRange[1]}</span>
+                          <div className="flex items-center justify-between">
+                            <div className="rounded-lg bg-background px-3 py-1.5 text-sm font-semibold text-foreground shadow-sm">
+                              ${priceRange[0]}
+                            </div>
+                            <div className="h-px flex-1 bg-border mx-2" />
+                            <div className="rounded-lg bg-background px-3 py-1.5 text-sm font-semibold text-foreground shadow-sm">
+                              ${priceRange[1]}
+                            </div>
                           </div>
                           <Button
                             size="sm"
-                            variant="outline"
                             onClick={handlePriceChange}
                             disabled={isPending}
-                            className="w-full"
+                            className="w-full shadow-lg transition-all duration-300 hover:scale-105"
                           >
                             Apply Price Filter
                           </Button>
@@ -320,65 +341,111 @@ export function ExploreClient({
 
                       {/* Category */}
                       <div className="mt-6 space-y-3">
-                        <Label>Category</Label>
+                        <div className="flex items-center gap-2">
+                          <Tag className="h-4 w-4 text-primary" />
+                          <Label className="font-semibold">Category</Label>
+                        </div>
                         <div className="flex flex-wrap gap-2">
                           {initialCategories.length > 0 &&
-                            initialCategories.map((category) => (
-                              <Badge
-                                key={category.category}
-                                variant={
-                                  selectedCategory === category.category
-                                    ? "default"
-                                    : "outline"
-                                }
-                                className="cursor-pointer transition-all hover:scale-105"
-                                onClick={() =>
-                                  handleCategoryChange(category.category)
-                                }
-                              >
-                                {category.category.charAt(0).toUpperCase() +
-                                  category.category.slice(1).toLowerCase()}
-                              </Badge>
-                            ))}
+                            initialCategories.map((category, index) => {
+                              const gradients = [
+                                "from-blue-500 to-cyan-500",
+                                "from-purple-500 to-pink-500",
+                                "from-orange-500 to-red-500",
+                                "from-green-500 to-emerald-500",
+                                "from-amber-500 to-yellow-500",
+                                "from-rose-500 to-pink-500",
+                                "from-indigo-500 to-purple-500",
+                                "from-teal-500 to-cyan-500"
+                              ];
+                              const gradient = gradients[index % gradients.length];
+                              const isSelected = selectedCategory === category.category;
+                              
+                              return (
+                                <Badge
+                                  key={category.category}
+                                  variant={isSelected ? "default" : "outline"}
+                                  className={`group/cat relative cursor-pointer overflow-hidden border-0 px-3 py-1.5 font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+                                    isSelected ? '' : 'bg-muted/50'
+                                  }`}
+                                  onClick={() =>
+                                    handleCategoryChange(category.category)
+                                  }
+                                >
+                                  {!isSelected && (
+                                    <div className={`absolute inset-0 bg-gradient-to-r ${gradient} opacity-0 transition-opacity duration-300 group-hover/cat:opacity-100`} />
+                                  )}
+                                  <span className={`relative transition-colors duration-300 ${
+                                    isSelected ? '' : 'group-hover/cat:text-white'
+                                  }`}>
+                                    {category.category.charAt(0).toUpperCase() +
+                                      category.category.slice(1).toLowerCase()}
+                                  </span>
+                                  {!isSelected && (
+                                    <Sparkles className="absolute right-1 top-1 h-3 w-3 text-white opacity-0 transition-all duration-300 group-hover/cat:opacity-100" />
+                                  )}
+                                </Badge>
+                              );
+                            })}
                         </div>
                       </div>
 
                       {/* Featured Cities */}
                       <div className="mt-6 space-y-3">
-                        <Label>Featured Cities</Label>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-primary" />
+                          <Label className="font-semibold">Featured Cities</Label>
+                        </div>
                         <div className="flex flex-wrap gap-2">
                           {initialFeaturedCities.length > 0 &&
-                            initialFeaturedCities.map((city) => (
-                              <Badge
-                                key={city.city}
-                                variant={
-                                  selectedCity === city.city
-                                    ? "default"
-                                    : "outline"
-                                }
-                                className="cursor-pointer transition-all hover:scale-105"
-                                onClick={() => handleCityChange(city.city)}
-                              >
-                                {city.city}
-                              </Badge>
-                            ))}
+                            initialFeaturedCities.map((city) => {
+                              const isSelected = selectedCity === city.city;
+                              
+                              return (
+                                <Badge
+                                  key={city.city}
+                                  variant={isSelected ? "default" : "outline"}
+                                  className={`group/city cursor-pointer gap-1.5 px-3 py-1.5 font-medium transition-all duration-300 hover:scale-105 hover:shadow-md ${
+                                    isSelected ? '' : 'hover:border-primary/50'
+                                  }`}
+                                  onClick={() => handleCityChange(city.city)}
+                                >
+                                  <MapPin className="h-3 w-3" />
+                                  {city.city}
+                                  {city.listingsCount && (
+                                    <span className="ml-1 text-xs opacity-70">
+                                      ({city.listingsCount})
+                                    </span>
+                                  )}
+                                </Badge>
+                              );
+                            })}
                         </div>
                       </div>
 
                       {/* Language */}
                       <div className="mt-6 space-y-3">
-                        <Label>Language</Label>
+                        <div className="flex items-center gap-2">
+                          <Globe className="h-4 w-4 text-primary" />
+                          <Label className="font-semibold">Language</Label>
+                        </div>
                         <Select
                           value={selectedLanguage || "all"}
                           onValueChange={(value) =>
                             handleLanguageChange(value === "all" ? "" : value)
                           }
                         >
-                          <SelectTrigger className="border-input bg-background w-full">
-                            <SelectValue placeholder="All languages" />
+                          <SelectTrigger className="w-full h-10 border-2 border-border/50 bg-background transition-all duration-300 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-primary/20">
+                            <div className="flex items-center gap-2">
+                              <SelectValue placeholder="All languages" />
+                            </div>
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="all">All languages</SelectItem>
+                            <SelectItem value="all">
+                              <div className="flex items-center gap-2">
+                                All languages
+                              </div>
+                            </SelectItem>
                             {LANGUAGES.map((language) => (
                               <SelectItem key={language} value={language}>
                                 {language}
@@ -540,19 +607,23 @@ export function ExploreClient({
                         transition={{ duration: 0.3, delay: index * 0.05 }}
                       >
                         <Link href={`/tours/${listing.id}`}>
-                          <Card className="group cursor-pointer overflow-hidden border-primary/10 transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl">
+                          <Card className="py-0 group relative cursor-pointer overflow-hidden border-2 border-border/50 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:border-primary/50 hover:shadow-2xl">
+                            {/* Gradient overlay on hover */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                             <div className="flex flex-col sm:flex-row">
                               <div className="relative h-64 overflow-hidden sm:h-auto sm:w-80">
                                 <Image
                                   src={listing.images[0]}
                                   alt={listing.title}
                                   fill
-                                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                  className="object-cover transition-all duration-700 group-hover:scale-125 group-hover:rotate-2"
                                   unoptimized={listing.images[0]?.startsWith(
                                     "http"
                                   )}
                                 />
-                                <Badge className="absolute right-3 top-3 bg-background/90 text-foreground backdrop-blur-sm hover:bg-background/90">
+                                {/* Image overlay gradient */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                                <Badge className="absolute right-3 top-3 border-0 bg-background/95 font-semibold text-foreground shadow-lg backdrop-blur-md ring-1 ring-primary/10 transition-all duration-300 hover:bg-background/95 hover:scale-105">
                                   {listing.category.charAt(0).toUpperCase() +
                                     listing.category.slice(1).toLowerCase()}
                                 </Badge>
@@ -565,11 +636,11 @@ export function ExploreClient({
                                   </Badge>
                                 )}
                               </div>
-                              <CardContent className="flex flex-1 flex-col p-6">
+                              <CardContent className="relative flex flex-1 flex-col p-6">
                                 <div className="flex-1">
                                   <div className="flex items-start justify-between gap-4">
                                     <div className="flex-1">
-                                      <h3 className="text-xl font-bold text-foreground transition-colors group-hover:text-primary">
+                                      <h3 className="text-xl font-bold text-foreground transition-colors duration-300 group-hover:text-primary">
                                         {listing.title}
                                       </h3>
                                       <p className="mt-1 text-sm text-muted-foreground">
@@ -579,18 +650,24 @@ export function ExploreClient({
                                       </p>
                                     </div>
                                     <div className="text-right">
-                                      <div className="text-2xl font-bold text-primary">
-                                        ${listing.tourFee}
-                                      </div>
-                                      <div className="text-xs text-muted-foreground">
-                                        per person
+                                      <div className="relative inline-block">
+                                        {/* Price glow effect */}
+                                        <div className="absolute inset-0 rounded-lg bg-primary/20 opacity-0 blur-lg transition-opacity duration-300 group-hover:opacity-100" />
+                                        <div className="relative rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 px-4 py-2 shadow-sm ring-1 ring-primary/20">
+                                          <div className="text-2xl font-bold text-primary">
+                                            ${listing.tourFee}
+                                          </div>
+                                          <div className="text-xs font-medium text-muted-foreground">
+                                            per person
+                                          </div>
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
 
-                                  <div className="mt-3 flex items-center gap-1 text-sm">
-                                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                                    <span className="text-muted-foreground">
+                                  <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-muted/50 px-3 py-1.5 text-sm font-medium transition-colors duration-300 group-hover:bg-muted w-fit">
+                                    <MapPin className="h-4 w-4 text-primary" />
+                                    <span className="text-foreground">
                                       {listing.city}
                                     </span>
                                   </div>
@@ -599,30 +676,30 @@ export function ExploreClient({
                                     {listing.description}
                                   </p>
 
-                                  <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                  <div className="mt-4 flex flex-wrap gap-3 text-sm">
                                     {listing.averageRating && (
-                                      <div className="flex items-center gap-1 rounded-full bg-primary/5 px-2 py-1 text-primary">
-                                        <Star className="h-3.5 w-3.5 fill-primary" />
-                                        <span className="font-semibold">
+                                      <div className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 px-3 py-1.5 ring-1 ring-amber-500/20 transition-all duration-300 hover:scale-105 hover:shadow-md">
+                                        <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                                        <span className="font-bold text-amber-600 dark:text-amber-400">
                                           {listing.averageRating.toFixed(1)}
                                         </span>
-                                        <span className="text-muted-foreground">
+                                        <span className="text-xs text-muted-foreground">
                                           ({listing._count.reviews})
                                         </span>
                                       </div>
                                     )}
-                                    <div className="flex items-center gap-1 rounded-full bg-muted px-2 py-1">
-                                      <Clock className="h-3.5 w-3.5" />
-                                      <span>
+                                    <div className="flex items-center gap-1.5 rounded-lg bg-muted/80 px-3 py-1.5 font-medium transition-all duration-300 hover:bg-muted hover:scale-105">
+                                      <Clock className="h-4 w-4 text-primary" />
+                                      <span className="text-foreground">
                                         {listing.durationDays}{" "}
                                         {listing.durationDays === 1
                                           ? "day"
                                           : "days"}
                                       </span>
                                     </div>
-                                    <div className="flex items-center gap-1 rounded-full bg-muted px-2 py-1">
-                                      <Users className="h-3.5 w-3.5" />
-                                      <span>Up to {listing.maxGroupSize}</span>
+                                    <div className="flex items-center gap-1.5 rounded-lg bg-muted/80 px-3 py-1.5 font-medium transition-all duration-300 hover:bg-muted hover:scale-105">
+                                      <Users className="h-4 w-4 text-primary" />
+                                      <span className="text-foreground">Up to {listing.maxGroupSize}</span>
                                     </div>
                                   </div>
                                 </div>
