@@ -94,6 +94,34 @@ npm start
 
 ---
 
+👤 Dummy Users for Testing
+
+```
+Email and password for some dummy users:
+// ADMIN
+email: super@next.com
+password: ph@123456
+
+// TOURIST
+email: john.tourist@localguide.com
+password: tourist123
+
+// GUIDE
+email: ahmed.guide@localguide.com
+password: guide123
+
+```
+
+---
+
+## Stripe Integration Card for testing
+
+- Card Number: 4242 4242 4242 4242
+- Expiry Date: 05/2026
+- CVV: 123
+- Zip Code: 12345
+- Country: United States
+
 ## 📁 Project Structure
 
 ```
