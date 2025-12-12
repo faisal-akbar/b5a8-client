@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SERVICE_FEE } from "@/constants/service-fee";
 import { getBookingById } from "@/services/booking/booking.service";
 import { removeFromWishlist } from "@/services/wishlist/wishlist.service";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -74,6 +75,7 @@ type Booking = {
   durationDays?: number;
   guideEmail?: string;
   totalPrice?: number;
+  guideDailyRate?: number;
 };
 
 type WishlistTableItem = {
@@ -289,6 +291,7 @@ export function TouristDashboardClient({
           category: result.data.listing?.category || undefined,
           durationDays: result.data.listing?.durationDays || undefined,
           guideEmail: result.data.guide?.user?.email || undefined,
+          guideDailyRate: result.data.guide?.dailyRate,
           totalPrice: result.data.payment?.amount
             ? result.data.payment.amount
             : result.data.listing?.tourFee || 0,
@@ -414,11 +417,29 @@ export function TouristDashboardClient({
       accessorKey: "paymentAmount",
       header: "Total Amount",
       cell: ({ row }) => {
-        const amount = row.original.paymentAmount || row.original.price;
+        const booking = row.original;
+
+        // If paymentAmount exists, use it
+        if (booking.paymentAmount) {
+          const formatted = new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+          }).format(booking.paymentAmount);
+          return <div className="font-medium">{formatted}</div>;
+        }
+
+        // Otherwise, calculate: numberOfGuests * tourFee + serviceFee + guideDailyRate
+        const tourFee = booking.price || 0;
+        const numberOfGuests = booking.guests || 1;
+        const basePrice = tourFee * numberOfGuests;
+        const serviceFee = Math.round(basePrice * SERVICE_FEE);
+        const guideDailyRate = booking.guideDailyRate || 0;
+        const calculatedTotal = basePrice + serviceFee + guideDailyRate;
+
         const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
-        }).format(amount);
+        }).format(calculatedTotal);
         return <div className="font-medium">{formatted}</div>;
       },
     },
@@ -609,11 +630,29 @@ export function TouristDashboardClient({
       accessorKey: "price",
       header: "Amount Paid",
       cell: ({ row }) => {
-        const amount = row.original.paymentAmount || row.original.price;
+        const booking = row.original;
+
+        // If paymentAmount exists, use it
+        if (booking.paymentAmount) {
+          const formatted = new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+          }).format(booking.paymentAmount);
+          return <div className="font-medium">{formatted}</div>;
+        }
+
+        // Otherwise, calculate: numberOfGuests * tourFee + serviceFee + guideDailyRate
+        const tourFee = booking.price || 0;
+        const numberOfGuests = booking.guests || 1;
+        const basePrice = tourFee * numberOfGuests;
+        const serviceFee = Math.round(basePrice * SERVICE_FEE);
+        const guideDailyRate = booking.guideDailyRate || 0;
+        const calculatedTotal = basePrice + serviceFee + guideDailyRate;
+
         const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
-        }).format(amount);
+        }).format(calculatedTotal);
         return <div className="font-medium">{formatted}</div>;
       },
     },

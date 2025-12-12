@@ -132,6 +132,7 @@ type Booking = {
   durationDays?: number;
   guideEmail?: string;
   totalPrice?: number;
+  guideDailyRate?: number;
 };
 
 type WishlistTableItem = {
@@ -175,7 +176,7 @@ function transformBooking(apiBooking: ApiBooking): Booking {
       location: apiBooking.listing?.city || "Unknown Location",
       city: apiBooking.listing?.city || "Unknown City",
       date: apiBooking.date,
-      guests: apiBooking.numberOfGuests || 1,
+      guests: apiBooking.numberOfGuests ?? 1,
       price: apiBooking.listing?.tourFee || 0,
       status: (apiBooking.status || "PENDING").toLowerCase() as
         | "confirmed"
@@ -195,6 +196,7 @@ function transformBooking(apiBooking: ApiBooking): Booking {
       category: apiBooking.listing?.category,
       durationDays: apiBooking.listing?.durationDays,
       guideEmail: apiBooking.guide?.user?.email,
+      guideDailyRate: apiBooking.guide?.dailyRate,
       totalPrice: apiBooking.payment?.amount
         ? apiBooking.payment.amount
         : apiBooking.listing?.tourFee || 0,

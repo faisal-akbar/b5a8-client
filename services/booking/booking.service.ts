@@ -5,6 +5,7 @@ import { serverFetch } from "@/lib/server-fetch";
 export interface CreateBookingParams {
   listingId: string;
   date: string; // ISO date string
+  numberOfGuests?: number;
 }
 
 export interface GetMyBookingsParams {
@@ -28,7 +29,11 @@ export interface UpdateBookingStatusParams {
 /**
  * Create booking (Tourist only)
  */
-export async function createBooking({ listingId, date }: CreateBookingParams) {
+export async function createBooking({
+  listingId,
+  date,
+  numberOfGuests,
+}: CreateBookingParams) {
   try {
     const response = await serverFetch.post("/bookings", {
       headers: {
@@ -37,6 +42,7 @@ export async function createBooking({ listingId, date }: CreateBookingParams) {
       body: JSON.stringify({
         listingId,
         date,
+        numberOfGuests: numberOfGuests ?? 1,
       }),
     });
 

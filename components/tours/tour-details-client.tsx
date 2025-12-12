@@ -226,6 +226,7 @@ export function TourDetailsClient({
       const result = await createBooking({
         listingId: listing.id,
         date: bookingDateTime,
+        numberOfGuests: parseInt(guests, 10),
       });
 
       if (result.success) {
