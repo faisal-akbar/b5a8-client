@@ -1,7 +1,6 @@
 "use client";
 
 import { DataTable } from "@/components/dashboard/data-table";
-import { StatCard } from "@/components/dashboard/stat-card";
 import { BookingDetailsModal } from "@/components/modals/booking-details-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,6 +42,7 @@ import type {
   GuideStats,
 } from "@/types/guide";
 import type { ColumnDef } from "@tanstack/react-table";
+import { motion } from "framer-motion";
 import {
   Calendar,
   CalendarDays,
@@ -52,11 +52,12 @@ import {
   DollarSign,
   Edit,
   Eye,
+  Map,
   MoreHorizontal,
   Star,
   Trash2,
   TrendingUp,
-  X,
+  X
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -895,32 +896,36 @@ export function GuideDashboardClient({
 
   return (
     <div className="flex min-h-screen flex-col">
-      <main className="flex-1 bg-muted/30 py-8">
+      <main className="flex-1 bg-muted/30 py-8 relative overflow-hidden">
         <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-          <div
-            className="mb-8 animate-in fade-in slide-in-from-top-4"
-            style={{ animationDuration: "300ms" }}
+          {/* Decorative background elements */}
+          <div className="absolute inset-0 -z-10">
+            <div className="absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-primary/5 blur-3xl animate-pulse" />
+            <div className="absolute right-1/4 bottom-1/3 h-96 w-96 rounded-full bg-primary/5 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mb-8"
           >
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-foreground">
+                <div className="flex items-center gap-3 mb-2">
+                  <Badge className="gap-1.5 bg-primary/10 text-primary hover:bg-primary/20">
+                    <Map className="h-3.5 w-3.5" />
+                    Guide Dashboard
+                  </Badge>
+                </div>
+                <h1 className="text-4xl font-bold tracking-tight text-foreground">
                   Guide Dashboard
                 </h1>
-                <p className="mt-2 text-muted-foreground">
-                  Manage your tours and bookings
+                <p className="mt-2 text-lg text-muted-foreground">
+                  Manage your tours, bookings, and earnings
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                {/* <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    router.refresh()
-                  }}
-                >
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Refresh
-                </Button> */}
                 {/* {initialData.badges.length > 0 && (
                   <div className="flex gap-2">
                     {initialData.badges.map((badge) => (
@@ -932,41 +937,83 @@ export function GuideDashboardClient({
                 )} */}
               </div>
             </div>
-          </div>
+          </motion.div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-            <StatCard
-              title="Total Earnings"
-              value={`$${initialData.stats.totalEarnings.toLocaleString()}`}
-              description="Total earnings from all completed bookings"
-              icon={DollarSign}
-              index={0}
-            />
-            <StatCard
-              title="Completed Bookings"
-              value={initialData.stats.totalCompletedBookings.toString()}
-              description="Total completed bookings"
-              icon={CalendarDays}
-              index={1}
-            />
-            <StatCard
-              title="Average Rating"
-              value={
-                initialData.stats.averageRating > 0
-                  ? initialData.stats.averageRating.toFixed(1)
-                  : "0.0"
-              }
-              description="Average rating from all reviews"
-              icon={Star}
-              index={2}
-            />
-            <StatCard
-              title="Active Tours"
-              value={initialData.stats.activeTours.toString()}
-              description={`${initialData.stats.totalTours} total listings`}
-              icon={TrendingUp}
-              index={3}
-            />
+            <Card className="group relative overflow-hidden border-2 border-border/50 shadow-lg transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:-translate-y-1">
+              {/* Gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between space-y-0 pb-2">
+                  <p className="text-sm font-medium text-muted-foreground">Total Earnings</p>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 ring-1 ring-yellow-500/20">
+                    <DollarSign className="h-5 w-5 text-yellow-600" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-1">
+                  <span className="text-2xl font-bold">${initialData.stats.totalEarnings.toLocaleString()}</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">From completed bookings</p>
+              </CardContent>
+            </Card>
+
+            <Card className="group relative overflow-hidden border-2 border-border/50 shadow-lg transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:-translate-y-1">
+              {/* Gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between space-y-0 pb-2">
+                  <p className="text-sm font-medium text-muted-foreground">Completed Bookings</p>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/5 ring-1 ring-blue-500/20">
+                    <CalendarDays className="h-5 w-5 text-blue-600" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-1">
+                  <span className="text-2xl font-bold">{initialData.stats.totalCompletedBookings}</span>
+                  <span className="text-xs text-muted-foreground">bookings</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">Successfully guided</p>
+              </CardContent>
+            </Card>
+
+            <Card className="group relative overflow-hidden border-2 border-border/50 shadow-lg transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:-translate-y-1">
+              {/* Gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between space-y-0 pb-2">
+                  <p className="text-sm font-medium text-muted-foreground">Average Rating</p>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-500/5 ring-1 ring-purple-500/20">
+                    <Star className="h-5 w-5 text-purple-600" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-1">
+                  <span className="text-2xl font-bold">
+                    {initialData.stats.averageRating > 0
+                      ? initialData.stats.averageRating.toFixed(1)
+                      : "0.0"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">/ 5.0</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">From tourist reviews</p>
+              </CardContent>
+            </Card>
+
+            <Card className="group relative overflow-hidden border-2 border-border/50 shadow-lg transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:-translate-y-1">
+              {/* Gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between space-y-0 pb-2">
+                  <p className="text-sm font-medium text-muted-foreground">Active Tours</p>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-green-500/10 to-green-500/5 ring-1 ring-green-500/20">
+                    <TrendingUp className="h-5 w-5 text-green-600" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-1">
+                  <span className="text-2xl font-bold">{initialData.stats.activeTours}</span>
+                  <span className="text-xs text-muted-foreground">active</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">of {initialData.stats.totalTours} total listings</p>
+              </CardContent>
+            </Card>
           </div>
 
           <div
@@ -1012,312 +1059,328 @@ export function GuideDashboardClient({
               </div>
 
               <TabsContent value="upcoming">
-                <DataTable
-                  columns={bookingsColumns}
-                  data={initialData.upcomingBookings}
-                  searchKey="tourist.user.name"
-                  searchPlaceholder="Search by tourist name..."
-                  initialColumnVisibility={{
-                    id: false,
-                    paymentProvider: false,
-                  }}
-                />
-                {/* Pagination for upcoming bookings */}
-                {activeTab === "upcoming" &&
-                  initialData.upcomingBookings.length > 0 && (
-                    <div className="mt-6 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm text-muted-foreground">
-                          {initialData.upcomingBookingsTotal} total
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-6 lg:space-x-8">
-                        <div className="flex items-center space-x-2">
-                          <p className="text-sm font-medium">Page</p>
-                          <Select
-                            value={`${currentPage}`}
-                            onValueChange={(value) => {
-                              updatePagination(Number(value), currentLimit);
-                            }}
-                          >
-                            <SelectTrigger className="h-8 w-[70px]">
-                              <SelectValue placeholder={currentPage} />
-                            </SelectTrigger>
-                            <SelectContent side="top">
-                              {Array.from(
-                                {
-                                  length:
-                                    initialData.upcomingBookingsTotalPages,
-                                },
-                                (_, i) => i + 1
-                              ).map((pageNum) => (
-                                <SelectItem key={pageNum} value={`${pageNum}`}>
-                                  {pageNum}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <span className="text-sm text-muted-foreground">
-                            of {initialData.upcomingBookingsTotalPages}
-                          </span>
+                <Card className="border-2 border-border/50 shadow-lg">
+                  <CardContent className="pt-6">
+                    <DataTable
+                      columns={bookingsColumns}
+                      data={initialData.upcomingBookings}
+                      searchKey="tourist.user.name"
+                      searchPlaceholder="Search by tourist name..."
+                      initialColumnVisibility={{
+                        id: false,
+                        paymentProvider: false,
+                      }}
+                    />
+                    {/* Pagination for upcoming bookings */}
+                    {activeTab === "upcoming" &&
+                      initialData.upcomingBookings.length > 0 && (
+                        <div className="mt-6 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm text-muted-foreground">
+                              {initialData.upcomingBookingsTotal} total
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-6 lg:space-x-8">
+                            <div className="flex items-center space-x-2">
+                              <p className="text-sm font-medium">Page</p>
+                              <Select
+                                value={`${currentPage}`}
+                                onValueChange={(value) => {
+                                  updatePagination(Number(value), currentLimit);
+                                }}
+                              >
+                                <SelectTrigger className="h-8 w-[70px]">
+                                  <SelectValue placeholder={currentPage} />
+                                </SelectTrigger>
+                                <SelectContent side="top">
+                                  {Array.from(
+                                    {
+                                      length:
+                                        initialData.upcomingBookingsTotalPages,
+                                    },
+                                    (_, i) => i + 1
+                                  ).map((pageNum) => (
+                                    <SelectItem key={pageNum} value={`${pageNum}`}>
+                                      {pageNum}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <span className="text-sm text-muted-foreground">
+                                of {initialData.upcomingBookingsTotalPages}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <p className="text-sm font-medium">Rows per page</p>
+                              <Select
+                                value={`${currentLimit}`}
+                                onValueChange={(value) => {
+                                  updatePagination(1, Number(value)); // Reset to page 1 when limit changes
+                                }}
+                              >
+                                <SelectTrigger className="h-8 w-[70px]">
+                                  <SelectValue placeholder={currentLimit} />
+                                </SelectTrigger>
+                                <SelectContent side="top">
+                                  {[10, 20, 30, 40, 50].map((pageSize) => (
+                                    <SelectItem
+                                      key={pageSize}
+                                      value={`${pageSize}`}
+                                    >
+                                      {pageSize}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <p className="text-sm font-medium">Rows per page</p>
-                          <Select
-                            value={`${currentLimit}`}
-                            onValueChange={(value) => {
-                              updatePagination(1, Number(value)); // Reset to page 1 when limit changes
-                            }}
-                          >
-                            <SelectTrigger className="h-8 w-[70px]">
-                              <SelectValue placeholder={currentLimit} />
-                            </SelectTrigger>
-                            <SelectContent side="top">
-                              {[10, 20, 30, 40, 50].map((pageSize) => (
-                                <SelectItem
-                                  key={pageSize}
-                                  value={`${pageSize}`}
-                                >
-                                  {pageSize}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                      )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="pending">
-                <DataTable
-                  columns={pendingColumns}
-                  data={initialData.pendingRequests}
-                  searchKey="tourist.user.name"
-                  searchPlaceholder="Search by tourist name..."
-                  initialColumnVisibility={{
-                    id: false,
-                    paymentProvider: false,
-                  }}
-                />
-                {/* Pagination for pending bookings */}
-                {activeTab === "pending" &&
-                  initialData.pendingRequests.length > 0 && (
-                    <div className="mt-6 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm text-muted-foreground">
-                          {initialData.pendingBookingsTotal} total
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-6 lg:space-x-8">
-                        <div className="flex items-center space-x-2">
-                          <p className="text-sm font-medium">Page</p>
-                          <Select
-                            value={`${currentPage}`}
-                            onValueChange={(value) => {
-                              updatePagination(Number(value), currentLimit);
-                            }}
-                          >
-                            <SelectTrigger className="h-8 w-[70px]">
-                              <SelectValue placeholder={currentPage} />
-                            </SelectTrigger>
-                            <SelectContent side="top">
-                              {Array.from(
-                                {
-                                  length: initialData.pendingBookingsTotalPages,
-                                },
-                                (_, i) => i + 1
-                              ).map((pageNum) => (
-                                <SelectItem key={pageNum} value={`${pageNum}`}>
-                                  {pageNum}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <span className="text-sm text-muted-foreground">
-                            of {initialData.pendingBookingsTotalPages}
-                          </span>
+                <Card className="border-2 border-border/50 shadow-lg">
+                  <CardContent className="pt-6">
+                    <DataTable
+                      columns={pendingColumns}
+                      data={initialData.pendingRequests}
+                      searchKey="tourist.user.name"
+                      searchPlaceholder="Search by tourist name..."
+                      initialColumnVisibility={{
+                        id: false,
+                        paymentProvider: false,
+                      }}
+                    />
+                    {/* Pagination for pending bookings */}
+                    {activeTab === "pending" &&
+                      initialData.pendingRequests.length > 0 && (
+                        <div className="mt-6 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm text-muted-foreground">
+                              {initialData.pendingBookingsTotal} total
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-6 lg:space-x-8">
+                            <div className="flex items-center space-x-2">
+                              <p className="text-sm font-medium">Page</p>
+                              <Select
+                                value={`${currentPage}`}
+                                onValueChange={(value) => {
+                                  updatePagination(Number(value), currentLimit);
+                                }}
+                              >
+                                <SelectTrigger className="h-8 w-[70px]">
+                                  <SelectValue placeholder={currentPage} />
+                                </SelectTrigger>
+                                <SelectContent side="top">
+                                  {Array.from(
+                                    {
+                                      length: initialData.pendingBookingsTotalPages,
+                                    },
+                                    (_, i) => i + 1
+                                  ).map((pageNum) => (
+                                    <SelectItem key={pageNum} value={`${pageNum}`}>
+                                      {pageNum}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <span className="text-sm text-muted-foreground">
+                                of {initialData.pendingBookingsTotalPages}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <p className="text-sm font-medium">Rows per page</p>
+                              <Select
+                                value={`${currentLimit}`}
+                                onValueChange={(value) => {
+                                  updatePagination(1, Number(value)); // Reset to page 1 when limit changes
+                                }}
+                              >
+                                <SelectTrigger className="h-8 w-[70px]">
+                                  <SelectValue placeholder={currentLimit} />
+                                </SelectTrigger>
+                                <SelectContent side="top">
+                                  {[10, 20, 30, 40, 50].map((pageSize) => (
+                                    <SelectItem
+                                      key={pageSize}
+                                      value={`${pageSize}`}
+                                    >
+                                      {pageSize}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <p className="text-sm font-medium">Rows per page</p>
-                          <Select
-                            value={`${currentLimit}`}
-                            onValueChange={(value) => {
-                              updatePagination(1, Number(value)); // Reset to page 1 when limit changes
-                            }}
-                          >
-                            <SelectTrigger className="h-8 w-[70px]">
-                              <SelectValue placeholder={currentLimit} />
-                            </SelectTrigger>
-                            <SelectContent side="top">
-                              {[10, 20, 30, 40, 50].map((pageSize) => (
-                                <SelectItem
-                                  key={pageSize}
-                                  value={`${pageSize}`}
-                                >
-                                  {pageSize}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                      )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="completed">
-                <DataTable
-                  columns={completedBookingsColumns}
-                  data={initialData.completedBookings}
-                  searchKey="tourist.user.name"
-                  searchPlaceholder="Search by tourist name..."
-                  initialColumnVisibility={{
-                    id: false,
-                    paymentProvider: false,
-                  }}
-                />
-                {/* Pagination for completed bookings */}
-                {activeTab === "completed" &&
-                  initialData.completedBookings.length > 0 && (
-                    <div className="mt-6 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm text-muted-foreground">
-                          {initialData.completedBookingsTotal} total
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-6 lg:space-x-8">
-                        <div className="flex items-center space-x-2">
-                          <p className="text-sm font-medium">Page</p>
-                          <Select
-                            value={`${currentPage}`}
-                            onValueChange={(value) => {
-                              updatePagination(Number(value), currentLimit);
-                            }}
-                          >
-                            <SelectTrigger className="h-8 w-[70px]">
-                              <SelectValue placeholder={currentPage} />
-                            </SelectTrigger>
-                            <SelectContent side="top">
-                              {Array.from(
-                                {
-                                  length:
-                                    initialData.completedBookingsTotalPages,
-                                },
-                                (_, i) => i + 1
-                              ).map((pageNum) => (
-                                <SelectItem key={pageNum} value={`${pageNum}`}>
-                                  {pageNum}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <span className="text-sm text-muted-foreground">
-                            of {initialData.completedBookingsTotalPages}
-                          </span>
+                <Card className="border-2 border-border/50 shadow-lg">
+                  <CardContent className="pt-6">
+                    <DataTable
+                      columns={completedBookingsColumns}
+                      data={initialData.completedBookings}
+                      searchKey="tourist.user.name"
+                      searchPlaceholder="Search by tourist name..."
+                      initialColumnVisibility={{
+                        id: false,
+                        paymentProvider: false,
+                      }}
+                    />
+                    {/* Pagination for completed bookings */}
+                    {activeTab === "completed" &&
+                      initialData.completedBookings.length > 0 && (
+                        <div className="mt-6 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm text-muted-foreground">
+                              {initialData.completedBookingsTotal} total
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-6 lg:space-x-8">
+                            <div className="flex items-center space-x-2">
+                              <p className="text-sm font-medium">Page</p>
+                              <Select
+                                value={`${currentPage}`}
+                                onValueChange={(value) => {
+                                  updatePagination(Number(value), currentLimit);
+                                }}
+                              >
+                                <SelectTrigger className="h-8 w-[70px]">
+                                  <SelectValue placeholder={currentPage} />
+                                </SelectTrigger>
+                                <SelectContent side="top">
+                                  {Array.from(
+                                    {
+                                      length:
+                                        initialData.completedBookingsTotalPages,
+                                    },
+                                    (_, i) => i + 1
+                                  ).map((pageNum) => (
+                                    <SelectItem key={pageNum} value={`${pageNum}`}>
+                                      {pageNum}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <span className="text-sm text-muted-foreground">
+                                of {initialData.completedBookingsTotalPages}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <p className="text-sm font-medium">Rows per page</p>
+                              <Select
+                                value={`${currentLimit}`}
+                                onValueChange={(value) => {
+                                  updatePagination(1, Number(value)); // Reset to page 1 when limit changes
+                                }}
+                              >
+                                <SelectTrigger className="h-8 w-[70px]">
+                                  <SelectValue placeholder={currentLimit} />
+                                </SelectTrigger>
+                                <SelectContent side="top">
+                                  {[10, 20, 30, 40, 50].map((pageSize) => (
+                                    <SelectItem
+                                      key={pageSize}
+                                      value={`${pageSize}`}
+                                    >
+                                      {pageSize}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <p className="text-sm font-medium">Rows per page</p>
-                          <Select
-                            value={`${currentLimit}`}
-                            onValueChange={(value) => {
-                              updatePagination(1, Number(value)); // Reset to page 1 when limit changes
-                            }}
-                          >
-                            <SelectTrigger className="h-8 w-[70px]">
-                              <SelectValue placeholder={currentLimit} />
-                            </SelectTrigger>
-                            <SelectContent side="top">
-                              {[10, 20, 30, 40, 50].map((pageSize) => (
-                                <SelectItem
-                                  key={pageSize}
-                                  value={`${pageSize}`}
-                                >
-                                  {pageSize}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                      )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="listings">
-                <DataTable
-                  columns={toursColumns}
-                  data={initialData.listings}
-                  searchKey="title"
-                  searchPlaceholder="Search tours..."
-                  disablePagination={true}
-                  initialColumnVisibility={{
-                    id: false,
-                    meetingPoint: false,
-                  }}
-                />
-                {/* Pagination for listings */}
-                {activeTab === "listings" &&
-                  initialData.listings.length > 0 && (
-                    <div className="mt-6 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm text-muted-foreground">
-                          {initialData.listingsTotal} total
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-6 lg:space-x-8">
-                        <div className="flex items-center space-x-2">
-                          <p className="text-sm font-medium">Page</p>
-                          <Select
-                            value={`${currentPage}`}
-                            onValueChange={(value) => {
-                              updatePagination(Number(value), currentLimit);
-                            }}
-                          >
-                            <SelectTrigger className="h-8 w-[70px]">
-                              <SelectValue placeholder={currentPage} />
-                            </SelectTrigger>
-                            <SelectContent side="top">
-                              {Array.from(
-                                { length: initialData.listingsTotalPages },
-                                (_, i) => i + 1
-                              ).map((pageNum) => (
-                                <SelectItem key={pageNum} value={`${pageNum}`}>
-                                  {pageNum}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <span className="text-sm text-muted-foreground">
-                            of {initialData.listingsTotalPages}
-                          </span>
+                <Card className="border-2 border-border/50 shadow-lg">
+                  <CardContent className="pt-6">
+                    <DataTable
+                      columns={toursColumns}
+                      data={initialData.listings}
+                      searchKey="title"
+                      searchPlaceholder="Search tours..."
+                      disablePagination={true}
+                      initialColumnVisibility={{
+                        id: false,
+                        meetingPoint: false,
+                      }}
+                    />
+                    {/* Pagination for listings */}
+                    {activeTab === "listings" &&
+                      initialData.listings.length > 0 && (
+                        <div className="mt-6 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm text-muted-foreground">
+                              {initialData.listingsTotal} total
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-6 lg:space-x-8">
+                            <div className="flex items-center space-x-2">
+                              <p className="text-sm font-medium">Page</p>
+                              <Select
+                                value={`${currentPage}`}
+                                onValueChange={(value) => {
+                                  updatePagination(Number(value), currentLimit);
+                                }}
+                              >
+                                <SelectTrigger className="h-8 w-[70px]">
+                                  <SelectValue placeholder={currentPage} />
+                                </SelectTrigger>
+                                <SelectContent side="top">
+                                  {Array.from(
+                                    { length: initialData.listingsTotalPages },
+                                    (_, i) => i + 1
+                                  ).map((pageNum) => (
+                                    <SelectItem key={pageNum} value={`${pageNum}`}>
+                                      {pageNum}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <span className="text-sm text-muted-foreground">
+                                of {initialData.listingsTotalPages}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <p className="text-sm font-medium">Rows per page</p>
+                              <Select
+                                value={`${currentLimit}`}
+                                onValueChange={(value) => {
+                                  updatePagination(1, Number(value)); // Reset to page 1 when limit changes
+                                }}
+                              >
+                                <SelectTrigger className="h-8 w-[70px]">
+                                  <SelectValue placeholder={currentLimit} />
+                                </SelectTrigger>
+                                <SelectContent side="top">
+                                  {[10, 20, 30, 40, 50].map((pageSize) => (
+                                    <SelectItem
+                                      key={pageSize}
+                                      value={`${pageSize}`}
+                                    >
+                                      {pageSize}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <p className="text-sm font-medium">Rows per page</p>
-                          <Select
-                            value={`${currentLimit}`}
-                            onValueChange={(value) => {
-                              updatePagination(1, Number(value)); // Reset to page 1 when limit changes
-                            }}
-                          >
-                            <SelectTrigger className="h-8 w-[70px]">
-                              <SelectValue placeholder={currentLimit} />
-                            </SelectTrigger>
-                            <SelectContent side="top">
-                              {[10, 20, 30, 40, 50].map((pageSize) => (
-                                <SelectItem
-                                  key={pageSize}
-                                  value={`${pageSize}`}
-                                >
-                                  {pageSize}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                      )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="reviews">
@@ -1335,7 +1398,7 @@ export function GuideDashboardClient({
                   <>
                     <div className="space-y-4">
                       {initialData.reviews.map((review) => (
-                        <Card key={review.id}>
+                        <Card key={review.id} className="border-2 border-border/50 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20">
                           <CardContent className="p-6">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">

@@ -99,7 +99,7 @@ export function Navbar() {
             </span>
           </Link>
 
-          <div className="hidden items-center gap-1 md:flex">
+          <div className="hidden items-center gap-2 md:flex">
             {!isLoggedIn ? (
               <>
                 <NavLink href="/explore">Explore Tours</NavLink>
@@ -119,6 +119,7 @@ export function Navbar() {
               <>
                 <NavLink href="/explore">Explore Tours</NavLink>
                 <NavLink href="/tourist/dashboard">My Bookings</NavLink>
+                <NavLink href="/profile">Profile</NavLink>
                 <div className="ml-2 flex items-center gap-3">
                   <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-1.5">
                     <UserIcon className="h-4 w-4 text-primary" />
@@ -141,6 +142,7 @@ export function Navbar() {
               <>
                 <NavLink href="/explore">Explore Tours</NavLink>
                 <NavLink href="/guide/dashboard">Dashboard</NavLink>
+                <NavLink href="/profile">Profile</NavLink>
                 <div className="ml-2 flex items-center gap-3">
                   <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-1.5">
                     <UserIcon className="h-4 w-4 text-primary" />
@@ -171,6 +173,7 @@ export function Navbar() {
                 <NavLink href="/admin/dashboard/booking-management">
                   Manage Bookings
                 </NavLink>
+                <NavLink href="/profile">Profile</NavLink>
                 <div className="ml-2 flex items-center gap-3">
                   <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-1.5">
                     <UserIcon className="h-4 w-4 text-primary" />

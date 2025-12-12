@@ -5,43 +5,44 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import {
-  deleteListing,
-  updateListing,
+    deleteListing,
+    updateListing,
 } from "@/services/listing/listing.service";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
-  Activity,
-  ArrowLeft,
-  CheckCircle,
-  Eye,
-  MapPin,
-  MoreHorizontal,
-  Star,
-  Trash2,
-  XCircle,
+    Activity,
+    ArrowLeft,
+    CheckCircle,
+    Eye,
+    Map,
+    MapPin,
+    MoreHorizontal,
+    Star,
+    Trash2,
+    XCircle
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -381,28 +382,41 @@ export function AdminListingsClient({ initialData }: AdminListingsClientProps) {
     <div className="flex min-h-screen flex-col">
       <main className="flex-1 bg-muted/30 py-8">
         <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+
+          {/* Decorative background elements */}
+          <div className="absolute inset-0 -z-10">
+            <div className="absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-primary/5 blur-3xl animate-pulse" />
+            <div className="absolute right-1/4 bottom-1/3 h-96 w-96 rounded-full bg-primary/5 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          </div>
+
           <div
             className="mb-8 animate-in fade-in slide-in-from-top-4"
             style={{ animationDuration: "300ms" }}
           >
             <Link href="/admin/dashboard">
-              <Button variant="ghost" className="mb-4">
+              <Button variant="ghost" className="mb-4 transition-all duration-300 hover:scale-105">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Dashboard
               </Button>
             </Link>
             <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">
-                  Tour Listings Management
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <Badge className="gap-1.5 bg-purple-500/10 text-purple-600 hover:bg-purple-500/20">
+                    <Map className="h-3.5 w-3.5" />
+                    Listings Management
+                  </Badge>
+                </div>
+                <h1 className="text-4xl font-bold tracking-tight text-foreground">
+                  Tour Listings
                 </h1>
-                <p className="mt-2 text-muted-foreground">
+                <p className="text-lg text-muted-foreground">
                   Review and moderate all tour listings
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <Select value={statusFilter} onValueChange={updateStatusFilter}>
-                  <SelectTrigger className="w-[150px]">
+                  <SelectTrigger className="w-[150px] border-2 border-border/50 transition-all duration-300 focus:border-primary/30">
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -415,7 +429,7 @@ export function AdminListingsClient({ initialData }: AdminListingsClientProps) {
                   value={categoryFilter}
                   onValueChange={updateCategoryFilter}
                 >
-                  <SelectTrigger className="w-[150px]">
+                  <SelectTrigger className="w-[150px] border-2 border-border/50 transition-all duration-300 focus:border-primary/30">
                     <SelectValue placeholder="Filter by category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -434,12 +448,14 @@ export function AdminListingsClient({ initialData }: AdminListingsClientProps) {
 
           {/* Stats Cards */}
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-            <Card>
+            <Card className="border-2 border-border/50 shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Total Listings
                 </CardTitle>
-                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-500/5 ring-1 ring-purple-500/20">
+                  <MapPin className="h-5 w-5 text-purple-600" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{totalListings}</div>
@@ -449,12 +465,14 @@ export function AdminListingsClient({ initialData }: AdminListingsClientProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-2 border-border/50 shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Active Listings
                 </CardTitle>
-                <Activity className="h-4 w-4 text-green-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-green-500/10 to-green-500/5 ring-1 ring-green-500/20">
+                  <Activity className="h-5 w-5 text-green-600" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{activeListings}</div>
@@ -464,12 +482,14 @@ export function AdminListingsClient({ initialData }: AdminListingsClientProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-2 border-border/50 shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Inactive Listings
                 </CardTitle>
-                <XCircle className="h-4 w-4 text-orange-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/10 to-orange-500/5 ring-1 ring-orange-500/20">
+                  <XCircle className="h-5 w-5 text-orange-600" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{inactiveListings}</div>
@@ -481,7 +501,7 @@ export function AdminListingsClient({ initialData }: AdminListingsClientProps) {
           </div>
 
           {/* Listings Table */}
-          <Card>
+          <Card className="border-2 border-border/50 shadow-lg">
             <CardContent className="pt-6">
               <DataTable
                 columns={columns}

@@ -1,26 +1,25 @@
 "use client";
 
 import { DataTable } from "@/components/dashboard/data-table";
-import { StatCard } from "@/components/dashboard/stat-card";
 import { BookingDetailsModal } from "@/components/modals/booking-details-modal";
 import { ReviewModal } from "@/components/modals/review-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getBookingById } from "@/services/booking/booking.service";
@@ -28,17 +27,19 @@ import { removeFromWishlist } from "@/services/wishlist/wishlist.service";
 import type { ColumnDef } from "@tanstack/react-table";
 import { motion } from "framer-motion";
 import {
-  CalendarDays,
-  CreditCard,
-  Eye,
-  Heart,
-  Loader2,
-  MapPin,
-  MessageCircle,
-  MoreHorizontal,
-  Star,
-  Trash2,
-  Users,
+    CalendarDays,
+    Compass,
+    CreditCard,
+    Eye,
+    Heart,
+    Loader2,
+    MapPin,
+    MessageCircle,
+    MoreHorizontal,
+    Sparkles,
+    Star,
+    Trash2,
+    Users,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -823,47 +824,103 @@ export function TouristDashboardClient({
     <div className="flex min-h-screen flex-col">
       <main className="flex-1 bg-muted/30 py-8">
         <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+          {/* Decorative background elements */}
+          <div className="absolute inset-0 -z-10">
+            <div className="absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-primary/5 blur-3xl animate-pulse" />
+            <div className="absolute right-1/4 bottom-1/3 h-96 w-96 rounded-full bg-primary/5 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          </div>
+
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
             className="mb-8"
           >
-            <h1 className="text-3xl font-bold text-foreground">My Trips</h1>
-            <p className="mt-2 text-muted-foreground">
-              View and manage your bookings
+            <div className="flex items-center gap-3 mb-2">
+              <Badge className="gap-1.5 bg-primary/10 text-primary hover:bg-primary/20">
+                <Compass className="h-3.5 w-3.5" />
+                Tourist Dashboard
+              </Badge>
+            </div>
+            <h1 className="text-4xl font-bold tracking-tight text-foreground">
+              My Adventures
+            </h1>
+            <p className="mt-2 text-lg text-muted-foreground">
+              Manage your bookings and discover new experiences
             </p>
           </motion.div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-            <StatCard
-              title="Upcoming Trips"
-              value={stats.upcomingTrips}
-              description="Next 3 months"
-              icon={CalendarDays}
-              index={0}
-            />
-            <StatCard
-              title="Completed Trips"
-              value={stats.completedTrips}
-              description="All time adventures"
-              icon={MapPin}
-              index={1}
-            />
-            <StatCard
-              title="Wishlist"
-              value={stats.wishlist}
-              description="Saved experiences"
-              icon={Heart}
-              index={2}
-            />
-            <StatCard
-              title="Total Spent"
-              value={`$${stats.totalSpent.toLocaleString()}`}
-              description="On experiences"
-              icon={Star}
-              index={3}
-            />
+            <Card className="group relative overflow-hidden border-2 border-border/50 shadow-lg transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:-translate-y-1">
+              {/* Gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between space-y-0 pb-2">
+                  <p className="text-sm font-medium text-muted-foreground">Upcoming Trips</p>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/5 ring-1 ring-blue-500/20">
+                    <CalendarDays className="h-5 w-5 text-blue-600" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-1">
+                  <span className="text-2xl font-bold">{stats.upcomingTrips}</span>
+                  <span className="text-xs text-muted-foreground">trips</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">Next 3 months</p>
+              </CardContent>
+            </Card>
+
+            <Card className="group relative overflow-hidden border-2 border-border/50 shadow-lg transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:-translate-y-1">
+              {/* Gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between space-y-0 pb-2">
+                  <p className="text-sm font-medium text-muted-foreground">Completed Trips</p>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-green-500/10 to-green-500/5 ring-1 ring-green-500/20">
+                    <MapPin className="h-5 w-5 text-green-600" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-1">
+                  <span className="text-2xl font-bold">{stats.completedTrips}</span>
+                  <span className="text-xs text-muted-foreground">trips</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">All time adventures</p>
+              </CardContent>
+            </Card>
+
+            <Card className="group relative overflow-hidden border-2 border-border/50 shadow-lg transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:-translate-y-1">
+              {/* Gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between space-y-0 pb-2">
+                  <p className="text-sm font-medium text-muted-foreground">Wishlist</p>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-red-500/10 to-red-500/5 ring-1 ring-red-500/20">
+                    <Heart className="h-5 w-5 text-red-600" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-1">
+                  <span className="text-2xl font-bold">{stats.wishlist}</span>
+                  <span className="text-xs text-muted-foreground">items</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">Saved experiences</p>
+              </CardContent>
+            </Card>
+
+            <Card className="group relative overflow-hidden border-2 border-border/50 shadow-lg transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:-translate-y-1">
+              {/* Gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between space-y-0 pb-2">
+                  <p className="text-sm font-medium text-muted-foreground">Total Spent</p>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-500/5 ring-1 ring-purple-500/20">
+                    <Sparkles className="h-5 w-5 text-purple-600" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-1">
+                  <span className="text-2xl font-bold">${stats.totalSpent.toLocaleString()}</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">On experiences</p>
+              </CardContent>
+            </Card>
           </div>
 
           <motion.div
@@ -915,16 +972,18 @@ export function TouristDashboardClient({
               </div>
 
               <TabsContent value="upcoming">
-                <DataTable
-                  columns={upcomingColumns}
-                  data={initialUpcoming}
-                  searchKey="tourTitle"
-                  searchPlaceholder="Search tours..."
-                  initialColumnVisibility={{
-                    id: false,
-                    paymentProvider: false,
-                  }}
-                />
+                <Card className="border-2 border-border/50 shadow-lg">
+                  <CardContent className="pt-6">
+                    <DataTable
+                      columns={upcomingColumns}
+                      data={initialUpcoming}
+                      searchKey="tourTitle"
+                      searchPlaceholder="Search tours..."
+                      initialColumnVisibility={{
+                        id: false,
+                        paymentProvider: false,
+                      }}
+                    />
                 {/* Pagination for upcoming bookings */}
                 {activeTab === "upcoming" && initialUpcoming.length > 0 && (
                   <div className="mt-6 flex items-center justify-between">
@@ -983,19 +1042,23 @@ export function TouristDashboardClient({
                     </div>
                   </div>
                 )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="pending">
-                <DataTable
-                  columns={upcomingColumns}
-                  data={initialPending}
-                  searchKey="tourTitle"
-                  searchPlaceholder="Search tours..."
-                  initialColumnVisibility={{
-                    id: false,
-                    paymentProvider: false,
-                  }}
-                />
+                <Card className="border-2 border-border/50 shadow-lg">
+                  <CardContent className="pt-6">
+                    <DataTable
+                      columns={upcomingColumns}
+                      data={initialPending}
+                      searchKey="tourTitle"
+                      searchPlaceholder="Search tours..."
+                      initialColumnVisibility={{
+                        id: false,
+                        paymentProvider: false,
+                      }}
+                    />
                 {/* Pagination for pending bookings */}
                 {activeTab === "pending" && initialPending.length > 0 && (
                   <div className="mt-6 flex items-center justify-between">
@@ -1054,19 +1117,23 @@ export function TouristDashboardClient({
                     </div>
                   </div>
                 )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="past">
-                <DataTable
-                  columns={pastColumns}
-                  data={initialPast}
-                  searchKey="tourTitle"
-                  searchPlaceholder="Search tours..."
-                  initialColumnVisibility={{
-                    id: false,
-                    paymentProvider: false,
-                  }}
-                />
+                <Card className="border-2 border-border/50 shadow-lg">
+                  <CardContent className="pt-6">
+                    <DataTable
+                      columns={pastColumns}
+                      data={initialPast}
+                      searchKey="tourTitle"
+                      searchPlaceholder="Search tours..."
+                      initialColumnVisibility={{
+                        id: false,
+                        paymentProvider: false,
+                      }}
+                    />
                 {/* Pagination for past bookings */}
                 {activeTab === "past" && initialPast.length > 0 && (
                   <div className="mt-6 flex items-center justify-between">
@@ -1125,16 +1192,20 @@ export function TouristDashboardClient({
                     </div>
                   </div>
                 )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="wishlist">
-                <DataTable
-                  columns={wishlistColumns}
-                  data={initialWishlist}
-                  searchKey="tourTitle"
-                  searchPlaceholder="Search wishlist..."
-                  initialColumnVisibility={{ id: false }}
-                />
+                <Card className="border-2 border-border/50 shadow-lg">
+                  <CardContent className="pt-6">
+                    <DataTable
+                      columns={wishlistColumns}
+                      data={initialWishlist}
+                      searchKey="tourTitle"
+                      searchPlaceholder="Search wishlist..."
+                      initialColumnVisibility={{ id: false }}
+                    />
                 {/* Pagination for wishlist */}
                 {activeTab === "wishlist" && initialWishlist.length > 0 && (
                   <div className="mt-6 flex items-center justify-between">
@@ -1193,6 +1264,8 @@ export function TouristDashboardClient({
                     </div>
                   </div>
                 )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="reviews">
@@ -1210,7 +1283,7 @@ export function TouristDashboardClient({
                   <>
                     <div className="space-y-4">
                       {reviews.map((review) => (
-                        <Card key={review.id}>
+                        <Card key={review.id} className="border-2 border-border/50 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20">
                           <CardContent className="p-6">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">

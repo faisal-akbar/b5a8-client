@@ -47,11 +47,12 @@ import {
   CheckCircle,
   Eye,
   MoreHorizontal,
+  Shield,
   Trash2,
   UserCheck,
   UserPlus,
   Users,
-  UserX,
+  UserX
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -443,28 +444,40 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
     <div className="flex min-h-screen flex-col">
       <main className="flex-1 bg-muted/30 py-8">
         <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+          {/* Decorative background elements */}
+          <div className="absolute inset-0 -z-10">
+            <div className="absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-primary/5 blur-3xl animate-pulse" />
+            <div className="absolute right-1/4 bottom-1/3 h-96 w-96 rounded-full bg-primary/5 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          </div>
+
           <div
             className="mb-8 animate-in fade-in slide-in-from-top-4"
             style={{ animationDuration: "300ms" }}
           >
             <Link href="/admin/dashboard">
-              <Button variant="ghost" className="mb-4">
+              <Button variant="ghost" className="mb-4 transition-all duration-300 hover:scale-105">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Dashboard
               </Button>
             </Link>
             <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">
-                  User Management
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <Badge className="gap-1.5 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20">
+                    <Shield className="h-3.5 w-3.5" />
+                    User Management
+                  </Badge>
+                </div>
+                <h1 className="text-4xl font-bold tracking-tight text-foreground">
+                  Manage Users
                 </h1>
-                <p className="mt-2 text-muted-foreground">
+                <p className="text-lg text-muted-foreground">
                   View and manage all platform users
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <Select value={roleFilter} onValueChange={updateRoleFilter}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[180px] border-2 border-border/50 transition-all duration-300 focus:border-primary/30">
                     <SelectValue placeholder="Filter by role" />
                   </SelectTrigger>
                   <SelectContent>
@@ -474,8 +487,8 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
                     <SelectItem value="admin">Admins</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button onClick={() => setIsCreateAdminDialogOpen(true)}>
-                  <UserPlus className="mr-2 h-4 w-4" />
+                <Button onClick={() => setIsCreateAdminDialogOpen(true)} className="gap-2 shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                  <UserPlus className="h-4 w-4" />
                   Create Admin
                 </Button>
               </div>
@@ -484,12 +497,14 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
 
           {/* Stats Cards */}
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-            <Card>
+            <Card className="border-2 border-border/50 shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Total Users
                 </CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/5 ring-1 ring-blue-500/20">
+                  <Users className="h-5 w-5 text-blue-600" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{totalUsers}</div>
@@ -499,12 +514,14 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-2 border-border/50 shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Active Users
                 </CardTitle>
-                <UserCheck className="h-4 w-4 text-green-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-green-500/10 to-green-500/5 ring-1 ring-green-500/20">
+                  <UserCheck className="h-5 w-5 text-green-600" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{activeUsers}</div>
@@ -514,12 +531,14 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-2 border-border/50 shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Blocked Users
                 </CardTitle>
-                <UserX className="h-4 w-4 text-destructive" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-red-500/10 to-red-500/5 ring-1 ring-red-500/20">
+                  <UserX className="h-5 w-5 text-red-600" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{blockedUsers}</div>
@@ -529,10 +548,12 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-2 border-border/50 shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Guides</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-500/5 ring-1 ring-purple-500/20">
+                  <Users className="h-5 w-5 text-purple-600" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{guides}</div>
@@ -542,7 +563,7 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
           </div>
 
           {/* Users Table */}
-          <Card>
+          <Card className="border-2 border-border/50 shadow-lg">
             <CardContent className="pt-6">
               {users.length === 0 ? (
                 <div className="text-center py-12">

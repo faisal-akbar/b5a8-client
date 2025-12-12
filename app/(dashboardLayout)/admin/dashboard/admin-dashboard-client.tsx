@@ -9,10 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   Activity,
+  ArrowRight,
   CalendarDays,
   DollarSign,
   MapPin,
   Percent,
+  Sparkles,
   TrendingUp,
   Users,
   Wallet,
@@ -223,17 +225,29 @@ export function AdminDashboardClient({
     <div className="flex min-h-screen flex-col">
       <main className="flex-1 bg-muted/30 py-8">
         <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+          {/* Decorative background elements */}
+          <div className="absolute inset-0 -z-10">
+            <div className="absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-primary/5 blur-3xl animate-pulse" />
+            <div className="absolute right-1/4 bottom-1/3 h-96 w-96 rounded-full bg-primary/5 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          </div>
+
           <div
             className="mb-8 animate-in fade-in slide-in-from-top-4"
             style={{ animationDuration: "300ms" }}
           >
             <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">
-                  Admin Dashboard
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <Badge className="gap-1.5 bg-primary/10 text-primary hover:bg-primary/20">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Admin
+                  </Badge>
+                </div>
+                <h1 className="text-4xl font-bold tracking-tight text-foreground">
+                  Dashboard Overview
                 </h1>
-                <p className="mt-2 text-muted-foreground">
-                  Platform overview and management
+                <p className="text-lg text-muted-foreground">
+                  Platform analytics and management
                 </p>
               </div>
             </div>
@@ -305,56 +319,77 @@ export function AdminDashboardClient({
 
           {/* Quick Actions */}
           <div className="grid gap-6 md:grid-cols-3 mb-8">
-            <Card>
-              <CardHeader>
+            <Card className="group relative overflow-hidden border-2 border-border/50 shadow-lg transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:-translate-y-1">
+              {/* Gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <CardHeader className="relative">
                 <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  User Management
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/5 ring-1 ring-blue-500/20">
+                    <Users className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <span className="font-bold">User Management</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
+              <CardContent className="relative">
+                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
                   Manage all platform users, view profiles, and handle
                   user-related actions
                 </p>
                 <Link href="/admin/dashboard/users-management">
-                  <Button className="w-full">Manage Users</Button>
+                  <Button className="group/btn w-full gap-2 shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                    Manage Users
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
+                  </Button>
                 </Link>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
+            <Card className="group relative overflow-hidden border-2 border-border/50 shadow-lg transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:-translate-y-1">
+              {/* Gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <CardHeader className="relative">
                 <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  Listings Management
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-500/5 ring-1 ring-purple-500/20">
+                    <MapPin className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <span className="font-bold">Listings Management</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
+              <CardContent className="relative">
+                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
                   Review and moderate all tour listings, activate or deactivate
                   listings
                 </p>
                 <Link href="/admin/dashboard/listings-management">
-                  <Button className="w-full">Manage Listings</Button>
+                  <Button className="group/btn w-full gap-2 shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                    Manage Listings
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
+                  </Button>
                 </Link>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
+            <Card className="group relative overflow-hidden border-2 border-border/50 shadow-lg transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:-translate-y-1">
+              {/* Gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <CardHeader className="relative">
                 <CardTitle className="flex items-center gap-2">
-                  <CalendarDays className="h-5 w-5 text-primary" />
-                  Bookings Management
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-green-500/10 to-green-500/5 ring-1 ring-green-500/20">
+                    <CalendarDays className="h-5 w-5 text-green-600" />
+                  </div>
+                  <span className="font-bold">Bookings Management</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
+              <CardContent className="relative">
+                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
                   View all bookings, track booking status, and manage
                   booking-related issues
                 </p>
                 <Link href="/admin/dashboard/booking-management">
-                  <Button className="w-full">Manage Bookings</Button>
+                  <Button className="group/btn w-full gap-2 shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                    Manage Bookings
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
+                  </Button>
                 </Link>
               </CardContent>
             </Card>
@@ -362,9 +397,12 @@ export function AdminDashboardClient({
 
           {/* Recent Activity */}
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Users</CardTitle>
+            <Card className="border-2 border-border/50 shadow-lg">
+              <CardHeader className="border-b bg-muted/30">
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  Recent Users
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <DataTable
@@ -384,9 +422,12 @@ export function AdminDashboardClient({
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Listings</CardTitle>
+            <Card className="border-2 border-border/50 shadow-lg">
+              <CardHeader className="border-b bg-muted/30">
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  Recent Listings
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <DataTable
@@ -406,9 +447,12 @@ export function AdminDashboardClient({
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Bookings</CardTitle>
+            <Card className="border-2 border-border/50 shadow-lg">
+              <CardHeader className="border-b bg-muted/30">
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarDays className="h-5 w-5 text-primary" />
+                  Recent Bookings
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <DataTable

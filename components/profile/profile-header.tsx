@@ -63,7 +63,7 @@ export function ProfileHeader({
 
   return (
     <>
-      <Card className="overflow-hidden border-0 shadow-2xl">
+      <Card className="overflow-hidden border-0 shadow-2xl p-0 rounded-none">
         {/* Modern Cover Design */}
         <div className="relative h-72 w-full overflow-hidden">
           {/* Base Gradient - Modern Mesh Style */}
