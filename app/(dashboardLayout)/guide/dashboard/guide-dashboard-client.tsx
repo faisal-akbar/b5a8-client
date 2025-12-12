@@ -338,8 +338,8 @@ export function GuideDashboardClient({
       },
     },
     {
-      id: "price",
-      header: "Price",
+      id: "Tour Fee",
+      header: "Tour Fee",
       cell: ({ row }) => {
         const tourFee = row.original.listing?.tourFee || 0;
         const formatted = new Intl.NumberFormat("en-US", {
