@@ -71,6 +71,8 @@ const categories: { value: Category; label: string }[] = [
   { value: "STREET_FOOD", label: "Street Food" },
 ];
 
+const MAX_IMAGES = 5;
+
 export default function EditListingPage() {
   const router = useRouter();
   const params = useParams();
@@ -150,10 +152,32 @@ export default function EditListingPage() {
     const files = e.target.files;
     if (files) {
       const newFiles = Array.from(files);
-      setImageFiles((prev) => [...prev, ...newFiles]);
+      const currentTotal = existingImages.length + imageFiles.length;
+      const remainingSlots = MAX_IMAGES - currentTotal;
+
+      if (remainingSlots <= 0) {
+        toast.error(
+          `Maximum ${MAX_IMAGES} images allowed. Please remove some images first.`
+        );
+        e.target.value = ""; // Reset input
+        return;
+      }
+
+      if (newFiles.length > remainingSlots) {
+        toast.error(
+          `You can only add ${remainingSlots} more image${
+            remainingSlots === 1 ? "" : "s"
+          }. Maximum ${MAX_IMAGES} images allowed.`
+        );
+        e.target.value = ""; // Reset input
+        return;
+      }
+
+      const filesToAdd = newFiles.slice(0, remainingSlots);
+      setImageFiles((prev) => [...prev, ...filesToAdd]);
 
       // Create previews
-      newFiles.forEach((file) => {
+      filesToAdd.forEach((file) => {
         const reader = new FileReader();
         reader.onloadend = () => {
           setImagePreviews((prev) => [...prev, reader.result as string]);
@@ -181,7 +205,7 @@ export default function EditListingPage() {
       (img) => img && img.trim() !== ""
     );
 
-    // Validate images - need at least one image (existing or new) and max 10 total
+    // Validate images - need at least one image (existing or new) and max 5 total
     const totalImages = validExistingImages.length + imageFiles.length;
     if (totalImages === 0) {
       setValidationErrors({
@@ -192,10 +216,12 @@ export default function EditListingPage() {
       });
       return;
     }
-    if (totalImages > 5) {
+    if (totalImages > MAX_IMAGES) {
       setValidationErrors({
         success: false,
-        errors: [{ field: "images", message: "Cannot exceed 10 images." }],
+        errors: [
+          { field: "images", message: `Cannot exceed ${MAX_IMAGES} images.` },
+        ],
       });
       return;
     }
@@ -246,12 +272,17 @@ export default function EditListingPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await updateListing({
-        id: listingId,
+      // Prepare update data - explicitly set images to avoid duplication
+      const updateData = {
         ...validationData,
         images:
           validExistingImages.length > 0 ? validExistingImages : undefined,
         newImages: imageFiles.length > 0 ? imageFiles : undefined,
+      };
+
+      const result = await updateListing({
+        id: listingId,
+        ...updateData,
       });
 
       if (result.success) {
@@ -259,11 +290,14 @@ export default function EditListingPage() {
         router.refresh(); // Refresh server-side data
         router.push("/guide/dashboard?refresh=" + Date.now()); // Add timestamp to force client-side refresh
       } else {
+        console.error("Update listing error:", result.message);
         toast.error(result.message || "Failed to update listing");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating listing:", error);
-      toast.error("An error occurred while updating the listing");
+      const errorMessage =
+        error?.message || "An error occurred while updating the listing";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -577,7 +611,7 @@ export default function EditListingPage() {
                       </div>
                     )}
 
-                    {existingImages.length + imageFiles.length < 10 && (
+                    {existingImages.length + imageFiles.length < MAX_IMAGES && (
                       <label className="flex aspect-video cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 hover:bg-muted">
                         <Upload className="h-8 w-8 text-muted-foreground" />
                         <span className="mt-2 text-sm text-muted-foreground">

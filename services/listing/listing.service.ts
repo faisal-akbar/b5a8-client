@@ -291,7 +291,14 @@ export async function updateListing({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to update listing");
+        console.error("Update listing error response:", {
+          status: response.status,
+          statusText: response.statusText,
+          data,
+        });
+        throw new Error(
+          data.message || data.error || "Failed to update listing"
+        );
       }
 
       return {
@@ -319,6 +326,7 @@ export async function updateListing({
       };
     }
   } catch (error: any) {
+    console.error("Update listing catch error:", error);
     return {
       success: false,
       message: error?.message || "Failed to update listing",
