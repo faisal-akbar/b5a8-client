@@ -47,6 +47,7 @@ import {
   Calendar,
   CalendarDays,
   Check,
+  Clock,
   CreditCard,
   DollarSign,
   Edit,
@@ -370,6 +371,49 @@ export function GuideDashboardClient({
       },
     },
     {
+      id: "paymentStatus",
+      header: "Payment",
+      cell: ({ row }) => {
+        const booking = row.original;
+        const paymentStatus = booking.payment?.status?.toUpperCase();
+
+        // Show payment status for completed bookings
+        if (booking.status === "COMPLETED") {
+          if (
+            !paymentStatus ||
+            paymentStatus === "PENDING" ||
+            paymentStatus === "UNPAID"
+          ) {
+            return (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                Pending
+              </Badge>
+            );
+          }
+          if (paymentStatus === "COMPLETED" || paymentStatus === "PAID") {
+            return (
+              <Badge variant="default" className="flex items-center gap-1">
+                <CreditCard className="h-3 w-3" />
+                Paid
+              </Badge>
+            );
+          }
+          if (paymentStatus === "RELEASED") {
+            return (
+              <Badge variant="outline" className="flex items-center gap-1">
+                <DollarSign className="h-3 w-3" />
+                Released
+              </Badge>
+            );
+          }
+        }
+
+        // For non-completed bookings, show N/A or empty
+        return <span className="text-sm text-muted-foreground">-</span>;
+      },
+    },
+    {
       id: "actions",
       cell: ({ row }) => {
         const booking = row.original;
@@ -510,6 +554,45 @@ export function GuideDashboardClient({
       cell: ({ row }) => {
         const status = row.getValue("status") as string;
         return <Badge variant="outline">{status}</Badge>;
+      },
+    },
+    {
+      id: "paymentStatus",
+      header: "Payment",
+      cell: ({ row }) => {
+        const booking = row.original;
+        const paymentStatus = booking.payment?.status?.toUpperCase();
+
+        if (
+          !paymentStatus ||
+          paymentStatus === "PENDING" ||
+          paymentStatus === "UNPAID"
+        ) {
+          return (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              Pending
+            </Badge>
+          );
+        }
+        if (paymentStatus === "COMPLETED" || paymentStatus === "PAID") {
+          return (
+            <Badge variant="default" className="flex items-center gap-1">
+              <CreditCard className="h-3 w-3" />
+              Paid
+            </Badge>
+          );
+        }
+        if (paymentStatus === "RELEASED") {
+          return (
+            <Badge variant="outline" className="flex items-center gap-1">
+              <DollarSign className="h-3 w-3" />
+              Released
+            </Badge>
+          );
+        }
+
+        return <span className="text-sm text-muted-foreground">-</span>;
       },
     },
     {

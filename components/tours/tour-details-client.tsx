@@ -1034,14 +1034,14 @@ export function TourDetailsClient({
                         ? "Saved"
                         : "Save"}
                     </Button>
-                    <Button
+                    {/* <Button
                       variant="ghost"
                       size="sm"
                       className="hover:bg-slate-50"
                     >
                       <Share2 className="mr-2 h-4 w-4" />
                       Share
-                    </Button>
+                    </Button> */}
                   </div>
                 </CardContent>
               </Card>
