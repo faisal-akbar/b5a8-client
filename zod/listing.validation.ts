@@ -83,7 +83,7 @@ export const createListingZodSchema = z.object({
   images: z
     .array(z.instanceof(File), { message: "Images must be an array of files" })
     .min(1, { message: "At least one image is required." })
-    .max(5, { message: "Cannot exceed 5 images." }),
+    .max(3, { message: "Cannot exceed 3 images." }),
 });
 
 export const updateListingZodSchema = z.object({
@@ -135,7 +135,7 @@ export const updateListingZodSchema = z.object({
     .optional(),
   images: z
     .array(z.string(), { message: "Images must be an array of URLs" })
-    .max(5, { message: "Cannot exceed 5 images." })
+    .max(3, { message: "Cannot exceed 3 images." })
     .optional(),
   isActive: z
     .boolean({ message: "Active status must be a boolean" })

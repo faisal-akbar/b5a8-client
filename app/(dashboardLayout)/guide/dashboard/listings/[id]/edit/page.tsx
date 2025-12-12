@@ -71,7 +71,7 @@ const categories: { value: Category; label: string }[] = [
   { value: "STREET_FOOD", label: "Street Food" },
 ];
 
-const MAX_IMAGES = 5;
+const MAX_IMAGES = 3;
 
 export default function EditListingPage() {
   const router = useRouter();

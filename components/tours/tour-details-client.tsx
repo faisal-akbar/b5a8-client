@@ -37,7 +37,7 @@ import {
   Shield,
   Star,
   Users,
-  X
+  X,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -298,7 +298,7 @@ export function TourDetailsClient({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="grid gap-4 sm:grid-cols-4 h-[500px]"
+          className="relative grid gap-4 sm:grid-cols-4 h-[500px]"
         >
           <button
             onClick={() => {
@@ -318,54 +318,68 @@ export function TourDetailsClient({
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-40" />
           </button>
           <div className="flex flex-col gap-4 sm:col-span-1 sm:row-span-2 h-full">
-            {images.slice(1, 3).map((image, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  setCurrentImageIndex(index + 1);
-                  setGalleryOpen(true);
-                }}
-                className="group relative flex-1 overflow-hidden rounded-2xl shadow-md transition-all hover:shadow-xl ring-1 ring-black/5"
-              >
-                <Image
-                  src={image}
-                  alt={`${listing.title} ${index + 2}`}
-                  fill
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  unoptimized={image?.startsWith("http")}
-                />
-                <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
-              </button>
-            ))}
+            {images.slice(1, 3).map((image, index) => {
+              const actualIndex = index + 1;
+              return (
+                <button
+                  key={actualIndex}
+                  onClick={() => {
+                    if (actualIndex < images.length) {
+                      setCurrentImageIndex(actualIndex);
+                      setGalleryOpen(true);
+                    }
+                  }}
+                  className="group relative flex-1 overflow-hidden rounded-2xl shadow-md transition-all hover:shadow-xl ring-1 ring-black/5"
+                >
+                  <Image
+                    src={image}
+                    alt={`${listing.title} ${actualIndex + 1}`}
+                    fill
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    unoptimized={image?.startsWith("http")}
+                  />
+                  <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
+                </button>
+              );
+            })}
           </div>
           <div className="flex flex-col gap-4 sm:col-span-1 sm:row-span-2 h-full">
-            {images.slice(3, 5).map((image, index) => (
-              <button
-                key={index + 3}
-                onClick={() => {
-                  setCurrentImageIndex(index + 3);
-                  setGalleryOpen(true);
-                }}
-                className="group relative flex-1 overflow-hidden rounded-2xl shadow-md transition-all hover:shadow-xl ring-1 ring-black/5"
-              >
-                <Image
-                  src={image}
-                  alt={`${listing.title} ${index + 4}`}
-                  fill
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  unoptimized={image?.startsWith("http")}
-                />
-                <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
-              </button>
-            ))}
+            {images.slice(3, 5).map((image, index) => {
+              const actualIndex = index + 3;
+              return (
+                <button
+                  key={actualIndex}
+                  onClick={() => {
+                    if (actualIndex < images.length) {
+                      setCurrentImageIndex(actualIndex);
+                      setGalleryOpen(true);
+                    }
+                  }}
+                  className="group relative flex-1 overflow-hidden rounded-2xl shadow-md transition-all hover:shadow-xl ring-1 ring-black/5"
+                >
+                  <Image
+                    src={image}
+                    alt={`${listing.title} ${actualIndex + 1}`}
+                    fill
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    unoptimized={image?.startsWith("http")}
+                  />
+                  <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
+                </button>
+              );
+            })}
           </div>
-          
+
           <div className="absolute bottom-4 right-4 z-10">
             <Button
               size="sm"
               variant="secondary"
               className="gap-2 shadow-lg backdrop-blur-md bg-white/90 hover:bg-white text-slate-900 border border-slate-200/50"
-              onClick={() => setGalleryOpen(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentImageIndex(0);
+                setGalleryOpen(true);
+              }}
             >
               <div className="grid grid-cols-2 gap-0.5">
                 <div className="h-1 w-1 rounded-[1px] bg-slate-900" />
@@ -385,12 +399,15 @@ export function TourDetailsClient({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-4"
             onClick={() => setGalleryOpen(false)}
           >
             <button
-              onClick={() => setGalleryOpen(false)}
-              className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
+              onClick={(e) => {
+                e.stopPropagation();
+                setGalleryOpen(false);
+              }}
+              className="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
             >
               <X className="h-6 w-6" />
             </button>
@@ -399,7 +416,7 @@ export function TourDetailsClient({
                 e.stopPropagation();
                 previousImage();
               }}
-              className="absolute left-4 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
+              className="absolute left-4 z-10 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
             >
               <ChevronLeft className="h-6 w-6" />
             </button>
@@ -408,7 +425,7 @@ export function TourDetailsClient({
                 e.stopPropagation();
                 nextImage();
               }}
-              className="absolute right-4 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
+              className="absolute right-4 z-10 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20 top-1/2 -translate-y-1/2"
             >
               <ChevronRight className="h-6 w-6" />
             </button>
@@ -429,16 +446,19 @@ export function TourDetailsClient({
                 priority
               />
             </motion.div>
-            
-            <div className="absolute bottom-8 left-0 right-0 z-50 mx-auto max-w-4xl px-4 overflow-x-auto" onClick={(e) => e.stopPropagation()}>
+
+            <div
+              className="absolute bottom-8 left-0 right-0 z-50 mx-auto max-w-4xl px-4 overflow-x-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex justify-center gap-2 p-2">
                 {images.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setCurrentImageIndex(idx)}
                     className={`relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-md transition-all ${
-                      currentImageIndex === idx 
-                        ? "ring-2 ring-white scale-110 opacity-100" 
+                      currentImageIndex === idx
+                        ? "ring-2 ring-white scale-110 opacity-100"
                         : "opacity-60 hover:opacity-100"
                     }`}
                   >
@@ -453,7 +473,7 @@ export function TourDetailsClient({
                 ))}
               </div>
             </div>
-            
+
             <div className="absolute top-4 left-4 text-white/80 font-medium">
               {currentImageIndex + 1} / {images.length}
             </div>
@@ -589,7 +609,7 @@ export function TourDetailsClient({
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="flex-1 space-y-3">
                         <div>
                           <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
@@ -608,7 +628,9 @@ export function TourDetailsClient({
                                 </span>
                                 {bookingsCount > 0 && (
                                   <>
-                                    <span className="text-muted-foreground">•</span>
+                                    <span className="text-muted-foreground">
+                                      •
+                                    </span>
                                     <span className="text-muted-foreground">
                                       {bookingsCount} bookings hosted
                                     </span>
@@ -641,10 +663,7 @@ export function TourDetailsClient({
 
                         <div className="pt-2">
                           <Link href={`/profile/${listing.guide.id}`}>
-                            <Button
-                              variant="outline"
-                              className="group/btn"
-                            >
+                            <Button variant="outline" className="group/btn">
                               View Full Profile
                               <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
                             </Button>
@@ -712,8 +731,10 @@ export function TourDetailsClient({
                   Guest Reviews
                 </h2>
                 {reviews.length > 0 && (
-                   <div className="flex items-center gap-2">
-                    <span className="text-xl font-bold">{averageRating.toFixed(1)}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl font-bold">
+                      {averageRating.toFixed(1)}
+                    </span>
                     <div className="flex gap-0.5">
                       {[...Array(5)].map((_, i) => (
                         <Star
@@ -726,20 +747,25 @@ export function TourDetailsClient({
                         />
                       ))}
                     </div>
-                    <span className="text-muted-foreground text-sm">({reviewsCount})</span>
-                   </div>
+                    <span className="text-muted-foreground text-sm">
+                      ({reviewsCount})
+                    </span>
+                  </div>
                 )}
               </div>
-              
+
               {reviews.length === 0 ? (
                 <Card className="border-dashed border-2 bg-muted/30">
                   <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                     <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                       <Star className="h-8 w-8 text-primary" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">No reviews yet</h3>
+                    <h3 className="text-lg font-semibold mb-2">
+                      No reviews yet
+                    </h3>
                     <p className="text-muted-foreground max-w-sm mx-auto">
-                      This tour is new and waiting for its first adventurer! Book now and be the first to share your experience.
+                      This tour is new and waiting for its first adventurer!
+                      Book now and be the first to share your experience.
                     </p>
                   </CardContent>
                 </Card>
@@ -770,7 +796,8 @@ export function TourDetailsClient({
                             <div className="flex-1">
                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                                 <h4 className="font-semibold text-foreground text-lg">
-                                  {review.tourist?.user?.name || "Anonymous Traveler"}
+                                  {review.tourist?.user?.name ||
+                                    "Anonymous Traveler"}
                                 </h4>
                                 <span className="text-sm text-muted-foreground">
                                   {new Date(
@@ -805,7 +832,7 @@ export function TourDetailsClient({
                       </Card>
                     </motion.div>
                   ))}
-                  
+
                   {reviews.length > 5 && (
                     <Button variant="outline" className="w-full">
                       View all {reviews.length} reviews
@@ -825,13 +852,15 @@ export function TourDetailsClient({
               className="sticky top-28"
             >
               <Card className="overflow-hidden border-2 border-primary/10 shadow-xl transition-all hover:shadow-2xl hover:border-primary/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-blue-600" />
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-blue-600" />
                 <CardContent className="p-6 sm:p-8">
                   <div className="flex items-baseline gap-2 mb-6">
                     <span className="text-4xl font-bold text-foreground">
                       ${listing.tourFee}
                     </span>
-                    <span className="text-muted-foreground font-medium">per person</span>
+                    <span className="text-muted-foreground font-medium">
+                      per person
+                    </span>
                   </div>
 
                   <div className="mt-6 space-y-4">
