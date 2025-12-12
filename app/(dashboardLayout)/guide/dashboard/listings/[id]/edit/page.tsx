@@ -176,9 +176,14 @@ export default function EditListingPage() {
     e.preventDefault();
     setValidationErrors(null);
 
-    // Validate images
-    const allImages = [...existingImages];
-    if (allImages.length === 0) {
+    // Filter out any empty strings from existing images first
+    const validExistingImages = existingImages.filter(
+      (img) => img && img.trim() !== ""
+    );
+
+    // Validate images - need at least one image (existing or new) and max 10 total
+    const totalImages = validExistingImages.length + imageFiles.length;
+    if (totalImages === 0) {
       setValidationErrors({
         success: false,
         errors: [
@@ -187,8 +192,19 @@ export default function EditListingPage() {
       });
       return;
     }
+    if (totalImages > 5) {
+      setValidationErrors({
+        success: false,
+        errors: [{ field: "images", message: "Cannot exceed 10 images." }],
+      });
+      return;
+    }
 
     // Prepare data for validation
+    // For validation, we use existing images (URLs) since Zod expects string array
+    // If we only have new images, we omit images from validation (it's optional in schema)
+    // The actual new images will be sent separately via newImages parameter
+
     const validationData = {
       title: formData.title || undefined,
       description: formData.description || undefined,
@@ -205,7 +221,9 @@ export default function EditListingPage() {
         : undefined,
       city: formData.city || undefined,
       category: formData.category || undefined,
-      images: allImages,
+      // Only include images in validation if we have valid existing images
+      // If we only have new images, omit it (validation already checked total count above)
+      ...(validExistingImages.length > 0 && { images: validExistingImages }),
       isActive: formData.isActive,
     };
 
@@ -231,6 +249,9 @@ export default function EditListingPage() {
       const result = await updateListing({
         id: listingId,
         ...validationData,
+        images:
+          validExistingImages.length > 0 ? validExistingImages : undefined,
+        newImages: imageFiles.length > 0 ? imageFiles : undefined,
       });
 
       if (result.success) {

@@ -1,5 +1,4 @@
-import { z } from "zod"
-import type { Category } from "@/types/profile"
+import { z } from "zod";
 
 // Category enum values matching backend
 const categoryEnum = [
@@ -41,7 +40,7 @@ const categoryEnum = [
   "SURFING",
   "FOOD_TOUR",
   "STREET_FOOD",
-] as const
+] as const;
 
 export const createListingZodSchema = z.object({
   title: z
@@ -85,7 +84,7 @@ export const createListingZodSchema = z.object({
     .array(z.instanceof(File), { message: "Images must be an array of files" })
     .min(1, { message: "At least one image is required." })
     .max(10, { message: "Cannot exceed 10 images." }),
-})
+});
 
 export const updateListingZodSchema = z.object({
   title: z
@@ -129,16 +128,16 @@ export const updateListingZodSchema = z.object({
     .min(2, { message: "City must be at least 2 characters long." })
     .max(100, { message: "City cannot exceed 100 characters." })
     .optional(),
-  category: z.enum(categoryEnum, {
-    message: "Category must be a valid category",
-  }).optional(),
+  category: z
+    .enum(categoryEnum, {
+      message: "Category must be a valid category",
+    })
+    .optional(),
   images: z
     .array(z.string(), { message: "Images must be an array of URLs" })
-    .min(1, { message: "At least one image is required." })
     .max(10, { message: "Cannot exceed 10 images." })
     .optional(),
   isActive: z
     .boolean({ message: "Active status must be a boolean" })
     .optional(),
-})
-
+});

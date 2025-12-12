@@ -57,7 +57,7 @@ import {
   Star,
   Trash2,
   TrendingUp,
-  X
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -901,7 +901,10 @@ export function GuideDashboardClient({
           {/* Decorative background elements */}
           <div className="absolute inset-0 -z-10">
             <div className="absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-primary/5 blur-3xl animate-pulse" />
-            <div className="absolute right-1/4 bottom-1/3 h-96 w-96 rounded-full bg-primary/5 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+            <div
+              className="absolute right-1/4 bottom-1/3 h-96 w-96 rounded-full bg-primary/5 blur-3xl animate-pulse"
+              style={{ animationDelay: "1s" }}
+            />
           </div>
 
           <motion.div
@@ -945,15 +948,21 @@ export function GuideDashboardClient({
               <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <CardContent className="p-6">
                 <div className="flex items-center justify-between space-y-0 pb-2">
-                  <p className="text-sm font-medium text-muted-foreground">Total Earnings</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Total Earnings
+                  </p>
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 ring-1 ring-yellow-500/20">
                     <DollarSign className="h-5 w-5 text-yellow-600" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-2xl font-bold">${initialData.stats.totalEarnings.toLocaleString()}</span>
+                  <span className="text-2xl font-bold">
+                    ${initialData.stats.totalEarnings.toLocaleString()}
+                  </span>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">From completed bookings</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  From completed bookings
+                </p>
               </CardContent>
             </Card>
 
@@ -962,16 +971,24 @@ export function GuideDashboardClient({
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <CardContent className="p-6">
                 <div className="flex items-center justify-between space-y-0 pb-2">
-                  <p className="text-sm font-medium text-muted-foreground">Completed Bookings</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Completed Bookings
+                  </p>
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/5 ring-1 ring-blue-500/20">
                     <CalendarDays className="h-5 w-5 text-blue-600" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-2xl font-bold">{initialData.stats.totalCompletedBookings}</span>
-                  <span className="text-xs text-muted-foreground">bookings</span>
+                  <span className="text-2xl font-bold">
+                    {initialData.stats.totalCompletedBookings}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    bookings
+                  </span>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">Successfully guided</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Successfully guided
+                </p>
               </CardContent>
             </Card>
 
@@ -980,7 +997,9 @@ export function GuideDashboardClient({
               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <CardContent className="p-6">
                 <div className="flex items-center justify-between space-y-0 pb-2">
-                  <p className="text-sm font-medium text-muted-foreground">Average Rating</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Average Rating
+                  </p>
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-500/5 ring-1 ring-purple-500/20">
                     <Star className="h-5 w-5 text-purple-600" />
                   </div>
@@ -993,7 +1012,9 @@ export function GuideDashboardClient({
                   </span>
                   <span className="text-xs text-muted-foreground">/ 5.0</span>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">From tourist reviews</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  From tourist reviews
+                </p>
               </CardContent>
             </Card>
 
@@ -1002,16 +1023,22 @@ export function GuideDashboardClient({
               <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <CardContent className="p-6">
                 <div className="flex items-center justify-between space-y-0 pb-2">
-                  <p className="text-sm font-medium text-muted-foreground">Active Tours</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Active Tours
+                  </p>
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-green-500/10 to-green-500/5 ring-1 ring-green-500/20">
                     <TrendingUp className="h-5 w-5 text-green-600" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-2xl font-bold">{initialData.stats.activeTours}</span>
+                  <span className="text-2xl font-bold">
+                    {initialData.stats.activeTours}
+                  </span>
                   <span className="text-xs text-muted-foreground">active</span>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">of {initialData.stats.totalTours} total listings</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  of {initialData.stats.totalTours} total listings
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -1100,7 +1127,10 @@ export function GuideDashboardClient({
                                     },
                                     (_, i) => i + 1
                                   ).map((pageNum) => (
-                                    <SelectItem key={pageNum} value={`${pageNum}`}>
+                                    <SelectItem
+                                      key={pageNum}
+                                      value={`${pageNum}`}
+                                    >
                                       {pageNum}
                                     </SelectItem>
                                   ))}
@@ -1111,7 +1141,9 @@ export function GuideDashboardClient({
                               </span>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <p className="text-sm font-medium">Rows per page</p>
+                              <p className="text-sm font-medium">
+                                Rows per page
+                              </p>
                               <Select
                                 value={`${currentLimit}`}
                                 onValueChange={(value) => {
@@ -1177,11 +1209,15 @@ export function GuideDashboardClient({
                                 <SelectContent side="top">
                                   {Array.from(
                                     {
-                                      length: initialData.pendingBookingsTotalPages,
+                                      length:
+                                        initialData.pendingBookingsTotalPages,
                                     },
                                     (_, i) => i + 1
                                   ).map((pageNum) => (
-                                    <SelectItem key={pageNum} value={`${pageNum}`}>
+                                    <SelectItem
+                                      key={pageNum}
+                                      value={`${pageNum}`}
+                                    >
                                       {pageNum}
                                     </SelectItem>
                                   ))}
@@ -1192,7 +1228,9 @@ export function GuideDashboardClient({
                               </span>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <p className="text-sm font-medium">Rows per page</p>
+                              <p className="text-sm font-medium">
+                                Rows per page
+                              </p>
                               <Select
                                 value={`${currentLimit}`}
                                 onValueChange={(value) => {
@@ -1263,7 +1301,10 @@ export function GuideDashboardClient({
                                     },
                                     (_, i) => i + 1
                                   ).map((pageNum) => (
-                                    <SelectItem key={pageNum} value={`${pageNum}`}>
+                                    <SelectItem
+                                      key={pageNum}
+                                      value={`${pageNum}`}
+                                    >
                                       {pageNum}
                                     </SelectItem>
                                   ))}
@@ -1274,7 +1315,9 @@ export function GuideDashboardClient({
                               </span>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <p className="text-sm font-medium">Rows per page</p>
+                              <p className="text-sm font-medium">
+                                Rows per page
+                              </p>
                               <Select
                                 value={`${currentLimit}`}
                                 onValueChange={(value) => {
@@ -1343,7 +1386,10 @@ export function GuideDashboardClient({
                                     { length: initialData.listingsTotalPages },
                                     (_, i) => i + 1
                                   ).map((pageNum) => (
-                                    <SelectItem key={pageNum} value={`${pageNum}`}>
+                                    <SelectItem
+                                      key={pageNum}
+                                      value={`${pageNum}`}
+                                    >
                                       {pageNum}
                                     </SelectItem>
                                   ))}
@@ -1354,7 +1400,9 @@ export function GuideDashboardClient({
                               </span>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <p className="text-sm font-medium">Rows per page</p>
+                              <p className="text-sm font-medium">
+                                Rows per page
+                              </p>
                               <Select
                                 value={`${currentLimit}`}
                                 onValueChange={(value) => {
@@ -1398,7 +1446,10 @@ export function GuideDashboardClient({
                   <>
                     <div className="space-y-4">
                       {initialData.reviews.map((review) => (
-                        <Card key={review.id} className="border-2 border-border/50 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20">
+                        <Card
+                          key={review.id}
+                          className="border-2 border-border/50 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20"
+                        >
                           <CardContent className="p-6">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">

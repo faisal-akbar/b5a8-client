@@ -34,11 +34,10 @@ import {
   Globe,
   Heart,
   MapPin,
-  Share2,
   Shield,
   Star,
   Users,
-  X,
+  X
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -157,6 +156,19 @@ export function TourDetailsClient({
   const previousImage = () => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!galleryOpen) return;
+      if (e.key === "ArrowRight") nextImage();
+      if (e.key === "ArrowLeft") previousImage();
+      if (e.key === "Escape") setGalleryOpen(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [galleryOpen, images.length]); // Dependencies for closure freshness
 
   const handleBooking = async () => {
     // Check if user is logged in
@@ -286,53 +298,84 @@ export function TourDetailsClient({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="grid gap-2 sm:grid-cols-4"
+          className="grid gap-4 sm:grid-cols-4 h-[500px]"
         >
           <button
             onClick={() => {
               setCurrentImageIndex(0);
               setGalleryOpen(true);
             }}
-            className="group relative h-[400px] overflow-hidden rounded-lg sm:col-span-2 sm:row-span-2 shadow-md transition-all hover:shadow-xl"
+            className="group relative h-full overflow-hidden rounded-2xl sm:col-span-2 sm:row-span-2 shadow-lg transition-all hover:shadow-2xl ring-1 ring-black/5"
           >
             <Image
               src={images[0]}
               alt={listing.title}
               fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              className="object-cover transition-transform duration-700 group-hover:scale-110"
               unoptimized={images[0]?.startsWith("http")}
+              priority
             />
-            <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-40" />
           </button>
-          {images.slice(1, 4).map((image, index) => (
-            <button
-              key={index}
-              onClick={() => {
-                setCurrentImageIndex(index + 1);
-                setGalleryOpen(true);
-              }}
-              className="group relative h-[196px] overflow-hidden rounded-lg shadow-sm transition-all hover:shadow-md"
-            >
-              <Image
-                src={image}
-                alt={`${listing.title} ${index + 2}`}
-                fill
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                unoptimized={image?.startsWith("http")}
-              />
-              <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
-            </button>
-          ))}
-          {images.length > 4 && (
-            <button
+          <div className="flex flex-col gap-4 sm:col-span-1 sm:row-span-2 h-full">
+            {images.slice(1, 3).map((image, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setCurrentImageIndex(index + 1);
+                  setGalleryOpen(true);
+                }}
+                className="group relative flex-1 overflow-hidden rounded-2xl shadow-md transition-all hover:shadow-xl ring-1 ring-black/5"
+              >
+                <Image
+                  src={image}
+                  alt={`${listing.title} ${index + 2}`}
+                  fill
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  unoptimized={image?.startsWith("http")}
+                />
+                <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-col gap-4 sm:col-span-1 sm:row-span-2 h-full">
+            {images.slice(3, 5).map((image, index) => (
+              <button
+                key={index + 3}
+                onClick={() => {
+                  setCurrentImageIndex(index + 3);
+                  setGalleryOpen(true);
+                }}
+                className="group relative flex-1 overflow-hidden rounded-2xl shadow-md transition-all hover:shadow-xl ring-1 ring-black/5"
+              >
+                <Image
+                  src={image}
+                  alt={`${listing.title} ${index + 4}`}
+                  fill
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  unoptimized={image?.startsWith("http")}
+                />
+                <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
+              </button>
+            ))}
+          </div>
+          
+          <div className="absolute bottom-4 right-4 z-10">
+            <Button
+              size="sm"
+              variant="secondary"
+              className="gap-2 shadow-lg backdrop-blur-md bg-white/90 hover:bg-white text-slate-900 border border-slate-200/50"
               onClick={() => setGalleryOpen(true)}
-              className="group relative flex h-[196px] items-center justify-center overflow-hidden rounded-lg bg-slate-900/10 backdrop-blur-sm transition-colors hover:bg-slate-900/20"
             >
-              <span className="font-medium text-slate-900">
-                View All {images.length} Photos
-              </span>
-            </button>
-          )}
+              <div className="grid grid-cols-2 gap-0.5">
+                <div className="h-1 w-1 rounded-[1px] bg-slate-900" />
+                <div className="h-1 w-1 rounded-[1px] bg-slate-900" />
+                <div className="h-1 w-1 rounded-[1px] bg-slate-900" />
+                <div className="h-1 w-1 rounded-[1px] bg-slate-900" />
+              </div>
+              View all {images.length} photos
+            </Button>
+          </div>
         </motion.div>
       </section>
 
@@ -369,17 +412,49 @@ export function TourDetailsClient({
             >
               <ChevronRight className="h-6 w-6" />
             </button>
-            <motion.img
+            <motion.div
               key={currentImageIndex}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              src={images[currentImageIndex]}
-              alt={`${listing.title} ${currentImageIndex + 1}`}
-              className="max-h-[90vh] max-w-[90vw] object-contain"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="relative aspect-video w-full max-w-5xl"
               onClick={(e) => e.stopPropagation()}
-            />
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-4 py-2 text-sm text-white backdrop-blur">
+            >
+              <Image
+                src={images[currentImageIndex]}
+                alt={`${listing.title} ${currentImageIndex + 1}`}
+                fill
+                className="object-contain"
+                unoptimized={images[currentImageIndex]?.startsWith("http")}
+                priority
+              />
+            </motion.div>
+            
+            <div className="absolute bottom-8 left-0 right-0 z-50 mx-auto max-w-4xl px-4 overflow-x-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex justify-center gap-2 p-2">
+                {images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentImageIndex(idx)}
+                    className={`relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-md transition-all ${
+                      currentImageIndex === idx 
+                        ? "ring-2 ring-white scale-110 opacity-100" 
+                        : "opacity-60 hover:opacity-100"
+                    }`}
+                  >
+                    <Image
+                      src={img}
+                      alt={`Thumbnail ${idx + 1}`}
+                      fill
+                      className="object-cover"
+                      unoptimized={img?.startsWith("http")}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="absolute top-4 left-4 text-white/80 font-medium">
               {currentImageIndex + 1} / {images.length}
             </div>
           </motion.div>
@@ -422,59 +497,60 @@ export function TourDetailsClient({
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-6 border-y border-border/50 py-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                  <Clock className="h-5 w-5 text-primary" />
+            <div className="flex flex-wrap gap-4 py-8">
+              <div className="flex items-center gap-4 rounded-2xl bg-muted/50 px-6 py-4 transition-all hover:bg-muted/80">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Clock className="h-6 w-6" />
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-foreground">
+                    Duration
+                  </div>
+                  <div className="text-sm text-muted-foreground">
                     {listing.durationDays}{" "}
                     {listing.durationDays === 1 ? "day" : "days"}
                   </div>
-                  <div className="text-xs text-muted-foreground">Duration</div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                  <Users className="h-5 w-5 text-primary" />
+              <div className="flex items-center gap-4 rounded-2xl bg-muted/50 px-6 py-4 transition-all hover:bg-muted/80">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Users className="h-6 w-6" />
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-foreground">
-                    Up to {listing.maxGroupSize}
+                    Group Size
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    Group size
+                  <div className="text-sm text-muted-foreground">
+                    Up to {listing.maxGroupSize} people
                   </div>
                 </div>
               </div>
               {guideProfile?.languages && guideProfile.languages.length > 0 && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                    <Globe className="h-5 w-5 text-primary" />
+                <div className="flex items-center gap-4 rounded-2xl bg-muted/50 px-6 py-4 transition-all hover:bg-muted/80">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Globe className="h-6 w-6" />
                   </div>
                   <div>
                     <div className="text-sm font-semibold text-foreground">
-                      {guideProfile.languages.join(", ")}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
                       Languages
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {guideProfile.languages.join(", ")}
                     </div>
                   </div>
                 </div>
               )}
               {bookingsCount > 0 && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                    <CheckCircle className="h-5 w-5 text-primary" />
+                <div className="flex items-center gap-4 rounded-2xl bg-muted/50 px-6 py-4 transition-all hover:bg-muted/80">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <CheckCircle className="h-6 w-6" />
                   </div>
                   <div>
                     <div className="text-sm font-semibold text-foreground">
-                      {bookingsCount}{" "}
-                      {bookingsCount === 1 ? "booking" : "bookings"}
+                      Popularity
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      Total bookings
+                    <div className="text-sm text-muted-foreground">
+                      {bookingsCount} bookings so far
                     </div>
                   </div>
                 </div>
@@ -483,82 +559,102 @@ export function TourDetailsClient({
 
             {/* Guide Card */}
             {listing.guide && guideProfile && (
-              <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <Avatar className="h-16 w-16 border-2 border-slate-100">
-                      <AvatarImage
-                        src={guideProfile.profilePic || "/placeholder.svg"}
-                      />
-                      <AvatarFallback>
-                        {guideProfile.name[0] || "G"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-foreground">
-                          {guideProfile.name}
-                        </h3>
+              <div>
+                <h2 className="text-2xl font-semibold text-foreground mb-4">
+                  Meet Your Guide
+                </h2>
+                <Card className="overflow-hidden border-border/50 shadow-md transition-all hover:shadow-xl hover:border-primary/20 group">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                  <CardContent className="p-8 relative">
+                    <div className="flex flex-col sm:flex-row items-start gap-6">
+                      <div className="relative">
+                        <Avatar className="h-24 w-24 border-4 border-background shadow-lg ring-2 ring-primary/10 transition-transform duration-300 group-hover:scale-105">
+                          <AvatarImage
+                            src={guideProfile.profilePic || "/placeholder.svg"}
+                            className="object-cover"
+                          />
+                          <AvatarFallback className="text-2xl bg-primary/5 text-primary">
+                            {guideProfile.name[0] || "G"}
+                          </AvatarFallback>
+                        </Avatar>
                         {guideProfile.verified && (
-                          <Badge
-                            variant="secondary"
-                            className="gap-1 bg-emerald-50 text-emerald-700"
-                          >
-                            <Shield className="h-3 w-3" />
-                            Verified
-                          </Badge>
+                          <div className="absolute -bottom-2 -right-2 bg-background rounded-full p-1 shadow-sm">
+                            <Badge
+                              variant="secondary"
+                              className="h-6 w-6 p-0 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600"
+                              title="Verified Guide"
+                            >
+                              <Shield className="h-3.5 w-3.5 fill-current" />
+                            </Badge>
+                          </div>
                         )}
                       </div>
-                      {guideProfile.rating &&
-                        guideProfile.reviewsCount !== undefined && (
-                          <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Star className="h-4 w-4 fill-primary text-primary" />
-                              {guideProfile.rating.toFixed(1)} (
-                              {guideProfile.reviewsCount} reviews)
-                            </div>
-                            {bookingsCount > 0 && (
-                              <>
-                                <span>•</span>
-                                <span>{bookingsCount} bookings</span>
-                              </>
+                      
+                      <div className="flex-1 space-y-3">
+                        <div>
+                          <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+                            {guideProfile.name}
+                          </h3>
+                          {guideProfile.rating &&
+                            guideProfile.reviewsCount !== undefined && (
+                              <div className="mt-1 flex items-center gap-2 text-sm">
+                                <span className="flex items-center font-medium text-foreground">
+                                  <Star className="mr-1 h-4 w-4 fill-amber-400 text-amber-400" />
+                                  {guideProfile.rating.toFixed(1)}
+                                </span>
+                                <span className="text-muted-foreground">•</span>
+                                <span className="text-muted-foreground hover:text-foreground transition-colors underline decoration-dotted underline-offset-4">
+                                  {guideProfile.reviewsCount} reviews
+                                </span>
+                                {bookingsCount > 0 && (
+                                  <>
+                                    <span className="text-muted-foreground">•</span>
+                                    <span className="text-muted-foreground">
+                                      {bookingsCount} bookings hosted
+                                    </span>
+                                  </>
+                                )}
+                              </div>
                             )}
-                          </div>
+                        </div>
+
+                        {guideProfile.bio && (
+                          <p className="text-muted-foreground leading-relaxed text-pretty">
+                            {guideProfile.bio}
+                          </p>
                         )}
-                      {guideProfile.bio && (
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          {guideProfile.bio}
-                        </p>
-                      )}
-                      {guideProfile.expertise &&
-                        guideProfile.expertise.length > 0 && (
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {guideProfile.expertise.map((exp, index) => (
-                              <Badge
-                                key={index}
-                                variant="outline"
-                                className="text-xs"
-                              >
-                                {exp}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                      <div className="mt-4 flex gap-2">
-                        <Link href={`/profile/${listing.guide.id}`}>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="hover:bg-slate-50 bg-transparent"
-                          >
-                            View Profile
-                          </Button>
-                        </Link>
+
+                        {guideProfile.expertise &&
+                          guideProfile.expertise.length > 0 && (
+                            <div className="flex flex-wrap gap-2 pt-1">
+                              {guideProfile.expertise.map((exp, index) => (
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className="bg-secondary/50 hover:bg-secondary text-xs font-normal"
+                                >
+                                  {exp}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+
+                        <div className="pt-2">
+                          <Link href={`/profile/${listing.guide.id}`}>
+                            <Button
+                              variant="outline"
+                              className="group/btn"
+                            >
+                              View Full Profile
+                              <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
+                            </Button>
+                          </Link>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
             )}
 
             {/* Description */}
@@ -573,18 +669,18 @@ export function TourDetailsClient({
 
             {/* Itinerary */}
             <div>
-              <h2 className="text-2xl font-semibold text-foreground">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">
                 Itinerary
               </h2>
-              <div className="mt-4">
-                <Card className="border-slate-200 transition-all hover:shadow-md">
-                  <CardContent className="p-6">
+              <Card className="border-border/50 shadow-sm transition-all hover:shadow-md bg-card/50">
+                <CardContent className="p-8">
+                  <div className="prose prose-slate max-w-none dark:prose-invert">
                     <p className="text-pretty whitespace-pre-line leading-relaxed text-muted-foreground">
                       {itineraryText || "Itinerary details coming soon."}
                     </p>
-                  </CardContent>
-                </Card>
-              </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Meeting Point */}
@@ -611,19 +707,44 @@ export function TourDetailsClient({
 
             {/* Reviews */}
             <div>
-              <h2 className="text-2xl font-semibold text-foreground">
-                Reviews
-              </h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-semibold text-foreground">
+                  Guest Reviews
+                </h2>
+                {reviews.length > 0 && (
+                   <div className="flex items-center gap-2">
+                    <span className="text-xl font-bold">{averageRating.toFixed(1)}</span>
+                    <div className="flex gap-0.5">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-4 w-4 ${
+                            i < Math.round(averageRating)
+                              ? "fill-primary text-primary"
+                              : "text-muted-foreground/30"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-muted-foreground text-sm">({reviewsCount})</span>
+                   </div>
+                )}
+              </div>
+              
               {reviews.length === 0 ? (
-                <div className="mt-6 text-center py-12">
-                  <Star className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No reviews yet</h3>
-                  <p className="text-muted-foreground">
-                    Be the first to review this tour!
-                  </p>
-                </div>
+                <Card className="border-dashed border-2 bg-muted/30">
+                  <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                      <Star className="h-8 w-8 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">No reviews yet</h3>
+                    <p className="text-muted-foreground max-w-sm mx-auto">
+                      This tour is new and waiting for its first adventurer! Book now and be the first to share your experience.
+                    </p>
+                  </CardContent>
+                </Card>
               ) : (
-                <div className="mt-6 space-y-4">
+                <div className="grid gap-6">
                   {reviews.map((review, index) => (
                     <motion.div
                       key={review.id}
@@ -632,10 +753,10 @@ export function TourDetailsClient({
                       viewport={{ once: true }}
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                     >
-                      <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md">
+                      <Card className="border-border/50 shadow-sm transition-all hover:shadow-md bg-card/50">
                         <CardContent className="p-6">
                           <div className="flex items-start gap-4">
-                            <Avatar className="border-2 border-slate-100">
+                            <Avatar className="h-12 w-12 border-2 border-background shadow-sm">
                               <AvatarImage
                                 src={
                                   review.tourist?.user?.profilePic ||
@@ -647,35 +768,35 @@ export function TourDetailsClient({
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <h4 className="font-semibold text-foreground">
-                                  {review.tourist?.user?.name || "Anonymous"}
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                                <h4 className="font-semibold text-foreground text-lg">
+                                  {review.tourist?.user?.name || "Anonymous Traveler"}
                                 </h4>
                                 <span className="text-sm text-muted-foreground">
                                   {new Date(
                                     review.createdAt
                                   ).toLocaleDateString("en-US", {
                                     year: "numeric",
-                                    month: "short",
+                                    month: "long",
                                     day: "numeric",
                                   })}
                                 </span>
                               </div>
-                              <div className="mt-1 flex gap-1">
+                              <div className="flex items-center gap-1 mb-3">
                                 {[...Array(5)].map((_, i) => (
                                   <Star
                                     key={i}
                                     className={`h-4 w-4 ${
                                       i < review.rating
                                         ? "fill-primary text-primary"
-                                        : "text-muted-foreground"
+                                        : "fill-muted text-muted-foreground/30"
                                     }`}
                                   />
                                 ))}
                               </div>
                               {review.comment && (
-                                <p className="text-pretty mt-3 leading-relaxed text-muted-foreground">
-                                  {review.comment}
+                                <p className="text-pretty leading-relaxed text-muted-foreground">
+                                  "{review.comment}"
                                 </p>
                               )}
                             </div>
@@ -684,6 +805,12 @@ export function TourDetailsClient({
                       </Card>
                     </motion.div>
                   ))}
+                  
+                  {reviews.length > 5 && (
+                    <Button variant="outline" className="w-full">
+                      View all {reviews.length} reviews
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -695,15 +822,16 @@ export function TourDetailsClient({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="sticky top-24"
+              className="sticky top-28"
             >
-              <Card className="border-2 border-slate-200 shadow-lg transition-all hover:shadow-xl">
-                <CardContent className="p-6">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-foreground">
+              <Card className="overflow-hidden border-2 border-primary/10 shadow-xl transition-all hover:shadow-2xl hover:border-primary/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-blue-600" />
+                <CardContent className="p-6 sm:p-8">
+                  <div className="flex items-baseline gap-2 mb-6">
+                    <span className="text-4xl font-bold text-foreground">
                       ${listing.tourFee}
                     </span>
-                    <span className="text-muted-foreground">per person</span>
+                    <span className="text-muted-foreground font-medium">per person</span>
                   </div>
 
                   <div className="mt-6 space-y-4">

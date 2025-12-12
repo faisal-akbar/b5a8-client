@@ -39,6 +39,7 @@ export interface UpdateListingParams {
   city?: string;
   category?: string;
   images?: string[];
+  newImages?: File[];
   isActive?: boolean;
 }
 
@@ -245,25 +246,78 @@ export async function createListing(params: CreateListingParams) {
 /**
  * Update listing (Guide only)
  */
-export async function updateListing({ id, ...params }: UpdateListingParams) {
+export async function updateListing({
+  id,
+  newImages,
+  ...params
+}: UpdateListingParams) {
   try {
-    const response = await serverFetch.patch(`/listings/${id}`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(params),
-    });
+    // If there are new image files, use FormData (like createListing)
+    if (newImages && newImages.length > 0) {
+      const formData = new FormData();
 
-    const data = await response.json();
+      // Append all text fields
+      if (params.title) formData.append("title", params.title);
+      if (params.description)
+        formData.append("description", params.description);
+      if (params.itinerary) formData.append("itinerary", params.itinerary);
+      if (params.tourFee !== undefined)
+        formData.append("tourFee", params.tourFee.toString());
+      if (params.durationDays !== undefined)
+        formData.append("durationDays", params.durationDays.toString());
+      if (params.meetingPoint)
+        formData.append("meetingPoint", params.meetingPoint);
+      if (params.maxGroupSize !== undefined)
+        formData.append("maxGroupSize", params.maxGroupSize.toString());
+      if (params.city) formData.append("city", params.city);
+      if (params.category) formData.append("category", params.category);
+      if (params.isActive !== undefined)
+        formData.append("isActive", params.isActive.toString());
 
-    if (!response.ok) {
-      throw new Error(data.message || "Failed to update listing");
+      // Append existing image URLs as JSON string
+      if (params.images && params.images.length > 0) {
+        formData.append("existingImages", JSON.stringify(params.images));
+      }
+
+      // Append new image files
+      newImages.forEach((file) => {
+        formData.append("files", file);
+      });
+
+      const response = await serverFetch.patch(`/listings/${id}`, {
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update listing");
+      }
+
+      return {
+        success: true,
+        data: data.data,
+      };
+    } else {
+      // No new files, use JSON (existing behavior)
+      const response = await serverFetch.patch(`/listings/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(params),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update listing");
+      }
+
+      return {
+        success: true,
+        data: data.data,
+      };
     }
-
-    return {
-      success: true,
-      data: data.data,
-    };
   } catch (error: any) {
     return {
       success: false,
